@@ -44,7 +44,7 @@ approved.
 | A-14 | Per-call project id | Wins; does not touch the cache. |
 | A-15 | Header case | `Idempotency-Key` (canonical); no behavior impact. |
 
-## D-005 — Code generation approach (PROPOSED, awaiting owner decision)
+## D-005 — Code generation: stdlib types-only generator (`lkgen`), hand-written calls
 
 - **Date:** 2026-10-23
 - **Context:** the spec is OpenAPI **3.1.0**, with 42 `type: [T, "null"]` nullables, 34 `anyOf`, 6 `oneOf` (4 with a `kind` discriminator and an explicit mapping: `Block`/`VersionedBlock` ×28, `PropertyBlock`/`VersionedProperty` ×9), numeric `exclusiveMinimum`/`exclusiveMaximum` (3.1 form) and `allOf` (`ProjectDetail`, `ResourceWithAncestors`). Each option was prototyped in a scratch module against the **Resources + Projects** operations (12 ops) of the unmodified spec, sha256 `99109f62…3942b`.
@@ -64,7 +64,7 @@ approved.
 | Stable regeneration (generate twice, `cmp`) | ✅ identical | n/a | ✅ identical | ✅ identical (sorted output, `go/format`) |
 | Output size for the slice | 10,286 lines | — | 6,509 lines | 1,559 lines, 134 types |
 
-### Recommendation: **C2 — types only, from a small stdlib generator in the repo, with hand-written calls**
+### Decision: **C2** (approved by the owner 2026-10-23) — types only, from a small stdlib generator in the repo, with hand-written calls
 
 - B is out: it can't parse the spec, and once patched it drops the very operations Phase 1 needs.
 - A and C1 work, but the runtime's module graph puts about 80 unrelated modules (web frameworks, a JIT JSON library) under "every dependency must be justified". Their default nullable handling silently loses explicit `null`. Their union decoding rejects unknown kinds, which CLAUDE.md forbids (unknown kinds must round-trip).

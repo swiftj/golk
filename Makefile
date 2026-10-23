@@ -19,8 +19,11 @@ tools: ## Install pinned dev tools into GOBIN
 	$(GO) install golang.org/x/vuln/cmd/govulncheck@$(GOVULNCHECK_VERSION)
 	@command -v golangci-lint >/dev/null || { echo "golangci-lint v2 not found (brew install golangci-lint)"; exit 1; }
 
+# Operation tags whose schemas are generated. Extend this list phase by phase.
+GEN_TAGS    := Projects,Resources
+
 generate: ## Regenerate lk/internal/gen from docs/legendkeeper/openapi.json
-	@echo "generate: code generator not chosen yet (Phase 1, step 4)"; exit 1
+	$(GO) run ./internal/cmd/lkgen -spec docs/legendkeeper/openapi.json -tags $(GEN_TAGS) -out lk/internal/gen/types.go
 
 lint: ## gofmt, go vet, staticcheck, golangci-lint, govulncheck
 	@out="$$(gofmt -l $$(git ls-files -co --exclude-standard '*.go'))"; \
