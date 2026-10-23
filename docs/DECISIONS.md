@@ -43,3 +43,42 @@ approved.
 | A-13 | `parentId` sentinels | `lk.ParentRoot`, `lk.ParentTemplates`. |
 | A-14 | Per-call project id | Wins; does not touch the cache. |
 | A-15 | Header case | `Idempotency-Key` (canonical); no behavior impact. |
+
+## D-005 — Code generation approach (PROPOSED, awaiting owner decision)
+
+- **Date:** 2026-10-23
+- **Context:** the spec is OpenAPI **3.1.0**, with 42 `type: [T, "null"]` nullables, 34 `anyOf`, 6 `oneOf` (4 with a `kind` discriminator and an explicit mapping: `Block`/`VersionedBlock` ×28, `PropertyBlock`/`VersionedProperty` ×9), numeric `exclusiveMinimum`/`exclusiveMaximum` (3.1 form) and `allOf` (`ProjectDetail`, `ResourceWithAncestors`). Each option was prototyped in a scratch module against the **Resources + Projects** operations (12 ops) of the unmodified spec, sha256 `99109f62…3942b`.
+
+### Results
+
+| Criterion | A. oapi-codegen v2.8.0 (types + client) | B. ogen v1.24.0 | C1. oapi-codegen types only | C2. stdlib generator in repo (`internal/cmd/lkgen`) |
+|---|---|---|---|---|
+| Parses the spec as published | ✅ | ❌ fails on 3.1 numeric `exclusiveMinimum: 0` (`cannot unmarshal !!int into bool`) | ✅ | ✅ |
+| 3.1 nullables | ✅ only with `nullable-type: true` (`nullable.Nullable[T]`). Default output is `*string` + `omitempty`, which **cannot send `{"parentId":null}`** | n/a | ✅ same as A | ✅ `Nullable[T]` from our own package; exact-JSON test passes (`{"parentId":null}`, `{"name":"x"}`, `{"tags":[]}`, `{}`) |
+| `anyOf` | `json.RawMessage` wrapper + `As*/From*` helpers | ❌ "complex anyOf not implemented". With `ignore_not_implemented` it **skips 64 of 89 operations**, including `createResource`, `getResource`, `updateResource`, `moveResource`, `restoreResource`, `createManyResources` and every Blocks op | same as A | `json.RawMessage` for now; `Run`/blocks are hand-written in `lk/blocks` (Phase 2) per CLAUDE.md |
+| `kind` discriminator | `union json.RawMessage` + `ValueByDiscriminator()` returning `interface{}`; unknown kind → error | n/a | same as A | Raw-preserving union (`Kind` + `Raw`), so **unknown kinds are kept, not rejected**; variant table emitted |
+| `allOf` | ✅ merged | n/a | ✅ | ⚠ prototype emits `json.RawMessage`; flattening is ~40 lines, needed for `ProjectDetail` |
+| `CGO_ENABLED=0` build | ✅ | ✅ (after spec patch) | ✅ | ✅ |
+| Our transport owns retry/idempotency/rate limit | Possible: client takes an `HttpRequestDoer`, but it builds requests itself (its own `Idempotency-Key` param, its own URL building), so ownership is split | Client bakes in OpenTelemetry and its own error decoding | ✅ calls are hand-written | ✅ calls are hand-written |
+| Dependency footprint (`go mod graph` lines) | 88: `oapi-codegen/runtime` drags gin, echo, iris, bytedance/sonic, logrus, testify… into the module graph | 174, incl. `go.opentelemetry.io/otel/*`, `go-faster/*` | 88 (same runtime, needed for union helpers) | **0** (stdlib only) |
+| Stable regeneration (generate twice, `cmp`) | ✅ identical | n/a | ✅ identical | ✅ identical (sorted output, `go/format`) |
+| Output size for the slice | 10,286 lines | — | 6,509 lines | 1,559 lines, 134 types |
+
+### Recommendation: **C2 — types only, from a small stdlib generator in the repo, with hand-written calls**
+
+- B is out: it can't parse the spec, and once patched it drops the very operations Phase 1 needs.
+- A and C1 work, but the runtime's module graph puts about 80 unrelated modules (web frameworks, a JIT JSON library) under "every dependency must be justified". Their default nullable handling silently loses explicit `null`. Their union decoding rejects unknown kinds, which CLAUDE.md forbids (unknown kinds must round-trip).
+- C2 adds zero dependencies, emits our own three-state types directly (so there's no translation layer for `Optional`/`Nullable`), keeps unknown union kinds, and is deterministic.
+- **Cost:** we own about 400 lines of generator. That's bounded because the generator only emits wire types; operations, retries and pagination stay hand-written.
+- **Known work before it is the real `make generate`:**
+  - `allOf` flattening
+  - integer enums
+  - doc comments on enum constants
+  - a golden test of generator output
+  - a CI check that `make generate` leaves no diff
+- **Layout:**
+  - `internal/cmd/lkgen` holds the generator.
+  - It writes `lk/internal/gen/types.go`.
+  - The three-state types live in a leaf package, `lk/internal/opt`, which both `gen` and `lk` import, so there's no cycle.
+  - `lk` re-exports them as generic type aliases (`type Optional[T any] = opt.Optional[T]`, Go ≥ 1.24), plus constructor funcs.
+  - Public `lk` types are hand-written where the shape matters (request structs) and type aliases of generated types elsewhere.
