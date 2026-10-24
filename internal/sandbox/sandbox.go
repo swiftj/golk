@@ -203,3 +203,22 @@ func Main(m interface{ Run() int }) int {
 	}
 	return code
 }
+
+// APIKey returns the guarded sandbox key, for code under test that builds
+// its own client (lk-mcp). Never log it.
+func APIKey(t testing.TB) string {
+	t.Helper()
+	Client(t)
+	return os.Getenv(envKey)
+}
+
+// ClientOptions are the options that point another lk client at the
+// sandbox project: its base URL, its project ID and the shared rate limiter.
+func ClientOptions(t testing.TB) []lk.Option {
+	t.Helper()
+	opts := []lk.Option{lk.WithRateLimiter(limiter), lk.WithProjectID(ProjectID(t))}
+	if u := os.Getenv(envBaseURL); u != "" {
+		opts = append(opts, lk.WithBaseURL(u))
+	}
+	return opts
+}
