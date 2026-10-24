@@ -60,7 +60,7 @@ func rtGet(path string, kv ...string) rtReq {
 }
 
 // rtStructuredJSON is a result's structured content as JSON.
-func rtStructuredJSON(t *testing.T, h *harness, r any) string {
+func rtStructuredJSON(t *testing.T, r any) string {
 	t.Helper()
 	data, err := json.Marshal(r)
 	if err != nil {
@@ -225,7 +225,7 @@ func TestReadTools_X_TOOL_01_X_OUT_01(t *testing.T) {
 			if err := json.Unmarshal([]byte(tt.out), &want); err != nil {
 				t.Fatal(err)
 			}
-			if got := rtStructuredJSON(t, h, r.StructuredContent); got != rtStructuredJSON(t, h, want) {
+			if got := rtStructuredJSON(t, r.StructuredContent); got != rtStructuredJSON(t, want) {
 				t.Errorf("structured\n%s\nwant\n%s", got, tt.out)
 			}
 		})
@@ -244,7 +244,7 @@ func TestGetResource_X_OUT_01_ContentOnlyInText(t *testing.T) {
 		if !strings.Contains(text(r), content) {
 			t.Errorf("text lacks %q", content)
 		}
-		if strings.Contains(rtStructuredJSON(t, h, r.StructuredContent), content) {
+		if strings.Contains(rtStructuredJSON(t, r.StructuredContent), content) {
 			t.Errorf("structured output holds content %q", content)
 		}
 	}
@@ -254,7 +254,7 @@ func TestSearch_X_OUT_01_HighlightsNotInStructured(t *testing.T) {
 	h := newHarness(t)
 	h.lk.Enqueue(testutil.JSON(http.StatusOK, rtSearchJSON))
 	r := h.call("search", map[string]any{"query": "candy"})
-	if strings.Contains(rtStructuredJSON(t, h, r.StructuredContent), "rules the") {
+	if strings.Contains(rtStructuredJSON(t, r.StructuredContent), "rules the") {
 		t.Error("structured output holds a page passage")
 	}
 }

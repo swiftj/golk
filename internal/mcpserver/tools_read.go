@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 	"unicode/utf8"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -91,6 +92,7 @@ func (s *server) addListProjects(ms *mcp.Server) {
 		Description: "List the configured LegendKeeper projects (pass a name as project to other tools), and whether writes are enabled and guarded.",
 		Annotations: readOnly("List projects"),
 	}, func(ctx context.Context, _ *mcp.CallToolRequest, _ struct{}) (*mcp.CallToolResult, ListProjectsOut, error) {
+		start := time.Now()
 		out := ListProjectsOut{Projects: []ProjectInfo{}, ReadOnly: s.cfg.ReadOnly, Guard: s.guardState()}
 		var b strings.Builder
 		for _, name := range s.cfg.Projects() {
@@ -113,7 +115,7 @@ func (s *server) addListProjects(ms *mcp.Server) {
 			b.WriteString("No project is configured: set LEGENDKEEPER_API_KEY in the server's environment.\n")
 		}
 		fmt.Fprintf(&b, "read-only: %t; spoiler guard: %s", out.ReadOnly, out.Guard)
-		s.log.InfoContext(ctx, "tool call", "tool", "list_projects", "ok", true)
+		s.log.InfoContext(ctx, "tool call", "tool", "list_projects", "project", "all", "duration", time.Since(start), "ok", true)
 		return &mcp.CallToolResult{Content: []mcp.Content{&mcp.TextContent{Text: b.String()}}}, out, nil
 	})
 }
