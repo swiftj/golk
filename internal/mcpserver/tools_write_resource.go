@@ -54,7 +54,7 @@ func (s *server) guardReady() error {
 }
 
 // visibleResource is everything players would see of r if it were
-// visible: its name, aliases and tags, the names and blocks of its
+// visible: its name, aliases and tags, its image and banner URLs, the names and blocks of its
 // documents that are not hidden, and its sidebar properties (hidden ones
 // carry "isHidden":true, which the guard skips). Hidden documents are left
 // out: players can't see them whatever the resource's flag. Only page and
@@ -85,10 +85,14 @@ func visibleResource(ctx context.Context, c *lk.Client, r *lk.Resource) (map[str
 	if err != nil {
 		return nil, err
 	}
-	return map[string]any{
-		"name": r.Name, "aliases": r.Aliases, "tags": r.Tags,
+	v := map[string]any{
+		"name": r.Name, "aliases": r.Aliases, "tags": r.Tags, "imageUrl": r.ImageURL,
 		"documents": docs, "properties": props.Items,
-	}, nil
+	}
+	if r.Banner != nil {
+		v["bannerUrl"] = r.Banner.URL
+	}
+	return v, nil
 }
 
 // uncheckable refuses to show document d of r when the guard can't read

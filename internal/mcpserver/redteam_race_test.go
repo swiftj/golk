@@ -54,6 +54,24 @@ func TestRedteam_X_GUARD_05_UncheckableDocumentsStayHidden(t *testing.T) {
 	}
 }
 
+// Unhiding a resource checks its image and banner URLs too.
+func TestRedteam_X_GUARD_05_UnhideChecksImageAndBanner(t *testing.T) {
+	for name, field := range map[string]string{
+		"image":  `"imageUrl":"https://example.com/zorblax.png"`,
+		"banner": `"banner":{"enabled":true,"url":"https://example.com/zorblax.png","yPosition":0.5}`,
+	} {
+		t.Run(name, func(t *testing.T) {
+			res := `{"id":"r1","name":"Ooo","isHidden":true,` + field + `,"documents":[{"id":"d1","name":"Main","type":"page","rank":"a","isHidden":false}]}`
+			h := rgHarness(t, "Zorblax")
+			h.lk.Enqueue(wtOK(res), wtOK(rgBlocks), wtOK(wtNoProps))
+			wtMustFail(t, h, "update_resource", map[string]any{"id": "r1", "is_hidden": false}, "spoiler guard")
+			if len(h.writes()) != 0 {
+				t.Errorf("writes %+v", h.writes())
+			}
+		})
+	}
+}
+
 // Two concurrent write tools must not interleave a guard decision with
 // the other's write: update_resource unhides r1 after checking its old
 // content while edit_page, which read r1 as hidden, writes a term to it.
