@@ -76,7 +76,7 @@ func TestRedteam_X_GUARD_03_EditPageFieldsAreChecked(t *testing.T) {
 		"heading":                    "# The Crimson Accord\n",
 		"line break":                 "The Crimson\nAccord\n",
 		"case":                       "ZORBLAX\n",
-		"zero width":                 "Zor​blax\n",
+		"zero width":                 "Zor\u200bblax\n",
 		"lk-raw run":                 "```lk-raw\n{\"kind\":\"paragraph\",\"content\":[{\"text\":\"Zorblax\"}]}\n```\n",
 		"lk-raw secret-kind run":     "```lk-raw\n{\"kind\":\"paragraph\",\"content\":[{\"text\":\"Zorblax\",\"kind\":\"secret\"}]}\n```\n",
 		"lk-raw hidden-property run": "```lk-raw\n{\"kind\":\"paragraph\",\"content\":[{\"text\":\"Zorblax\",\"kind\":\"textField\",\"isHidden\":true}]}\n```\n",
