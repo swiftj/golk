@@ -2,4 +2,7 @@ module github.com/swiftj/golk
 
 go 1.27
 
-require golang.org/x/time v0.16.0
+require (
+	github.com/yuin/goldmark v1.8.6
+	golang.org/x/time v0.16.0
+)
