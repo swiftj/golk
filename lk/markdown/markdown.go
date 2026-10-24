@@ -30,15 +30,18 @@ type FromOptions struct {
 }
 
 // Report says what FromMarkdown did relative to Base, so a caller can show
-// it before writing.
+// it before writing. Every list is in document order and nil when empty.
 type Report struct {
-	// Kept lists the ids of base blocks restored verbatim.
+	// Kept lists the ids of base blocks restored verbatim: the top of each
+	// verbatim subtree, not its descendants.
 	Kept []string
-	// Changed lists the ids of base blocks that were edited in place.
+	// Changed lists the ids of base blocks that were edited in place,
+	// including containers whose descendants changed.
 	Changed []string
-	// Added lists the paths (as blocks.Walk writes them) of new blocks.
+	// Added lists the paths in the result (as blocks.Walk writes them) of
+	// the top of each new subtree.
 	Added []string
-	// Removed lists the base blocks the edit dropped.
+	// Removed lists the top of each base subtree the edit dropped.
 	Removed []RemovedBlock
 }
 
@@ -59,7 +62,9 @@ func ToMarkdown(page blocks.List, opts ToOptions) (string, error) {
 }
 
 // FromMarkdown parses LK Markdown into a page. On error it returns no
-// blocks; a *SyntaxError reports where the input is wrong.
+// blocks: a *SyntaxError reports where the input is wrong, an *IDError an
+// id it rejects, and a *RemoveError (errors.Is ErrRemovesOpaque) an edit
+// that would drop unsupported or lk-raw content of Base.
 func FromMarkdown(src string, opts FromOptions) (blocks.List, *Report, error) {
 	parsed, err := parse(src)
 	if err != nil {
