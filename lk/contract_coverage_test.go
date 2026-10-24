@@ -21,11 +21,11 @@ var (
 	idInCase   = regexp.MustCompile(`name:\s*"([CMX]-[A-Z][A-Z0-9]*-\d+)`)
 )
 
-// Every in-scope contract item (phase column starting with "1", "2a" or "2b") must be named
+// Every in-scope contract item (phase column starting with "1", "2a", "2b" or "3") must be named
 // by at least one test in the module (docs/SDK_CONTRACT.md, Rules).
 func TestContractCoverage(t *testing.T) {
 	inScope := contractItems(t)
-	if len(inScope) < 190 {
+	if len(inScope) < 215 {
 		t.Fatalf("parsed only %d in-scope items; is the table format still recognised?", len(inScope))
 	}
 	covered := map[string]bool{}
@@ -79,7 +79,7 @@ func contractItems(t *testing.T) []string {
 			continue
 		}
 		phase := strings.TrimSpace(m[2])
-		if (strings.HasPrefix(phase, "1") || strings.HasPrefix(phase, "2a") || strings.HasPrefix(phase, "2b")) && !slices.Contains(ids, m[1]) {
+		if (strings.HasPrefix(phase, "1") || strings.HasPrefix(phase, "2a") || strings.HasPrefix(phase, "2b") || strings.HasPrefix(phase, "3")) && !slices.Contains(ids, m[1]) {
 			ids = append(ids, m[1])
 		}
 	}

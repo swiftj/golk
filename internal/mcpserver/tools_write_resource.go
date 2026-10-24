@@ -352,12 +352,12 @@ type RestoreResourceOut struct {
 
 // restoreResource restores a deleted resource. LegendKeeper answers 404
 // for a deleted resource, so its content can't be checked before the
-// restore. Instead: the guard must be configured (or explicitly off)
-// before anything is sent; after the restore the resource and its live
-// descendants (the ones restored with it among them) are re-read, and
-// every visible one the guard flags is hidden at once, and the call fails
-// saying so. The content is visible to players for the moments between
-// the restore and the hide.
+// restore. Instead the guard must be configured (or explicitly off) before
+// anything is sent, and after the restore every visible resource of the
+// restored tree is hidden first, then checked, and shown again only when
+// the guard passes it. Restored content is visible to players only between
+// the restore and the hide of each resource (one request for the restored
+// resource itself), never while the guard reads it.
 func (s *server) restoreResource(ctx context.Context, c *lk.Client, in RestoreResourceIn) (toolResult[RestoreResourceOut], error) {
 	var zero toolResult[RestoreResourceOut]
 	out := RestoreResourceOut{ResourceID: in.ID, DryRun: in.DryRun}
@@ -366,7 +366,7 @@ func (s *server) restoreResource(ctx context.Context, c *lk.Client, in RestoreRe
 	}
 	if in.DryRun {
 		return toolResult[RestoreResourceOut]{out: out, text: fmt.Sprintf("Dry run: would restore resource %s and the descendants deleted with it. "+
-			"A deleted resource can't be read, so its content is checked right after the restore: anything visible to players that the spoiler guard flags is hidden at once. Nothing was written.", in.ID)}, nil
+			"A deleted resource can't be read, so after the restore every visible resource of the restored tree is hidden at once, checked by the spoiler guard, and shown again only if it passes. Nothing was written.", in.ID)}, nil
 	}
 	r, err := c.Resources.Restore(ctx, in.ID)
 	if err != nil {
@@ -376,43 +376,54 @@ func (s *server) restoreResource(ctx context.Context, c *lk.Client, in RestoreRe
 	if s.cfg.GuardOff {
 		return toolResult[RestoreResourceOut]{out: out, text: fmt.Sprintf("Restored resource %q (%s), %s.", r.Name, r.ID, hiddenWord(r.IsHidden))}, nil
 	}
-	flagged, checked, err := s.scanRestored(ctx, c, r.ID)
-	out.Checked = checked
-	var hid []string
-	for _, f := range flagged {
-		if _, herr := c.Resources.Update(ctx, f.id, lk.ResourceUpdate{IsHidden: lk.Some(true)}); herr != nil {
-			return zero, fmt.Errorf("restored resource %s, but the spoiler guard flagged %q (%s) and hiding it FAILED, so it may be visible to players now: %w. Hint: hide it with update_resource is_hidden=true at once",
-				r.ID, f.name, f.id, errors.Join(explain(herr), f.err))
+	visible, err := s.hideRestored(ctx, c, r)
+	if err != nil {
+		return zero, err
+	}
+	var held []string
+	for _, v := range visible {
+		out.Checked++
+		reason := s.recheck(ctx, c, v.id)
+		if reason == nil {
+			if _, uerr := c.Resources.Update(ctx, v.id, lk.ResourceUpdate{IsHidden: lk.Some(false)}); uerr == nil {
+				continue
+			} else {
+				reason = fmt.Errorf("showing it again failed: %w", explain(uerr))
+			}
 		}
-		hid = append(hid, fmt.Sprintf("%q (%s): %v", f.name, f.id, f.err))
-		if f.id == r.ID {
+		if v.id == r.ID {
 			out.Hidden = true
 		}
+		held = append(held, fmt.Sprintf("%q (%s): %v", v.name, v.id, reason))
 	}
-	if len(hid) > 0 {
-		return zero, fmt.Errorf("restored resource %q (%s), but the spoiler guard flagged content, so these were hidden from players at once:\n- %s\nHint: fix the content (or move it into :::secret blocks), then show it with update_resource is_hidden=false",
-			r.Name, r.ID, strings.Join(hid, "\n- "))
+	if len(held) > 0 {
+		return zero, fmt.Errorf("restored resource %q (%s), but these stay hidden from players:\n- %s\nHint: fix the content (or move it into :::secret blocks), then show it with update_resource is_hidden=false",
+			r.Name, r.ID, strings.Join(held, "\n- "))
 	}
-	if err != nil {
-		return zero, fmt.Errorf("restored resource %q (%s), but its content could not be fully checked: %w. Hint: read it and hide anything that must not be shown", r.Name, r.ID, explain(err))
-	}
-	return toolResult[RestoreResourceOut]{out: out, text: fmt.Sprintf("Restored resource %q (%s), %s; the spoiler guard checked %d resource(s) of the restored tree.",
-		r.Name, r.ID, hiddenWord(r.IsHidden), checked)}, nil
+	return toolResult[RestoreResourceOut]{out: out, text: fmt.Sprintf("Restored resource %q (%s), %s; the spoiler guard checked %d visible resource(s) of the restored tree, hidden while it did.",
+		r.Name, r.ID, hiddenWord(out.Hidden), out.Checked)}, nil
 }
 
-type flaggedResource struct {
-	id, name string
-	err      error
-}
-
-// scanRestored checks the resource id and its live descendants, and
-// returns the visible ones the guard refuses (a guard that can't run
-// counts as a refusal), and how many were checked. Hidden resources are
-// skipped, but not their children (hidden is not inherited).
-func (s *server) scanRestored(ctx context.Context, c *lk.Client, id string) ([]flaggedResource, int, error) {
-	var flagged []flaggedResource
-	checked := 0
-	queue := []string{id}
+// hideRestored hides the restored resource r and its live descendants that
+// are visible, and returns them. Hidden ones are left alone, but not their
+// children (hidden is not inherited). On an error the resources found so
+// far are hidden, and the error says the rest may be visible.
+func (s *server) hideRestored(ctx context.Context, c *lk.Client, r *lk.Resource) ([]flaggedResource, error) {
+	var visible []flaggedResource
+	hide := func(id, name string) error {
+		if _, err := c.Resources.Update(ctx, id, lk.ResourceUpdate{IsHidden: lk.Some(true)}); err != nil {
+			return fmt.Errorf("restored resource %q (%s), but hiding %q (%s) for the spoiler guard check FAILED, so it may be visible to players now: %w. Hint: hide it with update_resource is_hidden=true at once",
+				r.Name, r.ID, name, id, explain(err))
+		}
+		visible = append(visible, flaggedResource{id: id, name: name})
+		return nil
+	}
+	if !r.IsHidden {
+		if err := hide(r.ID, r.Name); err != nil {
+			return nil, err
+		}
+	}
+	queue := []string{r.ID}
 	seen := map[string]bool{}
 	for len(queue) > 0 {
 		cur := queue[0]
@@ -421,26 +432,36 @@ func (s *server) scanRestored(ctx context.Context, c *lk.Client, id string) ([]f
 			continue
 		}
 		seen[cur] = true
-		r, err := c.Resources.Get(ctx, cur)
-		if err != nil {
-			return flagged, checked, err
-		}
-		if !r.IsHidden {
-			v, err := visibleResource(ctx, c, r)
-			if err != nil {
-				return flagged, checked, err
-			}
-			checked++
-			if err := s.check(v); err != nil {
-				flagged = append(flagged, flaggedResource{id: r.ID, name: r.Name, err: err})
-			}
-		}
 		for kid, err := range c.Resources.All(ctx, lk.ResourceListParams{ParentID: cur, Limit: 100}) {
 			if err != nil {
-				return flagged, checked, err
+				return nil, fmt.Errorf("restored resource %q (%s), but listing its descendants failed, so some may be visible to players and unchecked: %w. Hint: list them and hide anything that must not be shown",
+					r.Name, r.ID, explain(err))
+			}
+			if !kid.IsHidden {
+				if err := hide(kid.ID, kid.Name); err != nil {
+					return nil, err
+				}
 			}
 			queue = append(queue, kid.ID)
 		}
 	}
-	return flagged, checked, nil
+	return visible, nil
+}
+
+// recheck runs the guard over resource id as players would see it once
+// shown again. It returns why the resource must stay hidden, or nil.
+func (s *server) recheck(ctx context.Context, c *lk.Client, id string) error {
+	r, err := c.Resources.Get(ctx, id)
+	if err != nil {
+		return fmt.Errorf("could not read it to check: %w", explain(err))
+	}
+	v, err := visibleResource(ctx, c, r)
+	if err != nil {
+		return fmt.Errorf("could not read its content to check: %w", explain(err))
+	}
+	return s.check(v)
+}
+
+type flaggedResource struct {
+	id, name string
 }

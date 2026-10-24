@@ -235,37 +235,51 @@ func TestDeleteResource_X_TOOL_03_Cascade(t *testing.T) {
 
 func TestRestoreResource_X_TOOL_08_CleanRestore(t *testing.T) {
 	h := newHarness(t)
-	h.lk.Enqueue(wtOK(wtRes), wtOK(wtRes), wtOK(blocksJSON), wtOK(wtNoProps), wtOK(wtNoKids))
+	h.lk.Enqueue(wtOK(wtRes), // restore
+		wtOK(wtRes),                                    // hide r1
+		wtOK(wtNoKids),                                 // r1 has no children
+		wtOK(wtRes), wtOK(blocksJSON), wtOK(wtNoProps), // recheck r1
+		wtOK(wtRes)) // show r1 again
 	got := wtMustOK(t, h, "restore_resource", map[string]any{"id": "r1"})
-	if !strings.Contains(got, `Restored resource "Ooo" (r1)`) || !strings.Contains(got, "checked 1 resource(s)") {
+	if !strings.Contains(got, `Restored resource "Ooo" (r1)`) || !strings.Contains(got, "checked 1 visible resource(s)") {
 		t.Errorf("text %q", got)
 	}
 	w := h.writes()
-	if len(w) != 1 {
+	if len(w) != 3 {
 		t.Fatalf("writes %+v", w)
 	}
 	wtReq(t, w[0], "POST", wtPath+"/r1/restore", "", "")
+	wtReq(t, w[1], "PATCH", wtPath+"/r1", "", `{"isHidden":true}`)
+	wtReq(t, w[2], "PATCH", wtPath+"/r1", "", `{"isHidden":false}`)
 }
 
-func TestRestoreResource_X_GUARD_05_ViolationHidesAtOnce(t *testing.T) {
+// Every visible resource of the restored tree is hidden before the guard
+// reads it, and a flagged one stays hidden.
+func TestRestoreResource_X_GUARD_05_HiddenWhileChecked(t *testing.T) {
 	h := newHarness(t)
 	h.guard.terms = []string{"Zorblax"}
 	kids := `{"data":[{"id":"k1","name":"Kid","isHidden":false}],"hasMore":false,"nextCursor":null}`
-	kid := `{"id":"k1","name":"Zorblax Kid","isHidden":false,"parentId":"r1","documents":[]}`
+	kid := `{"id":"k1","name":"Zorblax Kid","isHidden":true,"parentId":"r1","documents":[]}`
 	h.lk.Enqueue(wtOK(wtRes),
-		wtOK(wtRes), wtOK(blocksJSON), wtOK(wtNoProps), wtOK(kids), // r1: clean
-		wtOK(kid), wtOK(wtNoProps), wtOK(wtNoKids), // k1: flagged
-		wtOK(kid)) // hide k1
-	got := wtMustFail(t, h, "restore_resource", map[string]any{"id": "r1"}, "hidden from players at once")
-	if !strings.Contains(got, `"Zorblax Kid" (k1)`) {
+		wtOK(wtRes), wtOK(kids), wtOK(kid), wtOK(wtNoKids), // hide r1, list, hide k1, list k1
+		wtOK(wtRes), wtOK(blocksJSON), wtOK(wtNoProps), wtOK(wtRes), // r1 clean: shown again
+		wtOK(kid), wtOK(wtNoProps)) // k1 flagged: stays hidden
+	got := wtMustFail(t, h, "restore_resource", map[string]any{"id": "r1"}, "stay hidden from players")
+	if !strings.Contains(got, `"Kid" (k1)`) || strings.Contains(got, `(r1):`) {
 		t.Errorf("text %q", got)
 	}
 	w := h.writes()
-	if len(w) != 2 {
+	if len(w) != 4 {
 		t.Fatalf("writes %+v", w)
 	}
 	wtReq(t, w[0], "POST", wtPath+"/r1/restore", "", "")
-	wtReq(t, w[1], "PATCH", wtPath+"/k1", "", `{"isHidden":true}`)
+	wtReq(t, w[1], "PATCH", wtPath+"/r1", "", `{"isHidden":true}`)
+	wtReq(t, w[2], "PATCH", wtPath+"/k1", "", `{"isHidden":true}`)
+	wtReq(t, w[3], "PATCH", wtPath+"/r1", "", `{"isHidden":false}`)
+	// The guard read nothing before both were hidden.
+	if n := len(h.lk.Requests()); n != 11 {
+		t.Errorf("%d requests", n)
+	}
 }
 
 func TestRestoreResource_X_TOOL_04_DryRunAndNoGuard(t *testing.T) {
