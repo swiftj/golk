@@ -83,7 +83,7 @@ Spec: OpenAPI 3.1.0, `info.version` 3.0.0, sha256 in [`FETCHED.md`](legendkeeper
 | C-ERR-09 | Any non-JSON or malformed error body still yields `*APIError` with the HTTP status, never a panic or JSON error. | C-ERR-08 generalised; CLAUDE.md §Library hygiene | 1 |
 | C-ERR-10 | `*ConnectionError` means no response arrived (DNS, TCP, TLS, timeout, cancellation). It has no `RequestID`, is not an `*APIError`, and `Unwrap()` returns the cause. | G§Error classes | 1 |
 | C-ERR-11 | `RetryAfter` on a 429 (and any response with `Retry-After`) is parsed from the header. | G§Error classes (`retryAfterMs`) | 1 |
-| C-ERR-12 ⚠ | On 412, `CurrentVersion` is parsed from the message when it can be; otherwise empty. | G§Error classes; A-05 | 2 |
+| C-ERR-12 ⚠ | On 412, `CurrentVersion` is parsed from the message when it can be; otherwise empty. | G§Error classes; A-05 | 2a |
 | C-ERR-13 | A request body with an unknown field is rejected by the server with `VALIDATION_ERROR`; the SDK must therefore never send a field the caller did not set (see C-WIRE-01). | G§Errors Details | 1 |
 
 ### Error code catalogue
@@ -176,8 +176,8 @@ The spec's `ErrorCode` enum and the guide's table list the same 29 codes (verifi
 | C-VER-02 | 412 `VERSION_MISMATCH` returns `*APIError` matching `ErrVersionMismatch`; not retried. | G§Versioned writes; G§Retries | 1 |
 | C-VER-03 | Versions are opaque strings: the SDK never parses, orders or modifies them; equality only. | G§Versioned writes | 1 |
 | C-VER-04 | When a versioned response body lacks `version`, the client copies it from the `ETag` header. ⚠ A-06 | G§Versioned writes Details | 1 (mechanism) |
-| C-VER-05 | A write that returns no body returns no version. | G§Versioned writes Details | 2 |
-| C-VER-06 | `IfMatch` is accepted only by operations the guide lists as versioned (`documents.replaceBlocks`, every `blocks` write, sidebar property row writes, every `boards` write, calendars). | G§Versioned writes | 2+ |
+| C-VER-05 | A write that returns no body returns no version. | G§Versioned writes Details | 2a |
+| C-VER-06 | `IfMatch` is accepted only by operations the guide lists as versioned (`documents.replaceBlocks`, every `blocks` write, sidebar property row writes, every `boards` write, calendars). | G§Versioned writes | 2a (documents, blocks, properties); 4–5 (boards, calendars) |
 
 ## PAGE — pagination
 
@@ -187,7 +187,7 @@ The spec's `ErrorCode` enum and the guide's table list the same 29 codes (verifi
 | C-PAGE-02 | Cursors are opaque: the SDK sends back exactly the `nextCursor` it received, never builds or parses one. | G§Pagination | 1 |
 | C-PAGE-03 | Every list is exposed as an iterator (`iter.Seq2[T, error]`) that yields every item from the current page to the end of the collection, fetching as it goes. | G§Pagination; CLAUDE.md §SDK contract 8 | 1 |
 | C-PAGE-04 | A page exposes its items, `HasMore` and `NextCursor`, plus a manual `Next(ctx)` that fetches the next page and reports done after the last. | G§Pagination | 1 |
-| C-PAGE-05 | Non-paged lists return the whole collection in one page with `HasMore` false and no cursor, behind the same iterator shape. | G§Pagination | 2 |
+| C-PAGE-05 | Non-paged lists return the whole collection in one page with `HasMore` false and no cursor, behind the same iterator shape. | G§Pagination | 2a |
 | C-PAGE-06 | Breaking out of the iterator early sends no further requests. An error ends iteration after yielding `(zero, err)` once. | CLAUDE.md §Context | 1 |
 | C-PAGE-07 | Every page fetch uses the same filters (`parentId`, `limit`) as the first page. | G§Pagination | 1 |
 | C-PAGE-08 ⚠ | `hasMore` and `nextCursor` are both optional in the spec. Iteration continues only when `nextCursor` is a non-empty string. `hasMore: true` with no cursor returns `ErrPaginationInconsistent` rather than silently truncating. | S `ResourceList`; A-08 | 1 |
@@ -236,10 +236,129 @@ The spec's `ErrorCode` enum and the guide's table list the same 29 codes (verifi
 | ID | Requirement | Source | Phase |
 |---|---|---|---|
 | C-CONTENT-01 | Client-supplied resource/lane/event/feature ids are cuid2: a lowercase letter followed by 7 or 23 lowercase letters or digits. `lk.NewID()` generates a valid 24-char id. The server remains the authority (no client-side rejection). ⚠ A-10 | S§Identifiers; G§Stable ids | 1 (helper) |
-| C-CONTENT-02 | A new resource has one `blank` document named `Main`; the first typed write converts it; `blank` never fails with `KIND_MISMATCH`. | G§Make a first call; G§Error codes Details | 2 |
-| C-CONTENT-03 | Image fields accept only the project's own asset URLs; `data:`/`blob:` URIs are rejected in `url`/`src`/`href`/`*Url`/`*Src` fields. | G§Image URLs | 2 |
-| C-CONTENT-04 | `unsupported` blocks keep their `id` and are echoed back on full-page replaces; unknown kinds decode to a raw block preserving JSON. | G§Unsupported blocks; CLAUDE.md §Block model | 2 |
+| C-CONTENT-02 | A new resource has one `blank` document named `Main`; the first typed write converts it; `blank` never fails with `KIND_MISMATCH`. | G§Make a first call; G§Error codes Details | 2a |
+| C-CONTENT-03 | Image fields accept only the project's own asset URLs; `data:`/`blob:` URIs are rejected in `url`/`src`/`href`/`*Url`/`*Src` fields. | G§Image URLs | 2a |
+| C-CONTENT-04 | `unsupported` blocks keep their `id` and are echoed back on full-page replaces; unknown kinds decode to a raw block preserving JSON. | G§Unsupported blocks; CLAUDE.md §Block model | 2a |
 | C-CONTENT-05 | Siblings sort by `rank` compared as plain byte strings (no locale collation). | G§Stable ids and tree order; S§Resource order | 1 (doc + helper) |
+
+## CORE2 — core additions for Phase 2a
+
+| ID | Requirement | Source | Phase |
+|---|---|---|---|
+| C-CORE2-01 | Results of versioned operations expose `Version`. That covers `documents.getBlocks`, `blocks.get` and every write that takes `IfMatch`. When the body has no `version`, it is copied from `ETag` (C-VER-04). | G§Versioned writes | 2a |
+| C-CORE2-02 | `documents.assignBlockIds` returns a `Version` but is not versioned. It takes no `IfMatch`, so passing one is a misuse error. | S `assignBlockIds` (no `if-match` parameter); G§Block operations | 2a |
+| C-CORE2-03 | Single-page lists that carry a version (`RowList`, `BlockPropertyList`) expose `Items` and `Version`. | S `RowList`, `BlockPropertyList` | 2a |
+| C-CORE2-04 ⚠ | A JSON request body over the host limit fails before sending, with an error matching `ErrPayloadTooLarge` (C-ERR-15). No request is made and no rate-limit token is spent. | G§Error codes (`PAYLOAD_TOO_LARGE`); A-03, A-30 | 2a |
+| C-CORE2-05 | `CaptureResponse(&meta)` fills `ResponseMeta{Status, RequestID, ETag, Header}` from the final attempt's response, on success and on `*APIError`. It is left empty on `*ConnectionError`. | Phase 1 report; CLAUDE.md §MCP Tool output (request id) | 2a |
+| C-CORE2-06 | `IfMatch` is accepted by exactly the operations listed in C-VER-06 that are in scope (documents.replaceBlocks, every `blocks` write including infobox properties and their rows, and `properties` row writes). Every other operation rejects it before sending (`ErrIfMatchNotAllowed`). | G§Versioned writes; S `if-match` parameters | 2a |
+
+## DOC — documents
+
+All paths are under `/api/v3/projects/{projectId}/resources/{resourceId}/docs`.
+
+| ID | Requirement | Source | Phase |
+|---|---|---|---|
+| C-DOC-01 | `Documents.List`: `GET …/docs`. Returns a single page (C-PAGE-05) of summaries `{ID, Name, Type}`, where `Name` and `Type` may be absent (they're nullable in the spec). | G§documents; S `ListedDocument`, `listDocuments` | 2a |
+| C-DOC-02 | `Documents.Get`: `GET …/docs/{documentId}`. Returns `ID, Name, Type, Rank, IsHidden, IsFullWidth`, the timestamps (UTC) and `CalendarID`. `mapImage` and `sources` are kept raw until Phase 4. | G§documents; S `Document` | 2a |
+| C-DOC-03 | `Documents.Create`: `POST …/docs` with `name` and `type` required, and `isHidden`, `isFullWidth`, `calendarId` optional. It's a keyed POST. | G§documents | 2a |
+| C-DOC-04 | `Documents.Update`: `PATCH …/docs/{documentId}` sends only the fields set: `name`, `rank`, `isHidden`, `isFullWidth`, `calendarId`. `mapImage` and `sources` are Phase 4. | G§documents | 2a |
+| C-DOC-05 | `Documents.Delete` is `DELETE …/docs/{documentId}`. `Documents.Restore` is `POST …/docs/{documentId}/restore`. `ALREADY_DELETED`, `NOT_DELETED` and `PARENT_DELETED` surface as their sentinels. | G§documents; S `deleteDocument` | 2a |
+| C-DOC-06 | `Documents.GetBlocks`: `GET …/docs/{documentId}/blocks`. Returns `{ID, Version, Schema, Text, Blocks}`. An unexpected `schema` value is decoded verbatim, not rejected. A `blank` document reads as an empty page and stays `blank`. | G§The block model; G§documents Details | 2a |
+| C-DOC-07 | `Documents.ReplaceBlocks`: `PUT …/docs/{documentId}/blocks` with `{"blocks":[…]}`. It takes `IfMatch` and returns the whole tree with ids and the new version. | G§The block model; G§Versioned writes | 2a |
+| C-DOC-08 | `Documents.AssignBlockIDs`: `POST …/docs/{documentId}/block-ids` with no body. Returns `{Assigned, Version}`. | G§Block operations | 2a |
+| C-DOC-09 | `Resources.Create` accepts `Documents` (≤5, in order), each with `name`, `type`, optional flags and, for `page`, `Blocks`. The response carries no blocks. | G§Documents with content; S `ResourceDocumentParams` | 2a |
+
+## BLOCK — block model and single-block operations
+
+| ID | Requirement | Source | Phase |
+|---|---|---|---|
+| C-BLOCK-01 | `blocks.Block` is a sealed interface with one Go type per spec kind (all 28 in `Block.discriminator.mapping`). JSON is discriminated by `kind`. | G§TypeScript types; CLAUDE.md §Block model | 2a |
+| C-BLOCK-02 | A block of a kind the SDK does not know decodes to `blocks.Raw`, which keeps its JSON and re-encodes it unchanged. Decoding never fails because of an unknown kind. | CLAUDE.md §Block model | 2a |
+| C-BLOCK-03 | Encoding sends required fields always and optional fields only when set (`Optional`/`omitzero`). Each block type's JSON field set equals its spec schema; a test fails on drift. | C-WIRE-01; S `*Block` schemas | 2a |
+| C-BLOCK-04 ⚠ | A field the server sends on a known kind that the SDK does not model is kept and re-encoded on write, so a read → modify → write never drops it. Callers cannot set such fields. | CLAUDE.md §Block model ("dropping one deletes the user's content"); A-32 | 2a |
+| C-BLOCK-05 | Enum-typed fields (`Kind`, `Layout`, `Align`, `Tone`, `EmbedProvider`, `KeyValueDisplay`, `MeterMode`, `PropertyKind`) are string types with constants. An unknown value decodes and re-encodes verbatim. | G§Enums; A-28 | 2a |
+| C-BLOCK-06 | `Blocks.Get`: `GET …/docs/{documentId}/blocks/{blockId}`. Returns the block with its subtree and the document `Version`. | G§Block operations | 2a |
+| C-BLOCK-07 | `Blocks.Insert`: `POST …/docs/{documentId}/blocks` with `{block, after?|before?|parent?}`. Setting more than one anchor is a misuse error before sending. With none, the block is appended. It's a keyed POST, takes `IfMatch`, and returns the block and `Version`. | G§Block operations; S `BlockInsertRequest` | 2a |
+| C-BLOCK-08 | `Blocks.Update`: `PATCH …/blocks/{blockId}` with a `BlockPatch` holding only the fields set. The patch type has no `kind`, `id` or `children`. | G§Block operations; S `BlockPatch` | 2a |
+| C-BLOCK-09 | `Blocks.Replace`: `PUT …/blocks/{blockId}` with a whole block. | G§Block operations | 2a |
+| C-BLOCK-10 | `Blocks.Move`: `POST …/blocks/{blockId}/move` with exactly one of `after`, `before`, `parent`. Zero or several anchors are a misuse error before sending. It's a keyed POST. | G§Block operations; S `BlockMoveRequest` | 2a |
+| C-BLOCK-11 | `Blocks.Delete`: `DELETE …/blocks/{blockId}`. A 204 returns no version (C-VER-05). | G§Versioned writes Details | 2a |
+| C-BLOCK-12 | Every `Blocks` write accepts `IfMatch`. Every write except the deletes returns `Version`. | G§blocks ("Every write takes `ifMatch`") | 2a |
+| C-BLOCK-13 | Infobox properties are addressed by the infobox's block id: `ListProperties`, `GetProperty`, `CreateProperty`, `UpdateProperty`, `DeleteProperty` under `…/blocks/{blockId}/properties`. They take the same bodies as sidebar properties and return the document `Version`. | G§Infoboxes | 2a |
+
+## RUN — inline text
+
+| ID | Requirement | Source | Phase |
+|---|---|---|---|
+| C-RUN-01 | `blocks.Run` is a sealed interface: `Text` (text plus the boolean marks `bold, italic, underline, strike, code, sub, sup` and optional `link`, `color`, `highlight`), `Mention` (`resourceId`, optional `documentId`, `text`, read-only `name`) and `Break` (`{"break":true}`). | G§Runs and marks; S `Run` | 2a |
+| C-RUN-02 | Decoding picks the variant by key (`mention`, `break`, else `text`). A run matching none decodes to a raw run that is preserved. Encoding sends a mark only when it's true. | S `Run`; CLAUDE.md §Block model | 2a |
+| C-RUN-03 | Run helpers follow the guide: `Mono` clears every other mark and later marks skip a mono run; `Sub` clears `sup` and vice versa; `Color`/`Highlight` also apply to mentions and skip mono runs; helpers nest. | G§Runs and marks | 2a |
+| C-RUN-04 | A mention reads (in `PlainText`) as its `text` label, or else its resource's `name`. ⚠ A-24 governs whether `name` is sent back. | G§The block model | 2a |
+
+## BUILD — builders
+
+| ID | Requirement | Source | Phase |
+|---|---|---|---|
+| C-BUILD-01 | There is a builder for every builder in the guide's table. Builders return the same plain block structs callers can write by hand. | G§Builders | 2a |
+| C-BUILD-02 | A kind that requires children takes the first child as a required argument (`first, rest...`), so the empty form does not compile. | G§Builders | 2a |
+| C-BUILD-03 | A string passed where children are expected is a paragraph. List items take inline content (strings and runs) as a one-paragraph item, and `LI` takes nested lists after the first paragraph. | G§Builders | 2a |
+| C-BUILD-04 | `Styled` applies only to paragraph, heading, quote and layout column (enforced by the type system). `WithID` sets a block's id. `AsProperty` wraps a property-capable block with an envelope. | G§Builders | 2a |
+| C-BUILD-05 ⚠ | `Map` takes both ids. An empty map block (neither id) has its own constructor. | G§Maps in pages; A-25 | 2a |
+| C-BUILD-06 | Builders don't validate what the server validates (callout `icon`/`color` with a non-`custom` tone, column widths, colour format). The server's 400 is the authority. | G§Builders; G§Text styles | 2a |
+
+## READ — readers
+
+| ID | Requirement | Source | Phase |
+|---|---|---|---|
+| C-READ-01 ⚠ | `PlainText` of a block, a list of blocks or a document equals the server's `DocumentBlocks.text` for the same content. | G§Readers; A-17 | 2a |
+| C-READ-02 ⚠ | `Walk` visits every block in pre-order with its dotted path (`blocks[0].children[1]`), descends into `children` and infobox `rows`, and stops when the visitor returns false. The paths match the server's `errors[].path`. | G§Readers; G§Rejected writes; A-18 | 2a |
+| C-READ-03 | `FindBlock` returns the first block in `Walk` order with that id, or nil. | G§Readers | 2a |
+
+## PROP — sidebar properties
+
+All paths are under `/api/v3/projects/{projectId}/resources/{resourceId}/properties`.
+
+| ID | Requirement | Source | Phase |
+|---|---|---|---|
+| C-PROP-01 | `blocks.Property` is a sealed interface over the 8 property-capable kinds, plus `UnsupportedProperty` and a raw fallback. Each carries the envelope `ID, Rank, Title, IsTitleHidden, IsHidden`. | G§properties; S `PropertyBlock` | 2a |
+| C-PROP-02 | `Properties.List` returns a single page sorted by rank. `Properties.Get` returns one property. | G§properties | 2a |
+| C-PROP-03 | `Properties.Create`: `POST …/properties` with the property and an optional `before`/`after`. The create body never carries `rank` (sending it is a 400). Not versioned. | G§properties; G§Rejected writes | 2a |
+| C-PROP-04 | `Properties.Update`: `PATCH …/properties/{propertyId}` merges only the fields set (envelope and kind fields). `kind` and `id` cannot be patched. Not versioned. | G§properties; S `PropertyUpdateRequest` | 2a |
+| C-PROP-05 | `Properties.Delete` removes the property and its rows. | G§properties | 2a |
+| C-PROP-06 | An `unsupported` property round-trips unchanged, and only its envelope can be patched. | S `listProperties`, `updateProperty` | 2a |
+
+## ROW — key-value rows
+
+| ID | Requirement | Source | Phase |
+|---|---|---|---|
+| C-ROW-01 | A row is `{ID, Rank, Key, Content []Run, Text}`, where `ID` may be absent (it's nullable in the spec). Rows are ordered by rank. | G§Key-value rows; S `Row` | 2a |
+| C-ROW-02 | The three row containers (keyValue block, sidebar property, infobox property) use the same row types. Their list, create, update and delete paths are as in the guide's table. | G§Key-value rows | 2a |
+| C-ROW-03 | Create sends `key` plus `content` or `text`, and an optional `before`/`after`. It's a keyed POST. | G§Key-value rows; S `RowCreateRequest` | 2a |
+| C-ROW-04 | Update sends only the fields set. `Content` is `Nullable`, and `null` clears the value. `Text` is `Optional` and never sends `null`. | S `RowPatchRequest` | 2a |
+| C-ROW-05 | Every row write accepts `IfMatch`. Row lists return `Items` and `Version`. | G§Versioned writes; S `RowList` | 2a |
+
+## ASSET — assets and uploads
+
+All paths are under `/api/v3/projects/{projectId}/assets`.
+
+| ID | Requirement | Source | Phase |
+|---|---|---|---|
+| C-ASSET-01 | `Assets.List`: `GET …/assets`, server-paged, with optional `folderId`, `limit` and `cursor`. | G§assets; C-PAGE-01 | 2a |
+| C-ASSET-02 | `Assets.Get` returns `ID, Name, Type, FolderID, IsHidden, Description, URL, Width, Height, CreatedAt`. An unknown `Type` (the spec also has `AUDIO`) is kept verbatim. | G§assets; S `Asset` | 2a |
+| C-ASSET-03 | `Assets.CreateFolder`: `POST …/assets` with `name` and an optional `folderId`. | G§assets | 2a |
+| C-ASSET-04 | `Assets.Update`: `PATCH …/assets/{assetId}` sends only the fields set. `FolderID` is `Nullable`, and `null` moves the asset to the root. The 204 returns only an error. | G§assets; S `updateAsset` | 2a |
+| C-ASSET-05 | `Assets.Delete`: `DELETE …/assets/{assetId}`. | G§assets | 2a |
+| C-ASSET-06 | `Assets.CreateImageUpload`: `POST …/assets/uploads` with `contentType`, `contentLength` and `contentHash`. Returns `{UploadKey, UploadURL, Method, Headers, ExpiresAt}`. | G§Uploading images; S `ImageUploadCreateParams` | 2a |
+| C-ASSET-07 | `Assets.CreateImage`: `POST …/assets/images` with `uploadKey`, `name`, and optional `description` and `folderId`. | G§Uploading images | 2a |
+| C-ASSET-08 ⚠ | `Assets.UploadImage` holds the bytes in memory, sends their length and SHA-256 (A-27), uploads them, then calls `CreateImage`. The content type must be one of the five accepted types. When none is given, it's detected from the bytes, and an undetectable or unaccepted type fails before any request. | G§Uploading images | 2a |
+| C-ASSET-09 ⚠ | The storage upload uses the returned `method` and `uploadUrl` verbatim and sends only the returned `headers` (A-23). It never sends `Authorization` or any API header. A non-2xx answer returns `*UploadError` with the storage status. | G§Uploading images Details; A-31 | 2a |
+
+## SEARCH and TAG
+
+| ID | Requirement | Source | Phase |
+|---|---|---|---|
+| C-SEARCH-01 | `Search.Search`: `GET …/search` with `q`, plus `limit` only when set. Returns a single page of `{Resource, Document?}` in server order. Duplicates per resource are kept (one per matching document). | G§search; S `search` | 2a |
+| C-TAG-01 | `Tags.List`: `GET …/tags`. Returns a single page of `{Tag, Count}` in server order. | G§tags | 2a |
 
 ---
 
@@ -339,3 +458,109 @@ copied into [`DECISIONS.md`](DECISIONS.md).
 ### A-15 — `Idempotency-Key` header case
 
 - Spec parameter name is `idempotency-key`; guide/spec prose use `Idempotency-Key`. HTTP header names are case-insensitive; Go canonicalises to `Idempotency-Key`. No conflict in behavior; noted for completeness.
+
+### A-16 — What an omitted field means on a block replace (guide internal conflict)
+
+- G§Layout and width: *"On a replace or an update, an omitted field keeps its current value."*
+- G§Block titles and image fill: *"A replace that omits `fill` removes it, as it does `alt`."*
+- G§Text styles: *"To remove a style, replace the block without the field."*
+
+**Proposed:** the SDK never adds or strips fields, so a read → modify → replace sends back everything that was read (C-BLOCK-04), and the conflict cannot cause data loss through the SDK. A Phase 2a probe replaces an image, a layout column and a paragraph without each optional field, and records which fields persist. The doc comments on `Blocks.Replace` and `Documents.ReplaceBlocks` state the observed rule.
+
+### A-17 — `plainText` derivation
+
+- G§Readers: `plainText` is *"derived the same way as `DocumentBlocks.text`"*.
+- G§The block model: `text` is *"one line per text-bearing block"*.
+- Nothing documents the separator, a trailing newline, or the treatment of tables, code, expand titles, key-value rows, secret blocks, `break` runs or `unsupported` blocks.
+
+**Proposed:** a Phase 2a probe writes a fixture page with every text-bearing kind and records the server's `text` as a golden file (made-up content only). `PlainText` is implemented to reproduce it, and an integration test asserts `PlainText(blocks) == text` on fresh content. Where the probe can't settle a case (`unsupported`), `PlainText` contributes nothing for it and says so in its doc comment.
+
+### A-18 — `walk` path form
+
+- G§Readers gives one example path, `blocks[0].children[1]`, and says it descends into `children` and infobox `rows`.
+
+**Proposed:** pre-order. The root segment is `blocks[i]`. Children are `.children[j]` and infobox rows are `.rows[k]`. A property's own children (a `textField` property) are `.rows[k].children[j]`. A probe compares these against `errors[].path` from a deliberately invalid nested write, and the probe result wins.
+
+### A-19 — Row write responses and `version`
+
+- S row-write operations: *"Responses carry the document `version` in the body and as `ETag`"*, but the `Row` schema has no `version` field.
+
+**Proposed:** row writes return `Versioned[Row]`. `Version` is taken from a body `version` when present (decoded leniently), else from `ETag` (C-VER-04). A probe records which one the server sends. If it sends neither, `Version` is empty and documented as such.
+
+### A-20 — `deleteBlock` and the other versioned deletes
+
+- S `deleteBlock` prose says the response carries `version`, but the declared response is 204 with no body. G§Versioned writes Details: *"A write that returns no body, such as `blocks.delete`, returns no version."*
+
+**Proposed:** the guide wins for behavior. The versioned deletes (block, row, infobox property) return only `error`.
+
+### A-21 — `BlockPatch.view`
+
+- S `BlockPatch` prose lists a `view` field, but `properties` doesn't define it, and the schema rejects unknown fields.
+
+**Proposed:** not exposed (never guess). Recorded as a spec defect.
+
+### A-22 — Single-page envelopes with paging fields
+
+- `DocumentList`, `PropertyList`, `TagList` and `SearchResultList` declare `hasMore`/`nextCursor`, but their operations take no cursor and are documented as not paginated.
+
+**Proposed:** treat them as single-page (C-PAGE-05). If the server ever answers `hasMore: true`, return `ErrPaginationInconsistent` rather than silently truncating (the same reasoning as A-08), since there is no cursor parameter to follow.
+
+### A-23 — Upload request headers
+
+- S `ImageUploadCreateParams.contentType`: *"The upload must send it as `content-type`."* G: the client sends *"only the returned `headers`"*.
+
+**Proposed:** send the returned headers exactly. If they don't include `Content-Type`, add it with the declared type (that's the only addition). Never send `Authorization`, `Idempotency-Key`, `If-Match` or the SDK `User-Agent` override. A probe records what `headers` contains.
+
+### A-24 — Echoing a mention's read-only `name`
+
+- G: *"`name` is read-only."* The write schema accepts `name` in a mention.
+
+**Proposed:** a probe writes a mention with `name` set. If the server accepts and ignores it, echo it as read. If it rejects it, the encoder omits `name` on write. Either way, `PlainText` uses it when there is no `text` label.
+
+### A-25 — Empty map block
+
+- G§Maps in pages allows *"neither"* id, but the TS `map` builder takes both.
+
+**Proposed:** `blocks.Map(resourceID, documentID, opts)` takes both ids, and `blocks.EmptyMap(opts)` builds the "Link a map" block. Hand-written structs can do either.
+
+### A-26 — Row key length
+
+- `RowCreateRequest.key` maxLength 256; inline `keyValue.rows[].key` maxLength 2048.
+
+**Proposed:** no client-side check; the server is the authority. Recorded as a spec inconsistency.
+
+### A-27 — `contentHash`
+
+- Optional in the spec; the TS `uploadImage` always sends it.
+
+**Proposed:** `UploadImage` always sends it, lowercase hex. `CreateImageUpload` sends it only when set.
+
+### A-28 — Unknown enum values
+
+- Spec enums can grow (`Asset.type` already has `AUDIO`, which the guide never mentions; `DocumentBlocks.schema` is `1`).
+
+**Proposed:** decode any string verbatim and never fail. The constants document the known values.
+
+### A-29 — Caller-supplied key reused after a 412
+
+- G§Idempotent writes: the key comparison *"does not include `If-Match`"*, so retrying a keyed POST block write with a fresh `IfMatch` and the same key replays the stored 412.
+
+**Proposed:** generated keys are per call, so the normal path is unaffected. Document on `WithIdempotencyKey` and `IfMatch` that a new version needs a new key.
+
+### A-30 — The exact client-side body limit
+
+- G: the host refuses a body *"over 1 MB"*. Whether that is 1,000,000 or 1,048,576 bytes is not stated.
+
+**Proposed:** refuse bodies over **1,048,576** bytes client-side. A body between the two still gets the host's 413, which C-ERR-08 already handles. Refusing at 1,000,000 could block writes the server accepts.
+
+### A-31 — Retrying the storage upload
+
+- The guide says only that a storage refusal throws with the storage status.
+
+**Proposed:** the storage request gets the per-attempt timeout and no retries (the URL is signed and short-lived, and the guide describes no retry). It does not wait on the API rate limiters, since it isn't an API request. A failed `UploadImage` is retried by calling it again, which starts a new upload.
+
+### A-32 — Fields the SDK doesn't model on a known kind
+
+- Block schemas are `additionalProperties: false` today, so the server shouldn't send unknown fields. If a future spec adds one, a decoder that drops it would delete it on the next full-page replace.
+
+**Proposed:** each block struct keeps unmodelled fields from decode and re-encodes them (C-BLOCK-04). The spec-drift test (C-BLOCK-03) still fails, so the SDK gets updated, but no content is lost in the meantime.
