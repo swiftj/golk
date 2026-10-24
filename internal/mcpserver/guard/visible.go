@@ -42,12 +42,20 @@ import (
 // duplicated string member is checked, not only the one a parser keeps.
 
 type walker struct {
+	// run receives the "text" of the run being read, when the walker is in
+	// a content array (see array).
+	run  *runText
 	dec  *json.Decoder
 	m    *matcher
 	path []seg
 	hit  []bool
 	buf  []rune
 	idx  []int
+}
+
+type runText struct {
+	text string
+	ok   bool
 }
 
 type seg struct {
@@ -103,6 +111,8 @@ func (w *walker) after(tok json.Token) ([]Violation, error) {
 
 func (w *walker) object() ([]Violation, error) {
 	var vs []Violation
+	run := w.run // this object's own text, if it is a run
+	w.run = nil
 	asBlock, asProp := w.at(blockListKeys, nil), w.at(propListKeys, propKeys)
 	kinds, secretKinds, propKinds, hiddens, trueHiddens := 0, 0, 0, 0, 0
 	for w.dec.More() {
@@ -130,6 +140,14 @@ func (w *walker) object() ([]Violation, error) {
 			hiddens++
 			if b, ok := tok.(bool); ok && b {
 				trueHiddens++
+			}
+		case "text":
+			if s, ok := tok.(string); ok && run != nil {
+				run.text, run.ok = s, true
+			}
+		case "break":
+			if b, ok := tok.(bool); ok && b && run != nil && !run.ok {
+				run.text, run.ok = "\n", true
 			}
 		}
 		w.path = append(w.path, seg{key: key, isKey: true})
@@ -179,17 +197,47 @@ func (w *walker) at(lists, members map[string]bool) bool {
 
 func (w *walker) array() ([]Violation, error) {
 	var vs []Violation
+	// A content array holds a block's runs. Players read them as one text,
+	// so a term split across runs ("the Crimson [Accord](url)", or
+	// "Zor**blax**") is looked for in the joined text too. A run without
+	// text (a mention) joins as a separator no term spans.
+	n := len(w.path)
+	runs := n > 0 && w.path[n-1].isKey && w.path[n-1].key == "content"
+	var joined strings.Builder
 	for i := 0; w.dec.More(); i++ {
+		var rt runText
+		if runs {
+			w.run = &rt
+		}
 		w.path = append(w.path, seg{index: i})
 		sub, err := w.value()
 		w.path = w.path[:len(w.path)-1]
+		w.run = nil
 		if err != nil {
 			return nil, err
 		}
 		vs = append(vs, sub...)
+		if runs {
+			if rt.ok {
+				joined.WriteString(rt.text)
+			} else {
+				joined.WriteString(" | ")
+			}
+		}
 	}
 	if _, err := w.dec.Token(); err != nil { // ']'
 		return nil, err
+	}
+	if runs {
+		found := map[string]bool{}
+		for _, v := range vs {
+			found[v.Term] = true
+		}
+		for _, v := range w.text(joined.String()) {
+			if !found[v.Term] {
+				vs = append(vs, v)
+			}
+		}
 	}
 	return vs, nil
 }
