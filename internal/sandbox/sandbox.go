@@ -162,27 +162,36 @@ func Sweep() (int, error) {
 			leaked = append(leaked, r)
 		}
 	}
+	// The list can lag a delete, so an item counts as left behind only if
+	// the sweep really had to delete it.
+	n := 0
 	for _, r := range leaked {
 		err := client.Resources.Delete(ctx, r.ID, lk.ResourceDeleteParams{Cascade: true})
-		if err != nil && !errors.Is(err, lk.ErrNotFound) && !errors.Is(err, lk.ErrAlreadyDeleted) {
-			return len(leaked), err
+		switch {
+		case err == nil:
+			n++
+		case !errors.Is(err, lk.ErrNotFound) && !errors.Is(err, lk.ErrAlreadyDeleted):
+			return n, err
 		}
 	}
 	var assets []lk.Asset
 	for a, err := range client.Assets.All(ctx, lk.AssetListParams{Limit: 100}) {
 		if err != nil {
-			return len(leaked), err
+			return n, err
 		}
 		if strings.HasPrefix(a.Name, RunPrefix) {
 			assets = append(assets, a)
 		}
 	}
 	for _, a := range assets {
-		if err := client.Assets.Delete(ctx, a.ID); err != nil && !errors.Is(err, lk.ErrNotFound) {
-			return len(leaked) + len(assets), err
+		switch err := client.Assets.Delete(ctx, a.ID); {
+		case err == nil:
+			n++
+		case !errors.Is(err, lk.ErrNotFound):
+			return n, err
 		}
 	}
-	return len(leaked) + len(assets), nil
+	return n, nil
 }
 
 // Main is TestMain for integration packages: guard, run, then sweep.
