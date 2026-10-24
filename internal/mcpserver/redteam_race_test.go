@@ -150,8 +150,8 @@ func TestGuard_X_GUARD_08_ShowingMapsAndTimelinesScansThem(t *testing.T) {
 "mapImage":{"assetId":"a1","url":"https://assets.legendkeeper.com/p1/ooo.png","width":512,"height":256,"bounds":[[-128,0],[0,256]]}}`
 	cases := []struct {
 		name, doc string
-		replies  []string
-		refuse   bool
+		replies   []string
+		refuse    bool
 	}{
 		{"public pin", "m1", []string{res, mapDoc, `{"data":[{"id":"f1","type":"pin","name":"Zorblax Keep"}]}`}, true},
 		{"X-GUARD-11 hidden pin still checked", "m1", []string{res, mapDoc, `{"data":[{"id":"f1","type":"pin","name":"Zorblax Keep","isHidden":true}]}`}, true},
