@@ -119,18 +119,23 @@ func encodeObject(kind string, v any, extra map[string]json.RawMessage) ([]byte,
 	return b.Bytes(), nil
 }
 
-// kindOf reads the "kind" field of a JSON object.
+// kindOf reads the "kind" field of a JSON object. The name is matched
+// exactly, as the server matches it: encoding/json's case-insensitive
+// struct matching would read {"kind":"secret","Kind":"x"} as kind "x".
 func kindOf(data []byte) (string, error) {
-	var k struct {
-		Kind *string `json:"kind"`
-	}
-	if err := json.Unmarshal(data, &k); err != nil {
+	var all map[string]json.RawMessage
+	if err := json.Unmarshal(data, &all); err != nil {
 		return "", err
 	}
-	if k.Kind == nil {
+	raw, ok := all["kind"]
+	if !ok || string(raw) == "null" {
 		return "", fmt.Errorf("blocks: object has no kind")
 	}
-	return *k.Kind, nil
+	var kind string
+	if err := json.Unmarshal(raw, &kind); err != nil {
+		return "", fmt.Errorf("blocks: kind is not a string: %w", err)
+	}
+	return kind, nil
 }
 
 // arrayItems splits a JSON array into its elements. null decodes as no
