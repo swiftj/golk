@@ -385,7 +385,7 @@ The format is ours, not LegendKeeper's ([`LK_MARKDOWN.md`](LK_MARKDOWN.md), cite
 | M-ID-03 | Matching never moves an id onto a block of another kind and never uses a base block twice. Explicit `{#id}` wins over matching. | M§3.1, §3.2 | 2b |
 | M-TXT-01 | The visible text of a block's Markdown equals `blocks.PlainText` of the block. | M§4 | 2b |
 | M-SAFE-01 | Unknown directive, unknown or duplicate attribute, or a value the field can't hold is an error. | M§5 | 2b |
-| M-SAFE-02 | An unclosed container directive or a stray closing fence is an error; an unclosed `:::secret` never leaks into the page, and a code fence holding a `:::secret` line is an error. | M§5 | 2b |
+| M-SAFE-02 | An unclosed container directive or a stray closing fence is an error; an unclosed `:::secret` never leaks into the page, and a code fence outside a secret holding a `:::secret` or `:::` line, or text or a table row that looks like a mistyped fence (`:: secret`), is an error. | M§5 | 2b |
 | M-SAFE-03 | Raw HTML, link reference definitions and footnotes are errors. | M§5 | 2b |
 | M-SAFE-04 | Removing an `unsupported` or `lk-raw` block of `Base` (at any depth) is an error unless `AllowRemoveOpaque`; removed secrets are listed in `Report.Removed`. | M§5 | 2b |
 | M-SAFE-05 | An image not alone in its paragraph, or in a heading or table cell, is an error. | M§5 | 2b |

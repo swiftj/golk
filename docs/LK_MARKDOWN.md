@@ -232,7 +232,7 @@ These are the choices the implementation makes (Phase 2b). Each is the simplest 
 - GFM tables: column alignment (`:---`) and a row with more or fewer cells than the header are errors. A header cell is `header` (true); `header=false` is written only on a `:::cell`.
 - `::unsupported` takes its id as `id=…` (it is content, not a hidden field). An infobox `::unsupported` row also takes the envelope attributes.
 - An info string that starts with `lk-raw` or `lk-filter` must be exactly that.
-- A code fence whose text holds a line that would open a secret (three or more colons, then `secret` in any case, alone or followed by a space) is an error. Otherwise a fence left unclosed before a secret, for example after an edit drops a closing ```` ``` ````, would publish the secret as a visible code block. Code with such a line renders as `lk-raw`.
+- A code fence outside a secret whose text holds a line that would open a secret (three or more colons, then `secret` in any case, alone or followed by a space) or close a directive (three or more colons alone), after any indentation, quote markers or list markers, is an error. Otherwise a fence left unclosed by an edit (a dropped closing ```` ``` ````) could swallow a secret and publish it as code, or swallow the stray `:::` that a secret closed too early leaves behind, which is the error that catches that mistake. Inside a secret the same code is allowed (nothing it swallows is shown); outside one, such code renders as `lk-raw`.
 
 ---
 

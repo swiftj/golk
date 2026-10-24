@@ -120,6 +120,10 @@ func TestRedteam_M_SAFE_02_FenceSwallowsSecret(t *testing.T) {
 		"- ```\n  :::secret\n  " + sentinel + "\n  :::\n  ```\n",
 		"```\n   :::secret\n" + sentinel + "\n:::\n```\n",
 		"```\n:::Secret\n" + sentinel + "\n:::\n```\n",
+		// The fence's text holds a quoted or listed secret's lines.
+		"```\n> :::secret\n> " + sentinel + "\n> :::\n```\n",
+		"```\n- :::secret\n  " + sentinel + "\n  :::\n```\n",
+		"```\n1. :::secret\n   " + sentinel + "\n   :::\n```\n",
 	} {
 		got, err := parse(src)
 		var se *SyntaxError
@@ -152,12 +156,59 @@ func TestRedteam_M_SAFE_02_FenceSwallowsSecret(t *testing.T) {
 }
 
 // A code block whose text holds a secret fence line still round-trips: it
-// renders as lk-raw.
+// renders as lk-raw. Inside a secret, where nothing it swallowed could be
+// shown, the same code is a plain fence.
 func TestRedteam_M_SAFE_02_SecretFenceTextInCode(t *testing.T) {
-	page := listOf(t, `[{"kind":"code","id":"c","text":"Example:\n:::secret\nhidden\n:::"}]`)
-	md := roundTrip(t, page)
-	if !hasRaw(md) {
-		t.Fatalf("want lk-raw:\n%s", md)
+	for _, text := range []string{`Example:\n:::secret\nhidden\n:::`, `a\n:::\nb`, `> :::`} {
+		page := listOf(t, `[{"kind":"code","id":"c","text":"`+text+`"}]`)
+		if md := roundTrip(t, page); !hasRaw(md) {
+			t.Fatalf("want lk-raw:\n%s", md)
+		}
+	}
+	src := ":::secret\n```\n:::secret\nx\n:::\n```\n:::\n"
+	got, err := parse(src)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(mustJSON(t, got), `"kind":"code"`) {
+		t.Fatalf("want code in the secret: %s", mustJSON(t, got))
+	}
+}
+
+// TestRedteam_M_SAFE_02_FenceHidesStrayCloser: a ::: inserted inside a
+// secret closes it early, and the stray closer left behind is an error;
+// but a code fence left unclosed by the same edit used to swallow that
+// closer, so the rest of the secret parsed as public text.
+func TestRedteam_M_SAFE_02_FenceHidesStrayCloser(t *testing.T) {
+	for _, src := range []string{
+		":::secret\nA\n:::\n" + sentinel + "\n```\n:::\n\nPublic\n```\n",
+		":::secret\nA\n:::\n" + sentinel + "\n~~~\n  :::\n~~~\n",
+		"> :::secret\n> A\n> :::\n> " + sentinel + "\n> ```\n> :::\n> ```\n",
+	} {
+		got, err := parse(src)
+		var se *SyntaxError
+		if !errors.As(err, &se) || got != nil {
+			t.Errorf("%q: want a *SyntaxError, got %v %s", src, err, mustJSON(t, got))
+		}
+	}
+}
+
+// TestRedteam_M_SAFE_02_TableRowFence: a GFM table takes every following
+// line as a row, so a mistyped fence there ("\t::secret") became a cell.
+func TestRedteam_M_SAFE_02_TableRowFence(t *testing.T) {
+	for _, src := range []string{
+		"0\n|-\n\t::seCret\n" + sentinel + "\n",
+		"| a |\n| --- |\n:: secret\n" + sentinel + "\n",
+		"| a |\n| --- |\n  ::secret\n",
+	} {
+		got, err := parse(src)
+		var se *SyntaxError
+		if !errors.As(err, &se) || got != nil {
+			t.Errorf("%q: want a *SyntaxError, got %v %s", src, err, mustJSON(t, got))
+		}
+	}
+	if _, err := parse("| a |\n| --- |\n| :: secret |\n"); err != nil {
+		t.Errorf("a piped cell is text: %v", err)
 	}
 }
 
@@ -281,6 +332,9 @@ func FuzzRedteamSecretEdit(f *testing.F) {
 			lines = append(lines[:i], lines[i+1:]...)
 		}
 		if ins != "" {
+			for _, l := range strings.Split(ins, "\n") {
+				closer = closer || isClosingFence([]byte(strings.TrimLeft(l, " \t>")))
+			}
 			i := int(at) % (len(lines) + 1)
 			lines = append(lines[:i], append(strings.Split(ins, "\n"), lines[i:]...)...)
 		}
@@ -336,10 +390,13 @@ func TestRedteam_M_OPQ_02_KindMatchedExactly(t *testing.T) {
 	}
 }
 
-// secretOpener reports whether line, after quote markers, list markers and
-// indentation, is two or more colons and then "secret" in any case.
+// secretOpener reports whether line, after quote markers, a list marker
+// and indentation, is two or more colons and then "secret" in any case.
 func secretOpener(line string) bool {
-	l := strings.TrimLeft(line, " \t>-")
+	l := strings.TrimLeft(line, " \t>")
+	if len(l) > 1 && strings.IndexByte("-*+", l[0]) >= 0 && (l[1] == ' ' || l[1] == '\t') {
+		l = strings.TrimLeft(l[1:], " \t")
+	}
 	n := len(l) - len(strings.TrimLeft(l, ":"))
 	return n >= 2 && strings.HasPrefix(strings.ToLower(strings.TrimLeft(l[n:], " \t")), "secret")
 }

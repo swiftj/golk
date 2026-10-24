@@ -108,7 +108,10 @@ func (c *conv) directiveBlock(d *directiveNode, a *attrR, depth int) (blocks.Blo
 		if b.Layout, b.Width, err = placed(a); err != nil {
 			return nil, err
 		}
-		if b.Children, err = kids(); err != nil {
+		c.secrets++
+		b.Children, err = kids()
+		c.secrets--
+		if err != nil {
 			return nil, err
 		}
 		if err := a.done(); err != nil {

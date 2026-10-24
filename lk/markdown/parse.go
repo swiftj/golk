@@ -33,12 +33,17 @@ func parse(src string) (blocks.List, error) {
 
 // parseDoc is parse without the size limit, which the renderer's own checks
 // use: a large page still renders losslessly.
-func parseDoc(src string) (blocks.List, error) {
+func parseDoc(src string) (blocks.List, error) { return parseIn(src, 0) }
+
+// parseIn is parseDoc for Markdown that sits inside secrets levels of
+// secret, which the renderer's checks of a secret's descendants use.
+func parseIn(src string, secrets int) (blocks.List, error) {
 	if !utf8.ValidString(src) {
 		return nil, &SyntaxError{Reason: "input is not valid UTF-8"}
 	}
 	src = strings.ReplaceAll(src, "\r\n", "\n")
 	c := newConv([]byte(src), 0)
+	c.secrets = secrets
 	if i := strings.IndexAny(src, "\r\x00"); i >= 0 {
 		return nil, c.errf(i, "carriage return or NUL character")
 	}
@@ -58,6 +63,7 @@ type conv struct {
 	src      []byte
 	nl       []int // offsets of '\n'
 	lineBase int   // added to line numbers, for a sub-parse
+	secrets  int   // how many secrets enclose the block being converted
 }
 
 func newConv(src []byte, lineBase int) *conv {
@@ -243,19 +249,33 @@ func (c *conv) fenceLines(n ast.Node, row bool) error {
 	lines := n.Lines()
 	for i := range lines.Len() {
 		s := lines.At(i)
-		v := util.TrimLeftSpace(c.src[s.Start:s.Stop])
-		after := v
-		if len(v) >= 2 {
-			after = v[2:]
-			if !row || i > 0 {
-				after = util.TrimLeftSpace(after)
-			}
-		}
-		if bytes.HasPrefix(v, []byte(":::")) || bytes.HasPrefix(v, []byte("::")) && startsName(after) {
-			return c.errf(s.Start, "a directive fence must start its own line, indented at most 3 spaces (escape a literal one as \\:)")
+		if fenceLike(c.src[s.Start:s.Stop], row && i == 0) {
+			return c.fenceErr(s.Start)
 		}
 	}
 	return nil
+}
+
+func (c *conv) fenceErr(off int) error {
+	return c.errf(off, "a directive fence must start its own line, indented at most 3 spaces (escape a literal one as \\:)")
+}
+
+// fenceLike reports whether a line of text looks like a directive fence:
+// ":::", or "::" then a name. With rowStart (the first line of a key-value
+// row, where ":: value" is an empty key) the name must follow directly.
+func fenceLike(line []byte, rowStart bool) bool {
+	v := util.TrimLeftSpace(line)
+	if bytes.HasPrefix(v, []byte(":::")) {
+		return true
+	}
+	if !bytes.HasPrefix(v, []byte("::")) {
+		return false
+	}
+	after := v[2:]
+	if !rowStart {
+		after = util.TrimLeftSpace(after)
+	}
+	return startsName(after)
 }
 
 // startsName reports whether b starts with a directive name. "::" then a
@@ -450,10 +470,11 @@ func (c *conv) fence(f *ast.FencedCodeBlock) (blocks.Block, bool, error) {
 	case "lk-filter":
 		return nil, false, c.errf(f.Pos(), "an lk-filter fence belongs at the end of a :::collection")
 	}
-	if i := secretFenceLine(body); i >= 0 {
+	if i := secretFenceLine(body); i >= 0 && c.secrets == 0 {
 		// A fence left unclosed before a secret (a dropped closing line)
-		// would otherwise publish the secret as code (M-SAFE-02).
-		return nil, false, c.errf(f.Lines().At(i).Start, "a code block holds a :::secret line; close the code fence before the secret")
+		// would otherwise publish the secret, or the rest of one closed
+		// early, as code (M-SAFE-02).
+		return nil, false, c.errf(f.Lines().At(i).Start, "a code block outside a secret holds a :::secret or ::: line; close the code fence before it")
 	}
 	b := &blocks.CodeBlock{Text: body}
 	if info != "" {
@@ -464,15 +485,22 @@ func (c *conv) fence(f *ast.FencedCodeBlock) (blocks.Block, bool, error) {
 
 // secretFenceLine is the index of the first line of code text that would
 // open a secret outside a fence (three or more colons, then "secret" in any
-// case, then the end of the line or a space), or -1.
+// case, then the end of the line or a space) or close a directive (three or
+// more colons alone), or -1. Quote markers and list markers before the
+// colons count too: a fence can swallow "> :::secret" lines of a quoted
+// secret. A swallowed closing line matters as much: it would otherwise
+// hide the stray closer left by a secret closed early.
 func secretFenceLine(text string) int {
 	for i, l := range strings.Split(text, "\n") {
-		l = strings.TrimLeft(l, " \t")
+		l = strings.TrimLeft(l, " \t>-*+.)0123456789")
 		n := len(l) - len(strings.TrimLeft(l, ":"))
 		if n < 3 {
 			continue
 		}
 		rest := l[n:]
+		if strings.TrimSpace(rest) == "" {
+			return i
+		}
 		if len(rest) >= 6 && strings.EqualFold(rest[:6], "secret") && (len(rest) == 6 || rest[6] == ' ' || rest[6] == '\t') {
 			return i
 		}
@@ -621,6 +649,17 @@ func (c *conv) gfmTable(t *east.Table, depth int) (blocks.Block, error) {
 	}
 	rows := blocks.List{}
 	for r := t.FirstChild(); r != nil; r = r.NextSibling() {
+		// A row is a source line of its own; like paragraph text, it can't
+		// be a mistyped fence (M-SAFE-02).
+		if pos := r.Pos(); pos >= 0 && pos < len(c.src) {
+			line := c.src[pos:]
+			if end := bytes.IndexByte(line, '\n'); end >= 0 {
+				line = line[:end]
+			}
+			if fenceLike(line, false) {
+				return nil, c.fenceErr(pos)
+			}
+		}
 		_, header := r.(*east.TableHeader)
 		if !header {
 			if n := c.rowCells(r.Pos()); n != len(t.Alignments) {

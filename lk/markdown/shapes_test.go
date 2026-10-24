@@ -82,7 +82,7 @@ var shapes = []shape{
 	{"quote color", `{"kind":"quote","color":"#ff0000","children":[` + P + `]}`, "md"},
 	{"quote empty", `{"kind":"quote","children":[]}`, "md"},
 	{"quote nested", `{"kind":"quote","color":"#000000","children":[{"kind":"quote","color":"#111111","children":[` + P + `]}]}`, "md"},
-	{"quote holding everything", `{"kind":"quote","children":[{"kind":"heading","level":2,"content":[{"text":"h"}]},{"kind":"code","text":"a\n:::\n> b"},{"kind":"bulletList","children":[{"kind":"listItem","children":[` + P + `]}]},{"kind":"callout","tone":"note","children":[` + P + `]},{"kind":"rule"}]}`, "md"},
+	{"quote holding everything", `{"kind":"quote","children":[{"kind":"heading","level":2,"content":[{"text":"h"}]},{"kind":"code","text":"a\n::: b\n> b"},{"kind":"bulletList","children":[{"kind":"listItem","children":[` + P + `]}]},{"kind":"callout","tone":"note","children":[` + P + `]},{"kind":"rule"}]}`, "md"},
 	{"code", `{"kind":"code","language":"go","text":"func main() {}\n"}`, "md"},
 	{"code no language", `{"kind":"code","text":"x"}`, "md"},
 	{"code empty", `{"kind":"code","text":""}`, "md"},
@@ -91,6 +91,7 @@ var shapes = []shape{
 	// M-SAFE-02: a code line that would open a secret is rejected in a
 	// fence (a dropped closing fence must not publish a secret as code),
 	// so such code is lk-raw.
+	{"code with a closing fence line", `{"kind":"code","text":"a\n:::\n> b"}`, "raw"},
 	{"code with a secret fence line", "{\"kind\":\"code\",\"language\":\"md\",\"text\":\"```\\n````\\n:::secret\\n\"}", "raw"},
 	{"code with tabs", `{"kind":"code","text":"\tindented\n  two"}`, "md"},
 	{"code language spaces", `{"kind":"code","language":"c sharp","text":"x"}`, "md"},

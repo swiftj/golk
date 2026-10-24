@@ -387,7 +387,7 @@ Château — ★ 日本
 >
 > ```
 > a
-> :::
+> ::: b
 > > b
 > ```
 >
@@ -433,6 +433,15 @@ x
 :::callout
 
 `````
+
+###### code with a closing fence line
+
+```lk-raw
+{
+  "kind": "code",
+  "text": "a\n:::\n\u003e b"
+}
+```
 
 ###### code with a secret fence line
 

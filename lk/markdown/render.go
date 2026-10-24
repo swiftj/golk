@@ -105,9 +105,10 @@ func rendersOpaque(n blocks.Node) bool {
 }
 
 type renderer struct {
-	ids  bool
-	memo map[blocks.Node]*rendered
-	err  error
+	ids     bool
+	secrets int // how many secrets enclose the node being rendered
+	memo    map[blocks.Node]*rendered
+	err     error
 }
 
 // rendered is one node's Markdown.
@@ -258,7 +259,7 @@ func (r *renderer) compute(b blocks.Block) *rendered {
 // verify reports whether lines parse back to exactly b, apart from hidden
 // fields.
 func (r *renderer) verify(b blocks.Block, lines []string) bool {
-	parsed, err := parseDoc(joinLines(lines))
+	parsed, err := parseIn(joinLines(lines), r.secrets)
 	return err == nil && len(parsed) == 1 && sameShown(parsed[0], b)
 }
 
@@ -448,7 +449,9 @@ func (r *renderer) blockLines(b blocks.Block, o ropt) ([]string, bool) {
 	case *blocks.SecretBlock:
 		optEnum(w, "layout", v.Layout, layouts)
 		w.optInt("width", v.Width)
+		r.secrets++
 		lines, ok = directive("secret", w, r.children(v.Children)), len(v.Children) > 0
+		r.secrets--
 	case *blocks.TextFieldBlock:
 		titledW(w, v.Title, v.IsTitleHidden, v.Layout, v.Width)
 		lines = directive("textfield", w, r.children(v.Children))
@@ -888,7 +891,7 @@ func (r *renderer) computeProp(p blocks.Property) *rendered {
 		}
 		if ok {
 			box := &blocks.InfoboxBlock{Rows: blocks.Properties{p}}
-			parsed, err := parseDoc(joinLines(directive("infobox", newAttrW(), lines)))
+			parsed, err := parseIn(joinLines(directive("infobox", newAttrW(), lines)), r.secrets)
 			if err == nil && len(parsed) == 1 && sameShown(parsed[0], box) {
 				return &rendered{lines: lines, safe: safe}
 			}
