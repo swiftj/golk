@@ -13,6 +13,10 @@ import (
 	"strings"
 )
 
+// maxBodyBytes is the host's limit on a JSON request body. A larger body is
+// refused before sending, so it spends no request (DECISIONS.md D-008, A-30).
+const maxBodyBytes = 1 << 20
+
 // request is one API call before it is sent.
 type request struct {
 	method string
@@ -61,6 +65,10 @@ func (c *Client) do(ctx context.Context, req *request, cc callConfig) error {
 	body, err := encodeBody(req.body)
 	if err != nil {
 		return err
+	}
+	if len(body) > maxBodyBytes {
+		return fmt.Errorf("lk: %s %s: request body is %d bytes, over the %d-byte limit: %w",
+			req.method, req.path, len(body), maxBodyBytes, ErrPayloadTooLarge)
 	}
 	target := c.baseURL.String() + req.path
 	if len(req.query) > 0 {

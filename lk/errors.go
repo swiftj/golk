@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -297,7 +298,23 @@ func newAPIError(statusCode int, h http.Header, body []byte, now time.Time) *API
 		e.RequestID = id
 	}
 	e.RetryAfter, e.hasRetryAfter = parseRetryAfter(h.Get("Retry-After"), now)
+	if statusCode == http.StatusPreconditionFailed {
+		e.CurrentVersion = currentVersion(e.Message)
+	}
 	return e
+}
+
+// currentVersionRE matches the server's 412 message, "Document version is
+// <current>, If-Match was <sent>" (DECISIONS.md D-009, A-05).
+var currentVersionRE = regexp.MustCompile(`^Document version is ([^\s,]+),`)
+
+// currentVersion returns the version a 412 message reports, or "" when the
+// message has another form.
+func currentVersion(msg string) string {
+	if m := currentVersionRE.FindStringSubmatch(msg); m != nil {
+		return m[1]
+	}
+	return ""
 }
 
 // errorText returns a short single-line excerpt of a non-JSON error body.
