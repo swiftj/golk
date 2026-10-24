@@ -193,3 +193,9 @@ That is the whole module graph (`go mod graph`). UUIDs (idempotency keys) and cu
 - **`ResourceDocument.Blocks`** carries page content on `Resources.Create`, which closes Phase 1's deferred `ResourceDocumentParams.Blocks`.
 - **Integration polling.** `TestIntegration_SearchAndTags` polls search for up to 30s with real sleeps, because the index may lag a write. That is the only real sleep in any test, and unit tests still never sleep.
 - **Sandbox sweep covers assets.** `sandbox.Sweep` also deletes root assets named with the run prefix, and `sandbox.CleanupAsset` registers deletes.
+
+## D-013 — Supported platforms: macOS and Linux only
+
+- **Date:** 2026-10-24
+- **Decision (owner):** lk-mcp is built and supported for `darwin/arm64`, `darwin/amd64`, `linux/amd64` and `linux/arm64` only. Linux covers server deployments such as AWS Lightsail. Windows is not a target: no Windows builds, no Windows-specific code paths, now or later.
+- `make build` builds those four targets, and `make verify-static` fails on any other binary in `dist/`. CLAUDE.md's build section says the same.

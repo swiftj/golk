@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # Verifies every binary in a dist directory was built with CGO_ENABLED=0,
 # and that Linux binaries are statically linked. macOS binaries always link
-# libSystem dynamically and Windows binaries link system DLLs; for those the
-# cgo check is the requirement (see CLAUDE.md).
+# libSystem dynamically; for those the cgo check is the requirement. Only
+# macOS and Linux are supported targets (see CLAUDE.md).
 set -euo pipefail
 
 dist="${1:-dist}"
@@ -31,8 +31,12 @@ for b in "${bins[@]}"; do
       fi
       echo "ok   $name: CGO_ENABLED=0, statically linked"
       ;;
-    *)
+    lk-mcp-darwin-*)
       echo "ok   $name: CGO_ENABLED=0 ($(file -b "$b" | cut -d, -f1))"
+      ;;
+    *)
+      echo "FAIL $name: unsupported target (only darwin and linux are built)"
+      fail=1
       ;;
   esac
 done

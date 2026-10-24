@@ -5,7 +5,7 @@ GO          ?= go
 GOBIN       ?= $(shell $(GO) env GOPATH)/bin
 VERSION     ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
 DIST        := dist
-TARGETS     := darwin/arm64 darwin/amd64 windows/amd64 windows/arm64 linux/amd64 linux/arm64
+TARGETS     := darwin/arm64 darwin/amd64 linux/amd64 linux/arm64
 
 STATICCHECK_VERSION := 2026.2.2
 GOVULNCHECK_VERSION := v1.9.0
@@ -50,8 +50,8 @@ test-integration: ## Integration tests against the sandbox project
 build: ## Cross-compile lk-mcp for every target into dist/
 	@mkdir -p $(DIST)
 	@for t in $(TARGETS); do \
-	  os=$${t%/*}; arch=$${t#*/}; ext=""; [ "$$os" = windows ] && ext=".exe"; \
-	  out="$(DIST)/lk-mcp-$$os-$$arch$$ext"; \
+	  os=$${t%/*}; arch=$${t#*/}; \
+	  out="$(DIST)/lk-mcp-$$os-$$arch"; \
 	  echo "build $$out"; \
 	  CGO_ENABLED=0 GOOS=$$os GOARCH=$$arch $(GO) build -trimpath \
 	    -ldflags "-s -w -X main.version=$(VERSION)" -o "$$out" ./cmd/lk-mcp; \

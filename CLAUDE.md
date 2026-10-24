@@ -52,16 +52,16 @@ Every release binary is built with cgo disabled. No exceptions.
 ```sh
 CGO_ENABLED=0 GOOS=<os> GOARCH=<arch> \
   go build -trimpath -ldflags "-s -w -X main.version=$(VERSION)" \
-  -o dist/lk-mcp-<os>-<arch>[.exe] ./cmd/lk-mcp
+  -o dist/lk-mcp-<os>-<arch> ./cmd/lk-mcp
 ```
 
-Build targets: `darwin/arm64`, `darwin/amd64`, `windows/amd64`, `windows/arm64`, `linux/amd64`, `linux/arm64`.
+Build targets: `darwin/arm64`, `darwin/amd64`, `linux/amd64`, `linux/arm64`. **Only macOS and Linux are supported** (Linux covers server deployments such as AWS Lightsail). Never build, ship or add code paths for Windows.
 
 Rules:
 
 - **No dependency that needs cgo.** Before adding any dependency, confirm it builds with `CGO_ENABLED=0` and record why it's needed in `docs/DECISIONS.md`. Prefer the standard library.
 - **`make verify-static` must pass.** Every binary in `dist/` must show `CGO_ENABLED=0` in `go version -m <binary>`. Linux binaries must also report `statically linked` from `file`.
-- **macOS is not fully static, and that's expected.** Go binaries there always link the system `libSystem` dynamically, even with cgo off. On macOS, the `CGO_ENABLED=0` check is the requirement. Windows binaries link only to system DLLs.
+- **macOS is not fully static, and that's expected.** Go binaries there always link the system `libSystem` dynamically, even with cgo off. On macOS, the `CGO_ENABLED=0` check is the requirement.
 - **The race detector needs cgo.** `make test-race` sets `CGO_ENABLED=1` for tests only. Never ship a binary built that way.
 
 ## Commands
