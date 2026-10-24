@@ -392,6 +392,29 @@ The format is ours, not LegendKeeper's ([`LK_MARKDOWN.md`](LK_MARKDOWN.md), cite
 | M-SAFE-06 | An `::unsupported` id not in `Base`, the same id twice, or an `::unsupported` moved out of the secret that holds it in `Base`, is an error. | M§5 | 2b |
 | M-SAFE-07 | Input over 1 MiB, nested deeper than 64 levels, or with more than 2000 link and emphasis markers in one paragraph or heading is rejected before (inline) parsing. | M§5 | 2b |
 
+## WORLD — maps, timelines, calendars and templates (Phase 4)
+
+Paths are under `/api/v3/projects/{projectId}`; `…/docs/{d}` is `resources/{resourceId}/docs/{documentId}`.
+
+| ID | Requirement | Source | Phase |
+|---|---|---|---|
+| C-FEAT-01 | `Features.List`: `GET …/docs/{d}/features`, with `type` only when set. Returns the whole collection on one page. | G§features; S `listFeatures` | 4 |
+| C-FEAT-02 | `Features.Create`: `POST …/features` sends only the fields set (every field is optional). Returns the feature. | G§features | 4 |
+| C-FEAT-03 | `Features.Get` and `Features.Update` (`PATCH`, only the fields set; `URI: Some("")` clears the link) return the feature with every spec field, unknown enum values kept. | G§features; S `Feature` | 4 |
+| C-FEAT-04 | `Features.Delete`: `DELETE …/features/{featureId}`. Deleting a folder leaves its features in place. | G§features | 4 |
+| C-LANE-01 | `Timelines.Lanes`: `GET …/lanes`, one page including chained timelines' lanes; `Timelines.Lane` reads one of this document's lanes. | G§timelines and calendars | 4 |
+| C-LANE-02 | `Timelines.CreateLane` sends `name`, `rank` and `size` (required) and `style` when set; it converts a `blank` document to a timeline. `UpdateLane` (`PATCH`) sends only the fields set. `DeleteLane` deletes the lane and its events. | G§timelines and calendars | 4 |
+| C-EVENT-01 | `Timelines.Events`: `GET …/events`, server-paged (`cursor`, `limit`) and ordered by start, including chained timelines' events; exposed as a page and an iterator. | G§timelines and calendars; S `listEvents` | 4 |
+| C-EVENT-02 | `Timelines.CreateEvent` sends `laneId` and `type` and either `start`/`end` (minutes) or `formattedStart`/`formattedEnd`, plus only the other fields set. `UpdateEvent` (`PATCH`) sends only the fields set; `laneId` moves the event. `DeleteEvent` deletes it. | G§timelines and calendars | 4 |
+| C-EVENT-03 | Events read back `formattedStart`, `formattedEnd`, `detail`, `startDate` and `endDate` (`{year, month, monthName, day, hour, minute, era{id,name,abbr}, iso}`). | G§timelines and calendars; S `EventDate` | 4 |
+| C-CAL-01 | `Calendars.List`: `GET …/calendars`, one page: custom calendars, then built-ins, each with its `version`. | G§Calendars | 4 |
+| C-CAL-02 | `Calendars.Create` (`POST`) sends a spec and returns the calendar with `id` and `version`. `Calendars.Update` (`PUT`) replaces the whole spec and takes `IfMatch`; `Calendars.Delete` takes `IfMatch`. A stale version fails with `ErrVersionMismatch`. | G§Calendars; S `Calendar.version` | 4 |
+| C-CAL-03 | A calendar spec is lossless: fields the SDK doesn't model are kept on read and written back on update. | CLAUDE.md §Block model (same rule); A-32 | 4 |
+| C-TPL-01 | `Templates.List`: `GET …/templates`, server-paged, any depth; also an iterator. | G§templates | 4 |
+| C-TPL-02 | `Resources.SaveAsTemplate`: `POST …/resources/{id}/save-as-template` with `name`, `includeChildren`, `after`, `before`, `id` only when set. `Resources.CreateFromTemplate`: `POST …/resources/from-template` with `templateId` and the same optional fields plus `parentId`. Both return the created resource. | G§templates; S | 4 |
+| C-DOC-10 | `DocumentUpdate` sends `sources` (a timeline's chained `{resourceId, documentId}` list; `[]` clears) and `mapImage {assetId}` only when set. Documents read back `sources` and `mapImage {assetId, url, width, height, bounds, tiles}`. | G§Chaining timelines; G§Map images | 4 |
+| C-MAP-01 | `PixelToPos` and `PosToPixel` map a pixel counted from the image's top-left corner to `[lat, lng]` and back, linearly across `bounds` (`[[south, west], [north, east]]`, north and west 0 at the top-left). | G§Map images; S `MapImage.bounds`; D-014 | 4 |
+
 ## MCP — lk-mcp server (`internal/mcpserver`, `cmd/lk-mcp`)
 
 From CLAUDE.md §MCP server rules and the approved Phase 3 plan (DECISIONS.md D-011, D-012). IDs are `X-<AREA>-NN` and follow the same rules as `C-` IDs.
@@ -422,6 +445,16 @@ From CLAUDE.md §MCP server rules and the approved Phase 3 plan (DECISIONS.md D-
 | X-ERR-01 | A failed call is a tool error (not a protocol error) with the error code, the request ID and an actionable hint. | CLAUDE.md §Tool output | 3 |
 | X-LOG-01 | stdout carries only MCP protocol frames; logs go to stderr as slog. | CLAUDE.md §MCP Logging | 3 |
 | X-LOG-02 | Logs hold one line per tool call (tool, project, duration, outcome) and never page content, Markdown or protected terms. | CLAUDE.md §MCP Logging | 3 |
+| X-MAP-01 | `read_map` returns the map image (url, size, bounds) and every feature (or one type), with ids, names, positions, folders, links and hidden flags. | Plan §Phase 4 | 4 |
+| X-MAP-02 | `set_map_feature` creates a feature, or updates the one named by `feature_id`, sending only the fields given; `pixel` is converted with `PixelToPos` and needs a map image; `pos` and `pixel` together is an error. `delete_map_feature` deletes one; `set_map_image` sets the map image from an asset id. | Plan §Phase 4 | 4 |
+| X-TL-01 | `read_timeline` returns lanes by rank and one page of events with formatted dates, marking lanes and events that come from chained timelines. | Plan §Phase 4 | 4 |
+| X-TL-02 | `set_timeline_lane`, `delete_timeline_lane`, `set_timeline_event` and `delete_timeline_event` send only the fields given; `update_document` sets a timeline's `calendar_id` and `sources`. | Plan §Phase 4 | 4 |
+| X-CAL-01 | Calendar tools list, read, create, replace (with `If-Match` from `version`) and delete custom calendars; a built-in calendar id is refused before any request. | Plan §Phase 4 | 4 |
+| X-TPL-01 | `list_templates`, `save_as_template` and `create_from_template` call the template operations with only the fields given. | Plan §Phase 4 | 4 |
+| X-GUARD-08 | Map features, timeline lanes and events are guarded content: writing one checks it unless its document or resource is hidden; showing a map or timeline document, unhiding or restoring a resource holding one, or setting a timeline's `sources` checks what it would show. Board documents are still refused. | Plan §Phase 4 | 4 |
+| X-GUARD-09 | `create_calendar` and `replace_calendar` check every string of the spec. | Plan §Phase 4 | 4 |
+| X-GUARD-10 | `save_as_template` and `create_from_template` check every resource they copy, each by its own hidden flag, before the write. | Plan §Phase 4 (templates treated as visible) | 4 |
+| X-GUARD-11 | Hidden features and events are checked like public content until the owner confirms in the player view that hidden pins are invisible (`hiddenFeaturesConfirmed`). | Plan §Phase 4 | 4 |
 
 ---
 
@@ -629,3 +662,28 @@ copied into [`DECISIONS.md`](DECISIONS.md).
 - Block schemas are `additionalProperties: false` today, so the server shouldn't send unknown fields. If a future spec adds one, a decoder that drops it would delete it on the next full-page replace.
 
 **Proposed:** each block struct keeps unmodelled fields from decode and re-encodes them (C-BLOCK-04). The spec-drift test (C-BLOCK-03) still fails, so the SDK gets updated, but no content is lost in the meantime.
+
+### A-33 — Versions on lanes, events and features
+
+- The spec gives `version` only to calendars (body and `ETag`). Lane, event and feature writes take no `If-Match`.
+- **Proposal:** these writes are unversioned; *probe* whether their responses carry an `ETag` and record it.
+
+### A-34 — `isHidden` on features and events
+
+- Both schemas have `isHidden` with no description, and the guide doesn't mention it.
+- **Proposal:** *probe* that it round-trips on create and update. What players see can't be probed with a key; the owner checks the player view (X-GUARD-11).
+
+### A-35 — Template copies and hidden flags
+
+- The guide says a copy "has the source's fields"; whether `isHidden` is among them isn't stated.
+- **Proposal:** *probe* save-as-template and create-from-template on a hidden child, and record whether the copy is hidden.
+
+### A-36 — Calendar version: body vs `ETag`
+
+- `Calendar.version` is "also sent as `ETag`" by create and update.
+- **Proposal:** read it from the body, with the ETag as fallback (the existing versioned-body rule); *probe* that they agree, including the weak-ETag form (D-009, A-06).
+
+### A-37 — Pixel ↔ position mapping
+
+- The guide names `pixelToPos`/`posToPixel` but gives no formula; the spec says `bounds` is `[[south, west], [north, east]]` with north and west 0 at the image's top-left, south negative and east positive.
+- **Proposal:** linear: `lat = north + (y / height) × (south − north)`, `lng = west + (x / width) × (east − west)`, and the inverse. The server stores `pos` verbatim, so the sandbox can confirm only the `bounds` shape; recorded as our derivation (D-014).

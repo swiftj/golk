@@ -23,9 +23,13 @@ var (
 	OpCreateBlockProperty        = Op{ID: "createBlockProperty", Method: "POST", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/blocks/{blockId}/properties"}
 	OpCreateBlockPropertyRow     = Op{ID: "createBlockPropertyRow", Method: "POST", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/blocks/{blockId}/properties/{propertyId}/rows"}
 	OpCreateBlockRow             = Op{ID: "createBlockRow", Method: "POST", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/blocks/{blockId}/rows"}
+	OpCreateCalendar             = Op{ID: "createCalendar", Method: "POST", Path: "/api/v3/projects/{projectId}/calendars"}
 	OpCreateDocument             = Op{ID: "createDocument", Method: "POST", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs"}
+	OpCreateEvent                = Op{ID: "createEvent", Method: "POST", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/events"}
+	OpCreateFeature              = Op{ID: "createFeature", Method: "POST", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/features"}
 	OpCreateImageAsset           = Op{ID: "createImageAsset", Method: "POST", Path: "/api/v3/projects/{projectId}/assets/images"}
 	OpCreateImageUpload          = Op{ID: "createImageUpload", Method: "POST", Path: "/api/v3/projects/{projectId}/assets/uploads"}
+	OpCreateLane                 = Op{ID: "createLane", Method: "POST", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/lanes"}
 	OpCreateManyResources        = Op{ID: "createManyResources", Method: "POST", Path: "/api/v3/projects/{projectId}/resources/batch"}
 	OpCreateProperty             = Op{ID: "createProperty", Method: "POST", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/properties"}
 	OpCreatePropertyRow          = Op{ID: "createPropertyRow", Method: "POST", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/properties/{propertyId}/rows"}
@@ -36,7 +40,11 @@ var (
 	OpDeleteBlockProperty        = Op{ID: "deleteBlockProperty", Method: "DELETE", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/blocks/{blockId}/properties/{propertyId}"}
 	OpDeleteBlockPropertyRow     = Op{ID: "deleteBlockPropertyRow", Method: "DELETE", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/blocks/{blockId}/properties/{propertyId}/rows/{rowId}"}
 	OpDeleteBlockRow             = Op{ID: "deleteBlockRow", Method: "DELETE", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/blocks/{blockId}/rows/{rowId}"}
+	OpDeleteCalendar             = Op{ID: "deleteCalendar", Method: "DELETE", Path: "/api/v3/projects/{projectId}/calendars/{calendarId}"}
 	OpDeleteDocument             = Op{ID: "deleteDocument", Method: "DELETE", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}"}
+	OpDeleteEvent                = Op{ID: "deleteEvent", Method: "DELETE", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/events/{eventId}"}
+	OpDeleteFeature              = Op{ID: "deleteFeature", Method: "DELETE", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/features/{featureId}"}
+	OpDeleteLane                 = Op{ID: "deleteLane", Method: "DELETE", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/lanes/{laneId}"}
 	OpDeleteProperty             = Op{ID: "deleteProperty", Method: "DELETE", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/properties/{propertyId}"}
 	OpDeletePropertyRow          = Op{ID: "deletePropertyRow", Method: "DELETE", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/properties/{propertyId}/rows/{rowId}"}
 	OpDeleteResource             = Op{ID: "deleteResource", Method: "DELETE", Path: "/api/v3/projects/{projectId}/resources/{resourceId}"}
@@ -45,6 +53,9 @@ var (
 	OpGetBlockProperty           = Op{ID: "getBlockProperty", Method: "GET", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/blocks/{blockId}/properties/{propertyId}"}
 	OpGetDocument                = Op{ID: "getDocument", Method: "GET", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}"}
 	OpGetDocumentBlocks          = Op{ID: "getDocumentBlocks", Method: "GET", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/blocks"}
+	OpGetEvent                   = Op{ID: "getEvent", Method: "GET", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/events/{eventId}"}
+	OpGetFeature                 = Op{ID: "getFeature", Method: "GET", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/features/{featureId}"}
+	OpGetLane                    = Op{ID: "getLane", Method: "GET", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/lanes/{laneId}"}
 	OpGetProject                 = Op{ID: "getProject", Method: "GET", Path: "/api/v3/projects/{projectId}"}
 	OpGetProperty                = Op{ID: "getProperty", Method: "GET", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/properties/{propertyId}"}
 	OpGetResource                = Op{ID: "getResource", Method: "GET", Path: "/api/v3/projects/{projectId}/resources/{resourceId}"}
@@ -53,12 +64,17 @@ var (
 	OpListBlockProperties        = Op{ID: "listBlockProperties", Method: "GET", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/blocks/{blockId}/properties"}
 	OpListBlockPropertyRows      = Op{ID: "listBlockPropertyRows", Method: "GET", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/blocks/{blockId}/properties/{propertyId}/rows"}
 	OpListBlockRows              = Op{ID: "listBlockRows", Method: "GET", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/blocks/{blockId}/rows"}
+	OpListCalendars              = Op{ID: "listCalendars", Method: "GET", Path: "/api/v3/projects/{projectId}/calendars"}
 	OpListDocuments              = Op{ID: "listDocuments", Method: "GET", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs"}
+	OpListEvents                 = Op{ID: "listEvents", Method: "GET", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/events"}
+	OpListFeatures               = Op{ID: "listFeatures", Method: "GET", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/features"}
+	OpListLanes                  = Op{ID: "listLanes", Method: "GET", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/lanes"}
 	OpListProjects               = Op{ID: "listProjects", Method: "GET", Path: "/api/v3/projects"}
 	OpListProperties             = Op{ID: "listProperties", Method: "GET", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/properties"}
 	OpListPropertyRows           = Op{ID: "listPropertyRows", Method: "GET", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/properties/{propertyId}/rows"}
 	OpListResources              = Op{ID: "listResources", Method: "GET", Path: "/api/v3/projects/{projectId}/resources"}
 	OpListTags                   = Op{ID: "listTags", Method: "GET", Path: "/api/v3/projects/{projectId}/tags"}
+	OpListTemplates              = Op{ID: "listTemplates", Method: "GET", Path: "/api/v3/projects/{projectId}/templates"}
 	OpMoveBlock                  = Op{ID: "moveBlock", Method: "POST", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/blocks/{blockId}/move"}
 	OpMoveResource               = Op{ID: "moveResource", Method: "POST", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/move"}
 	OpReplaceBlock               = Op{ID: "replaceBlock", Method: "PUT", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/blocks/{blockId}"}
@@ -72,7 +88,11 @@ var (
 	OpUpdateBlockProperty        = Op{ID: "updateBlockProperty", Method: "PATCH", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/blocks/{blockId}/properties/{propertyId}"}
 	OpUpdateBlockPropertyRow     = Op{ID: "updateBlockPropertyRow", Method: "PATCH", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/blocks/{blockId}/properties/{propertyId}/rows/{rowId}"}
 	OpUpdateBlockRow             = Op{ID: "updateBlockRow", Method: "PATCH", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/blocks/{blockId}/rows/{rowId}"}
+	OpUpdateCalendar             = Op{ID: "updateCalendar", Method: "PUT", Path: "/api/v3/projects/{projectId}/calendars/{calendarId}"}
 	OpUpdateDocument             = Op{ID: "updateDocument", Method: "PATCH", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}"}
+	OpUpdateEvent                = Op{ID: "updateEvent", Method: "PATCH", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/events/{eventId}"}
+	OpUpdateFeature              = Op{ID: "updateFeature", Method: "PATCH", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/features/{featureId}"}
+	OpUpdateLane                 = Op{ID: "updateLane", Method: "PATCH", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/lanes/{laneId}"}
 	OpUpdateProperty             = Op{ID: "updateProperty", Method: "PATCH", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/properties/{propertyId}"}
 	OpUpdatePropertyRow          = Op{ID: "updatePropertyRow", Method: "PATCH", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/properties/{propertyId}/rows/{rowId}"}
 	OpUpdateResource             = Op{ID: "updateResource", Method: "PATCH", Path: "/api/v3/projects/{projectId}/resources/{resourceId}"}
@@ -345,6 +365,253 @@ type BulletListBlockKind string
 const (
 	BulletListBlockKindBulletList BulletListBlockKind = "bulletList"
 )
+
+// Calendar A calendar specification with its `id` and `version`. The built-in calendars are
+// `gregorian`, `harptos`, `eberron`, `exandria`, `greyhawk`, `elder-scrolls`.
+type Calendar struct {
+	// Description Free text shown with the calendar.
+	Description opt.Optional[string] `json:"description,omitzero"`
+	// EpochWeekday Zero-based index into `weekdays` of the weekday of the epoch's first day. A value
+	// outside `weekdays` answers 400 VALIDATION_ERROR at `epochWeekday`.
+	EpochWeekday float64                      `json:"epochWeekday"`
+	Format       opt.Optional[CalendarFormat] `json:"format,omitzero"`
+	// HalfClock True renders times on a 12-hour clock with AM and PM when `hoursInDay` is even.
+	// Defaults to false.
+	HalfClock opt.Optional[bool] `json:"halfClock,omitzero"`
+	// HasZeroYear True when a year 0 exists. False makes year -1 directly precede year 1, as in the
+	// Gregorian calendar.
+	HasZeroYear bool `json:"hasZeroYear"`
+	// HoursInDay Hours in a day, 1 or more.
+	HoursInDay float64 `json:"hoursInDay"`
+	// ID The calendar id. A timeline document names its calendar by this id as `calendarId`.
+	ID string `json:"id"`
+	// LeapDays Leap days. May be empty.
+	LeapDays []CalendarLeapDay `json:"leapDays"`
+	// MaxMinutes The latest minute the calendar represents.
+	MaxMinutes float64 `json:"maxMinutes"`
+	// MinutesInHour Minutes in an hour, 1 or more.
+	MinutesInHour float64 `json:"minutesInHour"`
+	// Months The months of the year in order. At least one.
+	Months []CalendarMonth `json:"months"`
+	// Moons Moons. Absent or empty means none.
+	Moons opt.Optional[[]CalendarMoon] `json:"moons,omitzero"`
+	// Name Display name, 1 or more characters.
+	Name        string                            `json:"name"`
+	NegativeEra opt.Optional[CalendarNegativeEra] `json:"negativeEra,omitzero"`
+	// PositiveEras Forward eras in ascending `startsAt` order. At least one; the first usually starts
+	// at 0. Eras out of `startsAt` order answer 400 VALIDATION_ERROR at the field.
+	PositiveEras []CalendarEra `json:"positiveEras"`
+	// Version The calendar version, also sent as `ETag` by createCalendar and updateCalendar. Send it
+	// as `If-Match` to updateCalendar or deleteCalendar to fail with 412 instead of overwriting a
+	// change made since you read.
+	Version string `json:"version"`
+	// WeekResetsEachMonth True starts every month on the first weekday. False or absent lets weeks run
+	// on across month boundaries.
+	WeekResetsEachMonth opt.Optional[bool] `json:"weekResetsEachMonth,omitzero"`
+	// Weekdays The days of the week in order. At least one.
+	Weekdays []CalendarWeekday `json:"weekdays"`
+}
+
+// CalendarEra A forward era. Dates from `startsAt` until the next era's `startsAt` belong to it.
+type CalendarEra struct {
+	// Abbr Abbreviation rendered by the `E` format token, such as `CE` or `BCE`. Defaults to `AD`.
+	Abbr opt.Optional[string] `json:"abbr,omitzero"`
+	// HideAbbr Leaves the abbreviation out of formatted dates. Defaults to false.
+	HideAbbr opt.Optional[bool] `json:"hideAbbr,omitzero"`
+	// ID Stable id, unique among the calendar's eras.
+	ID string `json:"id"`
+	// Name Display name, such as `Common Era` or `Before Common Era`. Rendered by the `EE` format
+	// token.
+	Name string `json:"name"`
+	// ResetMode `none`: years keep counting from the calendar epoch. `year`: year numbering restarts
+	// at the era start, as regnal years do. `calendar`: year, month and day numbering all restart at
+	// the era start.
+	ResetMode CalendarEraResetMode `json:"resetMode"`
+	// StartsAt The minute the era begins, a whole number 0 or more. Each era must start later than the
+	// one before it.
+	StartsAt int64 `json:"startsAt"`
+}
+
+// CalendarEraResetMode `none`: years keep counting from the calendar epoch. `year`: year numbering
+// restarts at the era start, as regnal years do. `calendar`: year, month and day numbering all
+// restart at the era start.
+type CalendarEraResetMode string
+
+const (
+	CalendarEraResetModeYear     CalendarEraResetMode = "year"
+	CalendarEraResetModeCalendar CalendarEraResetMode = "calendar"
+	CalendarEraResetModeNone     CalendarEraResetMode = "none"
+)
+
+// CalendarFormat Templates for formatted dates, including `formattedStart` and `formattedEnd` on
+// events. Tokens: `YYYY` year, `E` era abbreviation, `EE` era name, `MMMM` month name, `MMM` month
+// abbreviation, `M` and `MM` month number, `D` and `DD` day number, `DDDD` weekday name, `DDD`
+// weekday abbreviation, `H` and `HH` hour, `m` and `mm` minute. `^` after a number adds an ordinal
+// suffix (`D^` renders `1st`). Text in square brackets is literal. Defaults to `{ id:
+// "american-verbose", year: "YYYY E", month: "MMMM YYYY E", day: "MMMM D^, YYYY E", time: "MMMM D^,
+// YYYY, HH:mm" }`.
+type CalendarFormat struct {
+	// Day Template for a date shown to the day, such as `MMMM D^, YYYY E`.
+	Day string `json:"day"`
+	// ID Name of the format preset, such as `american-verbose`.
+	ID string `json:"id"`
+	// Month Template for a date shown to the month, such as `MMMM YYYY E`.
+	Month string `json:"month"`
+	// Time Template for a date shown to the minute, such as `MMMM D^, YYYY E, HH:mm`.
+	Time string `json:"time"`
+	// Year Template for a date shown to the year, such as `YYYY E`.
+	Year string `json:"year"`
+}
+
+// CalendarLeapDay An extra day added to one month in the years its `interval` selects.
+type CalendarLeapDay struct {
+	// AddsWeekDay Stored with the leap day; the app writes false. Date arithmetic does not read it.
+	AddsWeekDay bool `json:"addsWeekDay"`
+	// Day Stored with the leap day; the app writes 1. Date arithmetic adds the leap day to the end of
+	// `month` and does not read this field.
+	Day float64 `json:"day"`
+	// ID Stable id, unique among the calendar's leap days.
+	ID string `json:"id"`
+	// Intercalary Stored with the leap day; the app writes false. Date arithmetic does not read it.
+	Intercalary bool `json:"intercalary"`
+	// Interval The years the leap day occurs in, as comma-separated terms. `4` is every fourth year; a
+	// `!` term removes years, so `400,!100,4` is the Gregorian rule (every fourth year, except every
+	// hundredth, except every four-hundredth). A term may carry its own offset as `4+1`. Any other
+	// string answers 400 VALIDATION_ERROR at `leapDays.N.interval`.
+	Interval string `json:"interval"`
+	// Month Zero-based index into `months` of the month the leap day lengthens by one day. A value
+	// outside `months` answers 400 VALIDATION_ERROR at the field.
+	Month float64 `json:"month"`
+	// Name Display name, such as `Leap Day`.
+	Name string `json:"name"`
+	// Offset Year offset applied to every term of `interval`. 0 aligns the cycle with year 0.
+	Offset float64 `json:"offset"`
+	// WeekDay Stored with the leap day; the app writes an empty string. Date arithmetic does not read
+	// it.
+	WeekDay string `json:"weekDay"`
+}
+
+type CalendarList struct {
+	Data []Calendar `json:"data"`
+	// HasMore True when more items exist beyond this page.
+	HasMore opt.Optional[bool] `json:"hasMore,omitzero"`
+	// NextCursor Cursor for the next page, or null.
+	NextCursor opt.Nullable[string] `json:"nextCursor,omitzero"`
+}
+
+// CalendarMonth A month. Months run in array order; a year is every month whose `interval` includes
+// that year, plus the leap days that fall in it.
+type CalendarMonth struct {
+	// ID Stable id, unique among the calendar's months.
+	ID string `json:"id"`
+	// Interval The month occurs every `interval` years: 1 is every year, 4 is every fourth year. A
+	// whole number, 1 or more. Any other value answers 400 VALIDATION_ERROR at the field.
+	Interval float64 `json:"interval"`
+	// IsIntercalary Marks a festival or gap period that sits between regular months. Date arithmetic
+	// counts an intercalary month like any other month.
+	IsIntercalary bool `json:"isIntercalary"`
+	// Length Days in the month, 1 or more.
+	Length float64 `json:"length"`
+	// Name Display name, 1 or more characters.
+	Name string `json:"name"`
+	// Offset Shifts which years a month with `interval` above 1 occurs in. Ignored when `interval` is
+	// 1.
+	Offset float64 `json:"offset"`
+}
+
+// CalendarMoon A moon whose phases the calendar view shows.
+type CalendarMoon struct {
+	// Color Display color as a hex code. Defaults to `#FFFFFF`.
+	Color opt.Optional[string] `json:"color,omitzero"`
+	// ID Stable id, unique among the calendar's moons.
+	ID string `json:"id"`
+	// Name Display name, 1 or more characters.
+	Name string `json:"name"`
+	// Phase Length of one full lunar cycle in minutes. May be fractional.
+	Phase float64 `json:"phase"`
+	// Shift Offset of the cycle in minutes. May be negative or fractional.
+	Shift float64 `json:"shift"`
+}
+
+// CalendarNegativeEra The era before the epoch. Absent, the calendar starts at the first forward
+// era.
+type CalendarNegativeEra struct {
+	// Abbr Abbreviation rendered by the `E` format token, such as `CE` or `BCE`. Defaults to `AD`.
+	Abbr opt.Optional[string] `json:"abbr,omitzero"`
+	// HideAbbr Leaves the abbreviation out of formatted dates. Defaults to false.
+	HideAbbr opt.Optional[bool] `json:"hideAbbr,omitzero"`
+	// ID Stable id, unique among the calendar's eras.
+	ID string `json:"id"`
+	// Name Display name, such as `Common Era` or `Before Common Era`. Rendered by the `EE` format
+	// token.
+	Name string `json:"name"`
+	// ResetMode Always `none`.
+	ResetMode CalendarNegativeEraResetMode `json:"resetMode"`
+	// StartsAt The earliest minute the calendar represents, a negative whole number. Dates from here
+	// to minute -1 belong to this era and count their years backwards.
+	StartsAt int64 `json:"startsAt"`
+}
+
+// CalendarNegativeEraResetMode Always `none`.
+type CalendarNegativeEraResetMode string
+
+const (
+	CalendarNegativeEraResetModeNone CalendarNegativeEraResetMode = "none"
+)
+
+// CalendarSpec A calendar specification: the months, weekdays, leap days, eras, moons, clock and
+// date formats that timelines render dates in. Event times are stored as minutes from the epoch, so
+// a calendar change re-renders existing events without moving them. Unknown fields answer 400
+// VALIDATION_ERROR.
+type CalendarSpec struct {
+	// Description Free text shown with the calendar.
+	Description opt.Optional[string] `json:"description,omitzero"`
+	// EpochWeekday Zero-based index into `weekdays` of the weekday of the epoch's first day. A value
+	// outside `weekdays` answers 400 VALIDATION_ERROR at `epochWeekday`.
+	EpochWeekday float64                      `json:"epochWeekday"`
+	Format       opt.Optional[CalendarFormat] `json:"format,omitzero"`
+	// HalfClock True renders times on a 12-hour clock with AM and PM when `hoursInDay` is even.
+	// Defaults to false.
+	HalfClock opt.Optional[bool] `json:"halfClock,omitzero"`
+	// HasZeroYear True when a year 0 exists. False makes year -1 directly precede year 1, as in the
+	// Gregorian calendar.
+	HasZeroYear bool `json:"hasZeroYear"`
+	// HoursInDay Hours in a day, 1 or more.
+	HoursInDay float64 `json:"hoursInDay"`
+	// ID The calendar id, 1–100 characters. On createCalendar it is optional and minted when absent;
+	// an id already in the project or equal to a built-in id answers 409 DUPLICATE_ID. On
+	// updateCalendar it is optional and must equal the path id.
+	ID opt.Optional[string] `json:"id,omitzero"`
+	// LeapDays Leap days. May be empty.
+	LeapDays []CalendarLeapDay `json:"leapDays"`
+	// MaxMinutes The latest minute the calendar represents.
+	MaxMinutes float64 `json:"maxMinutes"`
+	// MinutesInHour Minutes in an hour, 1 or more.
+	MinutesInHour float64 `json:"minutesInHour"`
+	// Months The months of the year in order. At least one.
+	Months []CalendarMonth `json:"months"`
+	// Moons Moons. Absent or empty means none.
+	Moons opt.Optional[[]CalendarMoon] `json:"moons,omitzero"`
+	// Name Display name, 1 or more characters.
+	Name        string                            `json:"name"`
+	NegativeEra opt.Optional[CalendarNegativeEra] `json:"negativeEra,omitzero"`
+	// PositiveEras Forward eras in ascending `startsAt` order. At least one; the first usually starts
+	// at 0. Eras out of `startsAt` order answer 400 VALIDATION_ERROR at the field.
+	PositiveEras []CalendarEra `json:"positiveEras"`
+	// WeekResetsEachMonth True starts every month on the first weekday. False or absent lets weeks run
+	// on across month boundaries.
+	WeekResetsEachMonth opt.Optional[bool] `json:"weekResetsEachMonth,omitzero"`
+	// Weekdays The days of the week in order. At least one.
+	Weekdays []CalendarWeekday `json:"weekdays"`
+}
+
+// CalendarWeekday A day of the week. Days cycle through `weekdays` in array order.
+type CalendarWeekday struct {
+	// ID Stable id, unique among the calendar's weekdays.
+	ID string `json:"id"`
+	// Name Display name, such as `Finnsday`.
+	Name string `json:"name"`
+}
 
 type CalloutBlock struct {
 	Children []Block `json:"children"`
@@ -625,6 +892,186 @@ type ErrorErrorsItem struct {
 	Path    string `json:"path"`
 }
 
+type Event struct {
+	// Color Fill color of the event on the timeline and the calendar, usually `#RRGGBB`. Ignored while
+	// the event's lane sets `style.color`. Absent, `#0079CC`.
+	Color opt.Optional[string] `json:"color,omitzero"`
+	// Detail The precision of the dates: 1=year 2=month 3=day 4=time. Absent means day.
+	Detail  opt.Optional[float64]      `json:"detail,omitzero"`
+	End     opt.Optional[float64]      `json:"end,omitzero"`
+	EndDate opt.Optional[EventEndDate] `json:"endDate,omitzero"`
+	// FormattedEnd The end date as the app displays it, when the event has an end.
+	FormattedEnd opt.Optional[string] `json:"formattedEnd,omitzero"`
+	// FormattedStart The start date as the app displays it in the document's calendar, at `detail`.
+	FormattedStart opt.Optional[string] `json:"formattedStart,omitzero"`
+	IconGlyph      opt.Optional[string] `json:"iconGlyph,omitzero"`
+	ID             string               `json:"id"`
+	ImageURL       opt.Optional[string] `json:"imageUrl,omitzero"`
+	IsHidden       opt.Optional[bool]   `json:"isHidden,omitzero"`
+	LaneID         string               `json:"laneId"`
+	Name           opt.Optional[string] `json:"name,omitzero"`
+	// Rank Fractional index for ordering within a lane
+	Rank           opt.Optional[string] `json:"rank,omitzero"`
+	ShowOnCalendar opt.Optional[bool]   `json:"showOnCalendar,omitzero"`
+	// Start Start date in minutes
+	Start     float64   `json:"start"`
+	StartDate EventDate `json:"startDate"`
+	Type      EventType `json:"type"`
+	// URI Link to a resource or document in this project: `lk://resources/<resourceId>`,
+	// `lk://documents/<documentId>` or `lk://resources/<resourceId>/docs/<documentId>`.
+	URI opt.Optional[string] `json:"uri,omitzero"`
+}
+
+type EventCreateParams struct {
+	// Color Fill color of the event on the timeline and the calendar, as `#RRGGBB`. Ignored while the
+	// event's lane sets `style.color`. Absent, `#0079CC`.
+	Color opt.Optional[string] `json:"color,omitzero"`
+	// Detail 1=year 2=month 3=day 4=time
+	Detail opt.Optional[float64] `json:"detail,omitzero"`
+	End    opt.Optional[float64] `json:"end,omitzero"`
+	// FormattedEnd Human date, fuzzy-parsed with the document calendar and converted to `end`.
+	FormattedEnd opt.Optional[string] `json:"formattedEnd,omitzero"`
+	// FormattedStart Human date, fuzzy-parsed with the document calendar and converted to `start` and
+	// `detail`.
+	FormattedStart opt.Optional[string] `json:"formattedStart,omitzero"`
+	IconGlyph      opt.Optional[string] `json:"iconGlyph,omitzero"`
+	// ID Optional client-chosen id: a lowercase letter followed by 7 or 23 lowercase letters or digits
+	// (a cuid2 id of 8 or 24 characters). See Identifiers.
+	ID opt.Optional[string] `json:"id,omitzero"`
+	// ImageURL Event image URL. The URL is the `url` of an image asset of this project (upload with
+	// createImageUpload and createImageAsset). Any other URL, including an image asset of another
+	// project, answers 400 VALIDATION_ERROR naming the field, unless the same document, resource or
+	// board already holds that URL in an image field. A `data:` or `blob:` URI answers 400
+	// VALIDATION_ERROR naming the field: documents hold no inline image data. Upload the image
+	// (createImageUpload, createImageAsset) and reference its URL.
+	ImageURL opt.Optional[string] `json:"imageUrl,omitzero"`
+	IsHidden opt.Optional[bool]   `json:"isHidden,omitzero"`
+	// LaneID ID of the lane this event belongs to
+	LaneID         string               `json:"laneId"`
+	Name           opt.Optional[string] `json:"name,omitzero"`
+	ShowOnCalendar opt.Optional[bool]   `json:"showOnCalendar,omitzero"`
+	// Start Start in minutes. Required unless formattedStart is set.
+	Start opt.Optional[float64] `json:"start,omitzero"`
+	// Type "event" (point/range) or "note" (annotation)
+	Type EventCreateParamsType `json:"type"`
+	// URI Link to a resource or document in this project. Accepted forms:
+	// `lk://resources/<resourceId>`, `lk://documents/<documentId>` or
+	// `lk://resources/<resourceId>/docs/<documentId>`; no other scheme is accepted. The target must be
+	// in the same project, must not be deleted, and must be readable by the caller: a target that
+	// answers 404 to the caller on GET cannot be linked. A legacy `docs` link names a document of that
+	// resource. Any other value answers 400 VALIDATION_ERROR at `uri`. A target created in the app can
+	// take a few seconds to become linkable while the server indexes it. An empty string clears the
+	// link.
+	URI opt.Optional[string] `json:"uri,omitzero"`
+}
+
+// EventCreateParamsType "event" (point/range) or "note" (annotation)
+type EventCreateParamsType string
+
+const (
+	EventCreateParamsTypeEvent EventCreateParamsType = "event"
+	EventCreateParamsTypeNote  EventCreateParamsType = "note"
+)
+
+// EventDate The start date resolved in the document's calendar.
+type EventDate struct {
+	// Day The day of the month, 1 for the first day.
+	Day  int64        `json:"day"`
+	Era  EventDateEra `json:"era"`
+	Hour int64        `json:"hour"`
+	// Iso Present only when the document uses the Gregorian calendar (`gregorian`). An ISO 8601
+	// calendar date cut to `detail`: `YYYY`, `YYYY-MM`, `YYYY-MM-DD` or `YYYY-MM-DDTHH:mm`, with no
+	// time zone. Years before 1 CE use astronomical numbering, so 1 BCE is `0000` and 44 BCE is
+	// `-0043`.
+	Iso    opt.Optional[string] `json:"iso,omitzero"`
+	Minute int64                `json:"minute"`
+	// Month The month number within the year, 1 for the first month of the calendar.
+	Month     int64  `json:"month"`
+	MonthName string `json:"monthName"`
+	// Year The year counted within `era`, as the app displays it; always 0 or more. A date before the
+	// first positive era is counted backwards in the negative era (44 with era BCE is 44 BCE).
+	Year int64 `json:"year"`
+}
+
+// EventDateEra The era a date falls in, as defined by the calendar.
+type EventDateEra struct {
+	Abbr string `json:"abbr"`
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
+type EventEndDate struct {
+	// Day The day of the month, 1 for the first day.
+	Day  int64        `json:"day"`
+	Era  EventDateEra `json:"era"`
+	Hour int64        `json:"hour"`
+	// Iso Present only when the document uses the Gregorian calendar (`gregorian`). An ISO 8601
+	// calendar date cut to `detail`: `YYYY`, `YYYY-MM`, `YYYY-MM-DD` or `YYYY-MM-DDTHH:mm`, with no
+	// time zone. Years before 1 CE use astronomical numbering, so 1 BCE is `0000` and 44 BCE is
+	// `-0043`.
+	Iso    opt.Optional[string] `json:"iso,omitzero"`
+	Minute int64                `json:"minute"`
+	// Month The month number within the year, 1 for the first month of the calendar.
+	Month     int64  `json:"month"`
+	MonthName string `json:"monthName"`
+	// Year The year counted within `era`, as the app displays it; always 0 or more. A date before the
+	// first positive era is counted backwards in the negative era (44 with era BCE is 44 BCE).
+	Year int64 `json:"year"`
+}
+
+type EventList struct {
+	Data []Event `json:"data"`
+	// HasMore True when more items exist beyond this page.
+	HasMore opt.Optional[bool] `json:"hasMore,omitzero"`
+	// NextCursor Cursor for the next page, or null.
+	NextCursor opt.Nullable[string] `json:"nextCursor,omitzero"`
+}
+
+type EventType string
+
+const (
+	EventTypeEvent                EventType = "event"
+	EventTypeNote                 EventType = "note"
+	EventTypePlaceholder          EventType = "placeholder"
+	EventTypeInvisiblePlaceholder EventType = "invisible-placeholder"
+)
+
+type EventUpdateParams struct {
+	// Color Fill color of the event on the timeline and the calendar, as `#RRGGBB`. Ignored while the
+	// event's lane sets `style.color`. Absent, `#0079CC`.
+	Color  opt.Optional[string]  `json:"color,omitzero"`
+	Detail opt.Optional[float64] `json:"detail,omitzero"`
+	End    opt.Optional[float64] `json:"end,omitzero"`
+	// FormattedEnd Human date, fuzzy-parsed with the document calendar and converted to `end`.
+	FormattedEnd opt.Optional[string] `json:"formattedEnd,omitzero"`
+	// FormattedStart Human date, fuzzy-parsed with the document calendar and converted to `start` and
+	// `detail`.
+	FormattedStart opt.Optional[string] `json:"formattedStart,omitzero"`
+	IconGlyph      opt.Optional[string] `json:"iconGlyph,omitzero"`
+	// ImageURL Event image URL. The URL is the `url` of an image asset of this project (upload with
+	// createImageUpload and createImageAsset). Any other URL, including an image asset of another
+	// project, answers 400 VALIDATION_ERROR naming the field, unless the same document, resource or
+	// board already holds that URL in an image field. A `data:` or `blob:` URI answers 400
+	// VALIDATION_ERROR naming the field: documents hold no inline image data. Upload the image
+	// (createImageUpload, createImageAsset) and reference its URL.
+	ImageURL opt.Optional[string] `json:"imageUrl,omitzero"`
+	IsHidden opt.Optional[bool]   `json:"isHidden,omitzero"`
+	// LaneID Move event to a different lane
+	LaneID         opt.Optional[string]  `json:"laneId,omitzero"`
+	Name           opt.Optional[string]  `json:"name,omitzero"`
+	ShowOnCalendar opt.Optional[bool]    `json:"showOnCalendar,omitzero"`
+	Start          opt.Optional[float64] `json:"start,omitzero"`
+	// URI Link to a resource or document in this project. Accepted forms:
+	// `lk://resources/<resourceId>`, `lk://documents/<documentId>` or
+	// `lk://resources/<resourceId>/docs/<documentId>`; no other scheme is accepted. The target must be
+	// in the same project, must not be deleted, and must be readable by the caller: a target that
+	// answers 404 to the caller on GET cannot be linked. A legacy `docs` link names a document of that
+	// resource. Any other value answers 400 VALIDATION_ERROR at `uri`. A target created in the app can
+	// take a few seconds to become linkable while the server indexes it. An empty string clears the
+	// link. Omitting `uri` leaves the stored link unchanged.
+	URI opt.Optional[string] `json:"uri,omitzero"`
+}
+
 type ExpandBlock struct {
 	Children []Block              `json:"children"`
 	ID       opt.Optional[string] `json:"id,omitzero"`
@@ -636,6 +1083,514 @@ type ExpandBlockKind string
 
 const (
 	ExpandBlockKindExpand ExpandBlockKind = "expand"
+)
+
+// Feature A feature of a map document. A pin carries its icon in `iconGlyph`, `iconColor`,
+// `iconShape` and `iconSize`. `iconSize` is absent when `iconShape` is `none`, and both are absent
+// when no shape is stored; the app then draws a medium `pin`. A shape stored by the app in an older
+// format reads as the app draws it: a glyph-only shape reads as `none`, and any other shape outside
+// these values reads as `pin` and `medium`.
+type Feature struct {
+	BorderStyle opt.Optional[FeatureBorderStyle] `json:"borderStyle,omitzero"`
+	// Color For a `region`: fill and border color. For a `path`: line color. Usually `#RRGGBB`.
+	// Absent, the app draws `#3B82F6`.
+	Color       opt.Optional[string]           `json:"color,omitzero"`
+	FillOpacity opt.Optional[float64]          `json:"fillOpacity,omitzero"`
+	FillStyle   opt.Optional[FeatureFillStyle] `json:"fillStyle,omitzero"`
+	// IconColor For a `pin`: fill color of the pin shape, usually `#RRGGBB`. Absent, the pin is drawn
+	// `#A7A7A7`.
+	IconColor opt.Optional[string] `json:"iconColor,omitzero"`
+	IconGlyph opt.Optional[string] `json:"iconGlyph,omitzero"`
+	// IconShape The shape drawn behind the glyph on a map pin, or `none` for the glyph alone.
+	IconShape opt.Optional[FeatureIconShape] `json:"iconShape,omitzero"`
+	// IconSize The size of the pin shape. Absent when `iconShape` is `none`.
+	IconSize opt.Optional[FeatureIconSize] `json:"iconSize,omitzero"`
+	ID       string                        `json:"id"`
+	IsHidden opt.Optional[bool]            `json:"isHidden,omitzero"`
+	// LabelSize Size of the name text. Written as `xs` to `3xl`; features drawn in the app may hold
+	// `small`, `medium` or `large`.
+	LabelSize       opt.Optional[string]                 `json:"labelSize,omitzero"`
+	LabelVisibility opt.Optional[FeatureLabelVisibility] `json:"labelVisibility,omitzero"`
+	Name            opt.Optional[string]                 `json:"name,omitzero"`
+	ParentID        opt.Optional[string]                 `json:"parentId,omitzero"`
+	PinImage        opt.Optional[FeatureImage]           `json:"pinImage,omitzero"`
+	Polygon         opt.Optional[[][]json.RawMessage]    `json:"polygon,omitzero"`
+	Polygons        opt.Optional[[][][]json.RawMessage]  `json:"polygons,omitzero"`
+	Polyline        opt.Optional[[][]json.RawMessage]    `json:"polyline,omitzero"`
+	// Pos [lat, lng] coordinate
+	Pos opt.Optional[[]json.RawMessage] `json:"pos,omitzero"`
+	// Rank Fractional index ordering the feature among its siblings under `parentId`.
+	Rank          opt.Optional[string]             `json:"rank,omitzero"`
+	StrokeOpacity opt.Optional[float64]            `json:"strokeOpacity,omitzero"`
+	StrokeStyle   opt.Optional[FeatureStrokeStyle] `json:"strokeStyle,omitzero"`
+	StrokeWidth   opt.Optional[float64]            `json:"strokeWidth,omitzero"`
+	// TextColor Color of the name text of a `label`, `region` or `path`, usually `#RRGGBB`. Absent,
+	// `#FFFFFF`.
+	TextColor opt.Optional[string] `json:"textColor,omitzero"`
+	// TextEffect How `textEffectColor` is drawn behind the name text of a `label`, `region` or `path`:
+	// `outline` draws a 3-pixel outline around the letters, `background` draws a box behind the text
+	// at 50% opacity. Not accepted on other types. Absent, `outline`.
+	TextEffect opt.Optional[FeatureTextEffect] `json:"textEffect,omitzero"`
+	// TextEffectColor Color of the outline or background box set by `textEffect`, usually `#RRGGBB`.
+	// Absent, `#000000`.
+	TextEffectColor opt.Optional[string]      `json:"textEffectColor,omitzero"`
+	Type            opt.Optional[FeatureType] `json:"type,omitzero"`
+	// UpdatedAt ISO 8601 date-time in UTC, ending in `Z`.
+	UpdatedAt opt.Optional[time.Time] `json:"updatedAt,omitzero"`
+	// URI Link to a resource or document in this project: `lk://resources/<resourceId>`,
+	// `lk://documents/<documentId>` or `lk://resources/<resourceId>/docs/<documentId>`.
+	URI opt.Optional[string] `json:"uri,omitzero"`
+}
+
+type FeatureBorderStyle string
+
+const (
+	FeatureBorderStyleSolid  FeatureBorderStyle = "solid"
+	FeatureBorderStyleDashed FeatureBorderStyle = "dashed"
+	FeatureBorderStyleDotted FeatureBorderStyle = "dotted"
+	FeatureBorderStyleNone   FeatureBorderStyle = "none"
+)
+
+// FeatureCreateParams A color field sent on a feature type it does not apply to answers 400
+// VALIDATION_ERROR.
+type FeatureCreateParams struct {
+	// BorderStyle Border line style (for regions)
+	BorderStyle opt.Optional[FeatureCreateParamsBorderStyle] `json:"borderStyle,omitzero"`
+	// Color For a `region`: fill and border color. For a `path`: line color. `#RRGGBB`. Not accepted
+	// on other types. Absent, the app draws `#3B82F6`.
+	Color opt.Optional[string] `json:"color,omitzero"`
+	// FillOpacity Fill opacity (for regions)
+	FillOpacity opt.Optional[float64] `json:"fillOpacity,omitzero"`
+	// FillStyle Fill style (for regions)
+	FillStyle opt.Optional[FeatureCreateParamsFillStyle] `json:"fillStyle,omitzero"`
+	// IconColor For a `pin`: fill color of the pin shape, as `#RRGGBB`; the glyph is drawn black or
+	// white for contrast. No effect when `iconShape` is `none` or the pin has a `pinImage`. A pin with
+	// `isSynced` and a `uri` draws the linked resource's `iconColor` instead. Not accepted on other
+	// types. Absent, the pin is drawn `#A7A7A7`.
+	IconColor opt.Optional[string] `json:"iconColor,omitzero"`
+	// IconGlyph For a `pin`: a FontAwesome icon name.
+	IconGlyph opt.Optional[string] `json:"iconGlyph,omitzero"`
+	// IconShape The shape drawn behind the glyph on a map pin: `pin`, `diamond`, `flag`, `marker`,
+	// `shield`, `circle`, `banner` or `arch`, or `none` for the glyph alone. Any other value answers
+	// 400 VALIDATION_ERROR at the field. Sent without `iconSize`, the stored `iconSize` is kept, or
+	// `medium` when none is stored.
+	IconShape opt.Optional[FeatureCreateParamsIconShape] `json:"iconShape,omitzero"`
+	// IconSize The size of the pin shape: `medium` or `small`. Ignored when `iconShape` is `none`. Any
+	// other value answers 400 VALIDATION_ERROR at the field. Sent without `iconShape`, the stored
+	// `iconShape` is kept, or `pin` when none is stored.
+	IconSize opt.Optional[FeatureCreateParamsIconSize] `json:"iconSize,omitzero"`
+	// ID Optional client-chosen id: a lowercase letter followed by 7 or 23 lowercase letters or digits
+	// (a cuid2 id of 8 or 24 characters). See Identifiers.
+	ID              opt.Optional[string]                             `json:"id,omitzero"`
+	IsHidden        opt.Optional[bool]                               `json:"isHidden,omitzero"`
+	LabelSize       opt.Optional[FeatureCreateParamsLabelSize]       `json:"labelSize,omitzero"`
+	LabelVisibility opt.Optional[FeatureCreateParamsLabelVisibility] `json:"labelVisibility,omitzero"`
+	Name            opt.Optional[string]                             `json:"name,omitzero"`
+	// ParentID Parent feature ID for hierarchy (null = root). Nests the feature under a folder.
+	ParentID opt.Optional[string]       `json:"parentId,omitzero"`
+	PinImage opt.Optional[FeatureImage] `json:"pinImage,omitzero"`
+	// Polygon Polygon vertices (for regions)
+	Polygon opt.Optional[[][]json.RawMessage] `json:"polygon,omitzero"`
+	// Polygons Several polygons of vertices (for regions)
+	Polygons opt.Optional[[][][]json.RawMessage] `json:"polygons,omitzero"`
+	// Polyline Polyline vertices (for paths)
+	Polyline opt.Optional[[][]json.RawMessage] `json:"polyline,omitzero"`
+	// Pos Position as [lat, lng] coordinate. Optional for folders.
+	Pos opt.Optional[[]json.RawMessage] `json:"pos,omitzero"`
+	// Rank Fractional index for ordering within the parent (e.g. "a0")
+	Rank opt.Optional[string] `json:"rank,omitzero"`
+	// StrokeOpacity Line opacity (for paths)
+	StrokeOpacity opt.Optional[float64] `json:"strokeOpacity,omitzero"`
+	// StrokeStyle Line style (for paths)
+	StrokeStyle opt.Optional[FeatureCreateParamsStrokeStyle] `json:"strokeStyle,omitzero"`
+	// StrokeWidth Line width (for paths)
+	StrokeWidth opt.Optional[float64] `json:"strokeWidth,omitzero"`
+	// TextColor Color of the feature's name text: the text of a `label`, or the name label drawn on a
+	// `region` or `path`. `#RRGGBB`. Not accepted on other types. Absent, the text is drawn `#FFFFFF`.
+	TextColor opt.Optional[string] `json:"textColor,omitzero"`
+	// TextEffect How `textEffectColor` is drawn behind the name text of a `label`, `region` or `path`:
+	// `outline` draws a 3-pixel outline around the letters, `background` draws a box behind the text
+	// at 50% opacity. Not accepted on other types. Absent, `outline`.
+	TextEffect opt.Optional[FeatureCreateParamsTextEffect] `json:"textEffect,omitzero"`
+	// TextEffectColor Color of the outline or background box set by `textEffect`, as `#RRGGBB`. Not
+	// accepted on other types. Absent, `#000000`.
+	TextEffectColor opt.Optional[string] `json:"textEffectColor,omitzero"`
+	// Type Feature type
+	Type opt.Optional[FeatureCreateParamsType] `json:"type,omitzero"`
+	// URI Link to a resource or document in this project. Accepted forms:
+	// `lk://resources/<resourceId>`, `lk://documents/<documentId>` or
+	// `lk://resources/<resourceId>/docs/<documentId>`; no other scheme is accepted. The target must be
+	// in the same project, must not be deleted, and must be readable by the caller: a target that
+	// answers 404 to the caller on GET cannot be linked. A legacy `docs` link names a document of that
+	// resource. Any other value answers 400 VALIDATION_ERROR at `uri`. A target created in the app can
+	// take a few seconds to become linkable while the server indexes it. An empty string clears the
+	// link.
+	URI opt.Optional[string] `json:"uri,omitzero"`
+	// VisibilityRange Zoom range [min, max] as 0-1
+	VisibilityRange opt.Optional[[]json.RawMessage] `json:"visibilityRange,omitzero"`
+}
+
+// FeatureCreateParamsBorderStyle Border line style (for regions)
+type FeatureCreateParamsBorderStyle string
+
+const (
+	FeatureCreateParamsBorderStyleSolid  FeatureCreateParamsBorderStyle = "solid"
+	FeatureCreateParamsBorderStyleDashed FeatureCreateParamsBorderStyle = "dashed"
+	FeatureCreateParamsBorderStyleDotted FeatureCreateParamsBorderStyle = "dotted"
+	FeatureCreateParamsBorderStyleNone   FeatureCreateParamsBorderStyle = "none"
+)
+
+// FeatureCreateParamsFillStyle Fill style (for regions)
+type FeatureCreateParamsFillStyle string
+
+const (
+	FeatureCreateParamsFillStyleSolid   FeatureCreateParamsFillStyle = "solid"
+	FeatureCreateParamsFillStyleStriped FeatureCreateParamsFillStyle = "striped"
+	FeatureCreateParamsFillStyleDotted  FeatureCreateParamsFillStyle = "dotted"
+	FeatureCreateParamsFillStyleNone    FeatureCreateParamsFillStyle = "none"
+)
+
+// FeatureCreateParamsIconShape The shape drawn behind the glyph on a map pin: `pin`, `diamond`,
+// `flag`, `marker`, `shield`, `circle`, `banner` or `arch`, or `none` for the glyph alone. Any
+// other value answers 400 VALIDATION_ERROR at the field. Sent without `iconSize`, the stored
+// `iconSize` is kept, or `medium` when none is stored.
+type FeatureCreateParamsIconShape string
+
+const (
+	FeatureCreateParamsIconShapePin     FeatureCreateParamsIconShape = "pin"
+	FeatureCreateParamsIconShapeDiamond FeatureCreateParamsIconShape = "diamond"
+	FeatureCreateParamsIconShapeFlag    FeatureCreateParamsIconShape = "flag"
+	FeatureCreateParamsIconShapeMarker  FeatureCreateParamsIconShape = "marker"
+	FeatureCreateParamsIconShapeShield  FeatureCreateParamsIconShape = "shield"
+	FeatureCreateParamsIconShapeCircle  FeatureCreateParamsIconShape = "circle"
+	FeatureCreateParamsIconShapeBanner  FeatureCreateParamsIconShape = "banner"
+	FeatureCreateParamsIconShapeArch    FeatureCreateParamsIconShape = "arch"
+	FeatureCreateParamsIconShapeNone    FeatureCreateParamsIconShape = "none"
+)
+
+// FeatureCreateParamsIconSize The size of the pin shape: `medium` or `small`. Ignored when
+// `iconShape` is `none`. Any other value answers 400 VALIDATION_ERROR at the field. Sent without
+// `iconShape`, the stored `iconShape` is kept, or `pin` when none is stored.
+type FeatureCreateParamsIconSize string
+
+const (
+	FeatureCreateParamsIconSizeMedium FeatureCreateParamsIconSize = "medium"
+	FeatureCreateParamsIconSizeSmall  FeatureCreateParamsIconSize = "small"
+)
+
+type FeatureCreateParamsLabelSize string
+
+const (
+	FeatureCreateParamsLabelSizeXs   FeatureCreateParamsLabelSize = "xs"
+	FeatureCreateParamsLabelSizeSm   FeatureCreateParamsLabelSize = "sm"
+	FeatureCreateParamsLabelSizeMd   FeatureCreateParamsLabelSize = "md"
+	FeatureCreateParamsLabelSizeLg   FeatureCreateParamsLabelSize = "lg"
+	FeatureCreateParamsLabelSizeXl   FeatureCreateParamsLabelSize = "xl"
+	FeatureCreateParamsLabelSizeV2xl FeatureCreateParamsLabelSize = "2xl"
+	FeatureCreateParamsLabelSizeV3xl FeatureCreateParamsLabelSize = "3xl"
+)
+
+type FeatureCreateParamsLabelVisibility string
+
+const (
+	FeatureCreateParamsLabelVisibilityAlways FeatureCreateParamsLabelVisibility = "always"
+	FeatureCreateParamsLabelVisibilityHover  FeatureCreateParamsLabelVisibility = "hover"
+	FeatureCreateParamsLabelVisibilityNever  FeatureCreateParamsLabelVisibility = "never"
+)
+
+// FeatureCreateParamsStrokeStyle Line style (for paths)
+type FeatureCreateParamsStrokeStyle string
+
+const (
+	FeatureCreateParamsStrokeStyleSolid  FeatureCreateParamsStrokeStyle = "solid"
+	FeatureCreateParamsStrokeStyleDashed FeatureCreateParamsStrokeStyle = "dashed"
+	FeatureCreateParamsStrokeStyleDotted FeatureCreateParamsStrokeStyle = "dotted"
+	FeatureCreateParamsStrokeStyleNone   FeatureCreateParamsStrokeStyle = "none"
+)
+
+// FeatureCreateParamsTextEffect How `textEffectColor` is drawn behind the name text of a `label`,
+// `region` or `path`: `outline` draws a 3-pixel outline around the letters, `background` draws a
+// box behind the text at 50% opacity. Not accepted on other types. Absent, `outline`.
+type FeatureCreateParamsTextEffect string
+
+const (
+	FeatureCreateParamsTextEffectOutline    FeatureCreateParamsTextEffect = "outline"
+	FeatureCreateParamsTextEffectBackground FeatureCreateParamsTextEffect = "background"
+)
+
+// FeatureCreateParamsType Feature type
+type FeatureCreateParamsType string
+
+const (
+	FeatureCreateParamsTypePin    FeatureCreateParamsType = "pin"
+	FeatureCreateParamsTypeLabel  FeatureCreateParamsType = "label"
+	FeatureCreateParamsTypeRegion FeatureCreateParamsType = "region"
+	FeatureCreateParamsTypePath   FeatureCreateParamsType = "path"
+	FeatureCreateParamsTypeFolder FeatureCreateParamsType = "folder"
+)
+
+type FeatureFillStyle string
+
+const (
+	FeatureFillStyleSolid   FeatureFillStyle = "solid"
+	FeatureFillStyleStriped FeatureFillStyle = "striped"
+	FeatureFillStyleDotted  FeatureFillStyle = "dotted"
+	FeatureFillStyleNone    FeatureFillStyle = "none"
+)
+
+// FeatureIconShape The shape drawn behind the glyph on a map pin, or `none` for the glyph alone.
+type FeatureIconShape string
+
+const (
+	FeatureIconShapePin     FeatureIconShape = "pin"
+	FeatureIconShapeDiamond FeatureIconShape = "diamond"
+	FeatureIconShapeFlag    FeatureIconShape = "flag"
+	FeatureIconShapeMarker  FeatureIconShape = "marker"
+	FeatureIconShapeShield  FeatureIconShape = "shield"
+	FeatureIconShapeCircle  FeatureIconShape = "circle"
+	FeatureIconShapeBanner  FeatureIconShape = "banner"
+	FeatureIconShapeArch    FeatureIconShape = "arch"
+	FeatureIconShapeNone    FeatureIconShape = "none"
+)
+
+// FeatureIconSize The size of the pin shape. Absent when `iconShape` is `none`.
+type FeatureIconSize string
+
+const (
+	FeatureIconSizeMedium FeatureIconSize = "medium"
+	FeatureIconSizeSmall  FeatureIconSize = "small"
+)
+
+type FeatureImage struct {
+	Height float64 `json:"height"`
+	// URL Image URL. The URL is the `url` of an image asset of this project (upload with
+	// createImageUpload and createImageAsset). Any other URL, including an image asset of another
+	// project, answers 400 VALIDATION_ERROR naming the field, unless the same document, resource or
+	// board already holds that URL in an image field. A `data:` or `blob:` URI answers 400
+	// VALIDATION_ERROR naming the field: documents hold no inline image data. Upload the image
+	// (createImageUpload, createImageAsset) and reference its URL.
+	URL   string  `json:"url"`
+	Width float64 `json:"width"`
+}
+
+type FeatureLabelVisibility string
+
+const (
+	FeatureLabelVisibilityAlways FeatureLabelVisibility = "always"
+	FeatureLabelVisibilityHover  FeatureLabelVisibility = "hover"
+	FeatureLabelVisibilityNever  FeatureLabelVisibility = "never"
+)
+
+type FeatureList struct {
+	Data []Feature `json:"data"`
+	// HasMore True when more items exist beyond this page.
+	HasMore opt.Optional[bool] `json:"hasMore,omitzero"`
+	// NextCursor Cursor for the next page, or null.
+	NextCursor opt.Nullable[string] `json:"nextCursor,omitzero"`
+}
+
+type FeatureStrokeStyle string
+
+const (
+	FeatureStrokeStyleSolid  FeatureStrokeStyle = "solid"
+	FeatureStrokeStyleDashed FeatureStrokeStyle = "dashed"
+	FeatureStrokeStyleDotted FeatureStrokeStyle = "dotted"
+	FeatureStrokeStyleNone   FeatureStrokeStyle = "none"
+)
+
+// FeatureTextEffect How `textEffectColor` is drawn behind the name text of a `label`, `region` or
+// `path`: `outline` draws a 3-pixel outline around the letters, `background` draws a box behind the
+// text at 50% opacity. Not accepted on other types. Absent, `outline`.
+type FeatureTextEffect string
+
+const (
+	FeatureTextEffectOutline    FeatureTextEffect = "outline"
+	FeatureTextEffectBackground FeatureTextEffect = "background"
+)
+
+type FeatureType string
+
+const (
+	FeatureTypePin    FeatureType = "pin"
+	FeatureTypeLabel  FeatureType = "label"
+	FeatureTypeRegion FeatureType = "region"
+	FeatureTypePath   FeatureType = "path"
+	FeatureTypeFolder FeatureType = "folder"
+)
+
+// FeatureUpdateParams A color field sent on a feature type it does not apply to answers 400
+// VALIDATION_ERROR.
+type FeatureUpdateParams struct {
+	// BorderStyle Border line style (for regions)
+	BorderStyle opt.Optional[FeatureUpdateParamsBorderStyle] `json:"borderStyle,omitzero"`
+	// Color For a `region`: fill and border color. For a `path`: line color. `#RRGGBB`. Not accepted
+	// on other types. Absent, the app draws `#3B82F6`.
+	Color opt.Optional[string] `json:"color,omitzero"`
+	// FillOpacity Fill opacity (for regions)
+	FillOpacity opt.Optional[float64] `json:"fillOpacity,omitzero"`
+	// FillStyle Fill style (for regions)
+	FillStyle opt.Optional[FeatureUpdateParamsFillStyle] `json:"fillStyle,omitzero"`
+	// IconColor For a `pin`: fill color of the pin shape, as `#RRGGBB`; the glyph is drawn black or
+	// white for contrast. No effect when `iconShape` is `none` or the pin has a `pinImage`. A pin with
+	// `isSynced` and a `uri` draws the linked resource's `iconColor` instead. Not accepted on other
+	// types. Absent, the pin is drawn `#A7A7A7`.
+	IconColor opt.Optional[string] `json:"iconColor,omitzero"`
+	// IconGlyph For a `pin`: a FontAwesome icon name.
+	IconGlyph opt.Optional[string] `json:"iconGlyph,omitzero"`
+	// IconShape The shape drawn behind the glyph on a map pin: `pin`, `diamond`, `flag`, `marker`,
+	// `shield`, `circle`, `banner` or `arch`, or `none` for the glyph alone. Any other value answers
+	// 400 VALIDATION_ERROR at the field. Sent without `iconSize`, the stored `iconSize` is kept, or
+	// `medium` when none is stored.
+	IconShape opt.Optional[FeatureUpdateParamsIconShape] `json:"iconShape,omitzero"`
+	// IconSize The size of the pin shape: `medium` or `small`. Ignored when `iconShape` is `none`. Any
+	// other value answers 400 VALIDATION_ERROR at the field. Sent without `iconShape`, the stored
+	// `iconShape` is kept, or `pin` when none is stored.
+	IconSize        opt.Optional[FeatureUpdateParamsIconSize]        `json:"iconSize,omitzero"`
+	IsHidden        opt.Optional[bool]                               `json:"isHidden,omitzero"`
+	LabelSize       opt.Optional[FeatureUpdateParamsLabelSize]       `json:"labelSize,omitzero"`
+	LabelVisibility opt.Optional[FeatureUpdateParamsLabelVisibility] `json:"labelVisibility,omitzero"`
+	Name            opt.Optional[string]                             `json:"name,omitzero"`
+	// ParentID Parent feature ID for hierarchy (null = root). Nests the feature under a folder.
+	ParentID opt.Optional[string]       `json:"parentId,omitzero"`
+	PinImage opt.Optional[FeatureImage] `json:"pinImage,omitzero"`
+	// Polygon Polygon vertices (for regions)
+	Polygon opt.Optional[[][]json.RawMessage] `json:"polygon,omitzero"`
+	// Polygons Several polygons of vertices (for regions)
+	Polygons opt.Optional[[][][]json.RawMessage] `json:"polygons,omitzero"`
+	// Polyline Polyline vertices (for paths)
+	Polyline opt.Optional[[][]json.RawMessage] `json:"polyline,omitzero"`
+	// Pos Position as [lat, lng] coordinate. Optional for folders.
+	Pos opt.Optional[[]json.RawMessage] `json:"pos,omitzero"`
+	// Rank Fractional index for ordering within the parent (e.g. "a0")
+	Rank opt.Optional[string] `json:"rank,omitzero"`
+	// StrokeOpacity Line opacity (for paths)
+	StrokeOpacity opt.Optional[float64] `json:"strokeOpacity,omitzero"`
+	// StrokeStyle Line style (for paths)
+	StrokeStyle opt.Optional[FeatureUpdateParamsStrokeStyle] `json:"strokeStyle,omitzero"`
+	// StrokeWidth Line width (for paths)
+	StrokeWidth opt.Optional[float64] `json:"strokeWidth,omitzero"`
+	// TextColor Color of the feature's name text: the text of a `label`, or the name label drawn on a
+	// `region` or `path`. `#RRGGBB`. Not accepted on other types. Absent, the text is drawn `#FFFFFF`.
+	TextColor opt.Optional[string] `json:"textColor,omitzero"`
+	// TextEffect How `textEffectColor` is drawn behind the name text of a `label`, `region` or `path`:
+	// `outline` draws a 3-pixel outline around the letters, `background` draws a box behind the text
+	// at 50% opacity. Not accepted on other types. Absent, `outline`.
+	TextEffect opt.Optional[FeatureUpdateParamsTextEffect] `json:"textEffect,omitzero"`
+	// TextEffectColor Color of the outline or background box set by `textEffect`, as `#RRGGBB`. Not
+	// accepted on other types. Absent, `#000000`.
+	TextEffectColor opt.Optional[string] `json:"textEffectColor,omitzero"`
+	// Type Feature type
+	Type opt.Optional[FeatureUpdateParamsType] `json:"type,omitzero"`
+	// URI Link to a resource or document in this project. Accepted forms:
+	// `lk://resources/<resourceId>`, `lk://documents/<documentId>` or
+	// `lk://resources/<resourceId>/docs/<documentId>`; no other scheme is accepted. The target must be
+	// in the same project, must not be deleted, and must be readable by the caller: a target that
+	// answers 404 to the caller on GET cannot be linked. A legacy `docs` link names a document of that
+	// resource. Any other value answers 400 VALIDATION_ERROR at `uri`. A target created in the app can
+	// take a few seconds to become linkable while the server indexes it. An empty string clears the
+	// link. Omitting `uri` leaves the stored link unchanged.
+	URI opt.Optional[string] `json:"uri,omitzero"`
+	// VisibilityRange Zoom range [min, max] as 0-1
+	VisibilityRange opt.Optional[[]json.RawMessage] `json:"visibilityRange,omitzero"`
+}
+
+// FeatureUpdateParamsBorderStyle Border line style (for regions)
+type FeatureUpdateParamsBorderStyle string
+
+const (
+	FeatureUpdateParamsBorderStyleSolid  FeatureUpdateParamsBorderStyle = "solid"
+	FeatureUpdateParamsBorderStyleDashed FeatureUpdateParamsBorderStyle = "dashed"
+	FeatureUpdateParamsBorderStyleDotted FeatureUpdateParamsBorderStyle = "dotted"
+	FeatureUpdateParamsBorderStyleNone   FeatureUpdateParamsBorderStyle = "none"
+)
+
+// FeatureUpdateParamsFillStyle Fill style (for regions)
+type FeatureUpdateParamsFillStyle string
+
+const (
+	FeatureUpdateParamsFillStyleSolid   FeatureUpdateParamsFillStyle = "solid"
+	FeatureUpdateParamsFillStyleStriped FeatureUpdateParamsFillStyle = "striped"
+	FeatureUpdateParamsFillStyleDotted  FeatureUpdateParamsFillStyle = "dotted"
+	FeatureUpdateParamsFillStyleNone    FeatureUpdateParamsFillStyle = "none"
+)
+
+// FeatureUpdateParamsIconShape The shape drawn behind the glyph on a map pin: `pin`, `diamond`,
+// `flag`, `marker`, `shield`, `circle`, `banner` or `arch`, or `none` for the glyph alone. Any
+// other value answers 400 VALIDATION_ERROR at the field. Sent without `iconSize`, the stored
+// `iconSize` is kept, or `medium` when none is stored.
+type FeatureUpdateParamsIconShape string
+
+const (
+	FeatureUpdateParamsIconShapePin     FeatureUpdateParamsIconShape = "pin"
+	FeatureUpdateParamsIconShapeDiamond FeatureUpdateParamsIconShape = "diamond"
+	FeatureUpdateParamsIconShapeFlag    FeatureUpdateParamsIconShape = "flag"
+	FeatureUpdateParamsIconShapeMarker  FeatureUpdateParamsIconShape = "marker"
+	FeatureUpdateParamsIconShapeShield  FeatureUpdateParamsIconShape = "shield"
+	FeatureUpdateParamsIconShapeCircle  FeatureUpdateParamsIconShape = "circle"
+	FeatureUpdateParamsIconShapeBanner  FeatureUpdateParamsIconShape = "banner"
+	FeatureUpdateParamsIconShapeArch    FeatureUpdateParamsIconShape = "arch"
+	FeatureUpdateParamsIconShapeNone    FeatureUpdateParamsIconShape = "none"
+)
+
+// FeatureUpdateParamsIconSize The size of the pin shape: `medium` or `small`. Ignored when
+// `iconShape` is `none`. Any other value answers 400 VALIDATION_ERROR at the field. Sent without
+// `iconShape`, the stored `iconShape` is kept, or `pin` when none is stored.
+type FeatureUpdateParamsIconSize string
+
+const (
+	FeatureUpdateParamsIconSizeMedium FeatureUpdateParamsIconSize = "medium"
+	FeatureUpdateParamsIconSizeSmall  FeatureUpdateParamsIconSize = "small"
+)
+
+type FeatureUpdateParamsLabelSize string
+
+const (
+	FeatureUpdateParamsLabelSizeXs   FeatureUpdateParamsLabelSize = "xs"
+	FeatureUpdateParamsLabelSizeSm   FeatureUpdateParamsLabelSize = "sm"
+	FeatureUpdateParamsLabelSizeMd   FeatureUpdateParamsLabelSize = "md"
+	FeatureUpdateParamsLabelSizeLg   FeatureUpdateParamsLabelSize = "lg"
+	FeatureUpdateParamsLabelSizeXl   FeatureUpdateParamsLabelSize = "xl"
+	FeatureUpdateParamsLabelSizeV2xl FeatureUpdateParamsLabelSize = "2xl"
+	FeatureUpdateParamsLabelSizeV3xl FeatureUpdateParamsLabelSize = "3xl"
+)
+
+type FeatureUpdateParamsLabelVisibility string
+
+const (
+	FeatureUpdateParamsLabelVisibilityAlways FeatureUpdateParamsLabelVisibility = "always"
+	FeatureUpdateParamsLabelVisibilityHover  FeatureUpdateParamsLabelVisibility = "hover"
+	FeatureUpdateParamsLabelVisibilityNever  FeatureUpdateParamsLabelVisibility = "never"
+)
+
+// FeatureUpdateParamsStrokeStyle Line style (for paths)
+type FeatureUpdateParamsStrokeStyle string
+
+const (
+	FeatureUpdateParamsStrokeStyleSolid  FeatureUpdateParamsStrokeStyle = "solid"
+	FeatureUpdateParamsStrokeStyleDashed FeatureUpdateParamsStrokeStyle = "dashed"
+	FeatureUpdateParamsStrokeStyleDotted FeatureUpdateParamsStrokeStyle = "dotted"
+	FeatureUpdateParamsStrokeStyleNone   FeatureUpdateParamsStrokeStyle = "none"
+)
+
+// FeatureUpdateParamsTextEffect How `textEffectColor` is drawn behind the name text of a `label`,
+// `region` or `path`: `outline` draws a 3-pixel outline around the letters, `background` draws a
+// box behind the text at 50% opacity. Not accepted on other types. Absent, `outline`.
+type FeatureUpdateParamsTextEffect string
+
+const (
+	FeatureUpdateParamsTextEffectOutline    FeatureUpdateParamsTextEffect = "outline"
+	FeatureUpdateParamsTextEffectBackground FeatureUpdateParamsTextEffect = "background"
+)
+
+// FeatureUpdateParamsType Feature type
+type FeatureUpdateParamsType string
+
+const (
+	FeatureUpdateParamsTypePin    FeatureUpdateParamsType = "pin"
+	FeatureUpdateParamsTypeLabel  FeatureUpdateParamsType = "label"
+	FeatureUpdateParamsTypeRegion FeatureUpdateParamsType = "region"
+	FeatureUpdateParamsTypePath   FeatureUpdateParamsType = "path"
+	FeatureUpdateParamsTypeFolder FeatureUpdateParamsType = "folder"
 )
 
 // FilterPredicate A collection filter. `composite` combines `filters` with `and`, `or` or `not`.
@@ -881,6 +1836,113 @@ type KeyValuePropertyRowsItem struct {
 	Key     string                          `json:"key"`
 	Rank    opt.Optional[string]            `json:"rank,omitzero"`
 	Text    opt.Optional[string]            `json:"text,omitzero"`
+}
+
+type Lane struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+	// Rank Fractional index for ordering (e.g. "a0", "a1")
+	Rank string   `json:"rank"`
+	Size LaneSize `json:"size"`
+	// Style Lane visual style options
+	Style opt.Optional[LaneStyle] `json:"style,omitzero"`
+}
+
+type LaneCreateParams struct {
+	// ID Optional client-chosen id: a lowercase letter followed by 7 or 23 lowercase letters or digits
+	// (a cuid2 id of 8 or 24 characters). See Identifiers.
+	ID opt.Optional[string] `json:"id,omitzero"`
+	// Name Lane display name
+	Name string `json:"name"`
+	// Rank Fractional index for ordering (e.g. "a0", "a1")
+	Rank string `json:"rank"`
+	// Size Lane height
+	Size LaneCreateParamsSize `json:"size"`
+	// Style Lane visual style options
+	Style opt.Optional[LaneCreateParamsStyle] `json:"style,omitzero"`
+}
+
+// LaneCreateParamsSize Lane height
+type LaneCreateParamsSize string
+
+const (
+	LaneCreateParamsSizeSm LaneCreateParamsSize = "sm"
+	LaneCreateParamsSizeLg LaneCreateParamsSize = "lg"
+)
+
+// LaneCreateParamsStyle Lane visual style options
+type LaneCreateParamsStyle struct {
+	// Color Fill color of every event in the lane, as `#RRGGBB`. When set, it replaces each event's
+	// `color` and hides the lane and event images. Absent, each event uses its own color.
+	Color opt.Optional[string] `json:"color,omitzero"`
+	// ImageURL Lane background image URL. The URL is the `url` of an image asset of this project
+	// (upload with createImageUpload and createImageAsset). Any other URL, including an image asset of
+	// another project, answers 400 VALIDATION_ERROR naming the field, unless the same document,
+	// resource or board already holds that URL in an image field. A `data:` or `blob:` URI answers 400
+	// VALIDATION_ERROR naming the field: documents hold no inline image data. Upload the image
+	// (createImageUpload, createImageAsset) and reference its URL.
+	ImageURL opt.Optional[string]  `json:"imageUrl,omitzero"`
+	Opacity  opt.Optional[float64] `json:"opacity,omitzero"`
+}
+
+type LaneList struct {
+	Data []Lane `json:"data"`
+	// HasMore True when more items exist beyond this page.
+	HasMore opt.Optional[bool] `json:"hasMore,omitzero"`
+	// NextCursor Cursor for the next page, or null.
+	NextCursor opt.Nullable[string] `json:"nextCursor,omitzero"`
+}
+
+type LaneSize string
+
+const (
+	LaneSizeSm LaneSize = "sm"
+	LaneSizeLg LaneSize = "lg"
+)
+
+// LaneStyle Lane visual style options
+type LaneStyle struct {
+	// Color Fill color of every event in the lane, as `#RRGGBB`. When set, it replaces each event's
+	// `color` and hides the lane and event images. Absent, each event uses its own color.
+	Color opt.Optional[string] `json:"color,omitzero"`
+	// ImageURL Lane background image URL. The URL is the `url` of an image asset of this project
+	// (upload with createImageUpload and createImageAsset). Any other URL, including an image asset of
+	// another project, answers 400 VALIDATION_ERROR naming the field, unless the same document,
+	// resource or board already holds that URL in an image field. A `data:` or `blob:` URI answers 400
+	// VALIDATION_ERROR naming the field: documents hold no inline image data. Upload the image
+	// (createImageUpload, createImageAsset) and reference its URL.
+	ImageURL opt.Optional[string]  `json:"imageUrl,omitzero"`
+	Opacity  opt.Optional[float64] `json:"opacity,omitzero"`
+}
+
+type LaneUpdateParams struct {
+	Name opt.Optional[string]               `json:"name,omitzero"`
+	Rank opt.Optional[string]               `json:"rank,omitzero"`
+	Size opt.Optional[LaneUpdateParamsSize] `json:"size,omitzero"`
+	// Style Lane visual style options
+	Style opt.Optional[LaneUpdateParamsStyle] `json:"style,omitzero"`
+}
+
+type LaneUpdateParamsSize string
+
+const (
+	LaneUpdateParamsSizeSm LaneUpdateParamsSize = "sm"
+	LaneUpdateParamsSizeLg LaneUpdateParamsSize = "lg"
+)
+
+// LaneUpdateParamsStyle Lane visual style options
+type LaneUpdateParamsStyle struct {
+	// Color Fill color of every event in the lane, as `#RRGGBB`. When set, it replaces each event's
+	// `color` and hides the lane and event images. Absent, each event uses its own color.
+	Color opt.Optional[string] `json:"color,omitzero"`
+	// ImageURL Lane background image URL. The URL is the `url` of an image asset of this project
+	// (upload with createImageUpload and createImageAsset). Any other URL, including an image asset of
+	// another project, answers 400 VALIDATION_ERROR naming the field, unless the same document,
+	// resource or board already holds that URL in an image field. A `data:` or `blob:` URI answers 400
+	// VALIDATION_ERROR naming the field: documents hold no inline image data. Upload the image
+	// (createImageUpload, createImageAsset) and reference its URL.
+	ImageURL opt.Optional[string]  `json:"imageUrl,omitzero"`
+	Opacity  opt.Optional[float64] `json:"opacity,omitzero"`
 }
 
 // LayoutBlock A row of two or three `layoutColumn` blocks. Each column's `width` is a percentage of

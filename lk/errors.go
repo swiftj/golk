@@ -304,9 +304,10 @@ func newAPIError(statusCode int, h http.Header, body []byte, now time.Time) *API
 	return e
 }
 
-// currentVersionRE matches the server's 412 message, "Document version is
-// <current>, If-Match was <sent>" (DECISIONS.md D-009, A-05).
-var currentVersionRE = regexp.MustCompile(`^Document version is ([^\s,]+),`)
+// currentVersionRE matches the server's 412 messages, "Document version is
+// <current>, If-Match was <sent>" and the same with "Calendar" (DECISIONS.md
+// D-009 A-05, D-014 A-36). Other forms leave CurrentVersion empty.
+var currentVersionRE = regexp.MustCompile(`^(?:Document|Calendar) version is ([^\s,]+),`)
 
 // currentVersion returns the version a 412 message reports, or "" when the
 // message has another form.

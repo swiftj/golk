@@ -75,6 +75,7 @@ func TestCore2_C_CORE2_01_VersionFromBodyOrETag(t *testing.T) {
 func TestCore2_C_ERR_12_CurrentVersionFromMessage(t *testing.T) {
 	for msg, want := range map[string]string{
 		"Document version is 90a1ea8e2700df9f, If-Match was 666d8c8987139620": "90a1ea8e2700df9f",
+		"Calendar version is 1faa06fba9f9e7b4, If-Match was 5bdc5884d11cc2cb": "1faa06fba9f9e7b4",
 		"Board version is 1, If-Match was 2":                                  "",
 		"Version mismatch":                                                    "",
 	} {
