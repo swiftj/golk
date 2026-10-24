@@ -87,7 +87,11 @@ var shapes = []shape{
 	{"code no language", `{"kind":"code","text":"x"}`, "md"},
 	{"code empty", `{"kind":"code","text":""}`, "md"},
 	{"code newline only", `{"kind":"code","text":"\n"}`, "md"},
-	{"code with fences", "{\"kind\":\"code\",\"language\":\"md\",\"text\":\"```\\n````\\n:::secret\\n\"}", "md"},
+	{"code with fences", "{\"kind\":\"code\",\"language\":\"md\",\"text\":\"```\\n````\\n:::callout\\n\"}", "md"},
+	// M-SAFE-02: a code line that would open a secret is rejected in a
+	// fence (a dropped closing fence must not publish a secret as code),
+	// so such code is lk-raw.
+	{"code with a secret fence line", "{\"kind\":\"code\",\"language\":\"md\",\"text\":\"```\\n````\\n:::secret\\n\"}", "raw"},
 	{"code with tabs", `{"kind":"code","text":"\tindented\n  two"}`, "md"},
 	{"code language spaces", `{"kind":"code","language":"c sharp","text":"x"}`, "md"},
 	{"code language empty", `{"kind":"code","language":"","text":"x"}`, "raw"},

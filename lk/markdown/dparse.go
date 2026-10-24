@@ -332,7 +332,7 @@ func (c *conv) itemText(it ast.Node) (string, int, error) {
 	if p == nil || !isTB && !isP || p.NextSibling() != nil {
 		return "", nodePos(it), c.errf(nodePos(it), "each row is one line: - key :: value")
 	}
-	if err := c.checkLines(p); err != nil {
+	if err := c.fenceLines(p, true); err != nil {
 		return "", 0, err
 	}
 	var b strings.Builder

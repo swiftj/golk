@@ -430,8 +430,18 @@ x
 `````md
 ```
 ````
-:::secret
+:::callout
 
+`````
+
+###### code with a secret fence line
+
+`````lk-raw
+{
+  "kind": "code",
+  "language": "md",
+  "text": "```\n````\n:::secret\n"
+}
 `````
 
 ###### code with tabs

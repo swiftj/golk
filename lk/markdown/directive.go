@@ -94,6 +94,9 @@ func (g *guarded) Continue(node ast.Node, reader text.Reader, pc parser.Context)
 
 func (g *guarded) Close(node ast.Node, reader text.Reader, pc parser.Context) {
 	g.inner.Close(node, reader, pc)
+	if _, ok := node.(*ast.Heading); ok {
+		markGuard(node, reader.Source(), pc)
+	}
 }
 
 func (g *guarded) CanInterruptParagraph() bool { return g.inner.CanInterruptParagraph() }
@@ -269,9 +272,50 @@ func (attrLineParser) CanAcceptIndentedLine() bool                 { return fals
 // definition it finds, which LK Markdown rejects (M-SAFE-03).
 type refGuard struct{}
 
-var refErrKey = parser.NewContextKey()
+var (
+	refErrKey  = parser.NewContextKey()
+	markErrKey = parser.NewContextKey()
+)
+
+// maxMarks bounds the unescaped '[', '*', '_' and '~' in one paragraph or
+// heading. goldmark's link and emphasis parsing is quadratic in them
+// ("[a](" or "*a_" repeated takes minutes at 1 MiB); with the bound the
+// worst case is a few seconds (M-API-03, M-SAFE-07). The renderer writes a
+// block over the bound as lk-raw, which is not inline-parsed.
+const maxMarks = 2000
+
+// markGuard records an error and empties n's lines, so inline parsing
+// skips it, when n holds more than maxMarks markers. It reports whether it
+// did.
+func markGuard(n ast.Node, src []byte, pc parser.Context) bool {
+	lines := n.Lines()
+	count := 0
+	for i := range lines.Len() {
+		s := lines.At(i)
+		v := s.Value(src)
+		for j := 0; j < len(v); j++ {
+			switch v[j] {
+			case '\\':
+				j++
+			case '[', '*', '_', '~':
+				count++
+			}
+		}
+	}
+	if count <= maxMarks {
+		return false
+	}
+	if pc.Get(markErrKey) == nil {
+		pc.Set(markErrKey, lines.At(0).Start)
+	}
+	n.SetLines(text.NewSegments())
+	return true
+}
 
 func (refGuard) Transform(node *ast.Paragraph, reader text.Reader, pc parser.Context) {
+	if markGuard(node, reader.Source(), pc) {
+		return
+	}
 	pos := -1
 	if node.Lines().Len() > 0 {
 		pos = node.Lines().At(0).Start

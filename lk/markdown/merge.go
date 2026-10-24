@@ -117,6 +117,7 @@ func (r *reconciler) claim(parsed, base blocks.List) error {
 		}
 		return true
 	})
+	baseSecret, parsedSecret := underSecret(base), underSecret(parsed)
 	for _, e := range ids {
 		b, ok := byID[e.n.NodeID()]
 		if !ok {
@@ -129,11 +130,47 @@ func (r *reconciler) claim(parsed, base blocks.List) error {
 			return &IDError{ID: e.n.NodeID(), Path: e.path,
 				Reason: fmt.Sprintf("is a %s in Base, not a %s", describe(b), describe(e.n))}
 		}
+		if isUnsupported(b) && baseSecret[b] && !parsedSecret[e.n] {
+			// Its content is invisible here, so neither the editor nor a
+			// spoiler guard can tell whether it may be shown.
+			return &IDError{ID: e.n.NodeID(), Path: e.path,
+				Reason: "unsupported content is inside a secret in Base and can't be moved out of it"}
+		}
 		r.claimOf[e.n] = b
 		r.claimedBy[b] = e.n
 		r.used[b] = true
 	}
 	return nil
+}
+
+// underSecret returns the nodes of l that have a secret block among their
+// ancestors.
+func underSecret(l blocks.List) map[blocks.Node]bool {
+	out := map[blocks.Node]bool{}
+	var visit func(n blocks.Node, in bool)
+	visit = func(n blocks.Node, in bool) {
+		if isNil(n) {
+			return
+		}
+		if in {
+			out[n] = true
+		}
+		in = in || n.Kind() == blocks.KindSecret
+		if kids, ok := blocks.Children(n); ok {
+			for _, c := range kids {
+				visit(c, in)
+			}
+		}
+		if ib, ok := n.(*blocks.InfoboxBlock); ok {
+			for _, c := range ib.Rows {
+				visit(c, in)
+			}
+		}
+	}
+	for _, n := range l {
+		visit(n, false)
+	}
+	return out
 }
 
 // level reconciles one list of siblings (blocks, or infobox rows when prop

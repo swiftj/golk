@@ -76,6 +76,9 @@ func (c *conv) goldmark() (ast.Node, error) {
 	if pos, ok := pc.Get(depthErrKey).(int); ok {
 		return nil, c.errf(pos, "nested deeper than %d levels", maxDepth)
 	}
+	if pos, ok := pc.Get(markErrKey).(int); ok {
+		return nil, c.errf(pos, "more than %d [, *, _ and ~ in one paragraph or heading; split it", maxMarks)
+	}
 	if pos, ok := pc.Get(refErrKey).(int); ok {
 		return nil, c.errf(pos, "link reference definitions and footnotes are not supported")
 	}
@@ -232,17 +235,33 @@ func (c *conv) block(n ast.Node, depth int) (b blocks.Block, attrable bool, err 
 // checkLines rejects a directive fence that ended up as paragraph text, as
 // a lazy continuation line or with too much indentation, so a :::secret can
 // never become visible text (M-SAFE-02).
-func (c *conv) checkLines(n ast.Node) error {
+func (c *conv) checkLines(n ast.Node) error { return c.fenceLines(n, false) }
+
+// fenceLines is checkLines; for a row (row), whose first line may be an
+// empty key's ":: value", only "::name" counts there.
+func (c *conv) fenceLines(n ast.Node, row bool) error {
 	lines := n.Lines()
 	for i := range lines.Len() {
 		s := lines.At(i)
 		v := util.TrimLeftSpace(c.src[s.Start:s.Stop])
-		if bytes.HasPrefix(v, []byte(":::")) || len(v) > 2 && v[0] == ':' && v[1] == ':' && isNameStart(v[2]) {
+		after := v
+		if len(v) >= 2 {
+			after = v[2:]
+			if !row || i > 0 {
+				after = util.TrimLeftSpace(after)
+			}
+		}
+		if bytes.HasPrefix(v, []byte(":::")) || bytes.HasPrefix(v, []byte("::")) && startsName(after) {
 			return c.errf(s.Start, "a directive fence must start its own line, indented at most 3 spaces (escape a literal one as \\:)")
 		}
 	}
 	return nil
 }
+
+// startsName reports whether b starts with a directive name. "::" then a
+// name, even after spaces (":: secret"), is a mistyped directive fence, not
+// text, so a mistyped secret can't become visible text (M-SAFE-02).
+func startsName(b []byte) bool { return len(b) > 0 && isNameStart(b[0]) }
 
 func (c *conv) paragraph(n ast.Node) (blocks.Block, bool, error) {
 	if err := c.checkLines(n); err != nil {
@@ -431,11 +450,34 @@ func (c *conv) fence(f *ast.FencedCodeBlock) (blocks.Block, bool, error) {
 	case "lk-filter":
 		return nil, false, c.errf(f.Pos(), "an lk-filter fence belongs at the end of a :::collection")
 	}
+	if i := secretFenceLine(body); i >= 0 {
+		// A fence left unclosed before a secret (a dropped closing line)
+		// would otherwise publish the secret as code (M-SAFE-02).
+		return nil, false, c.errf(f.Lines().At(i).Start, "a code block holds a :::secret line; close the code fence before the secret")
+	}
 	b := &blocks.CodeBlock{Text: body}
 	if info != "" {
 		b.Language = opt.Some(info)
 	}
 	return b, true, nil
+}
+
+// secretFenceLine is the index of the first line of code text that would
+// open a secret outside a fence (three or more colons, then "secret" in any
+// case, then the end of the line or a space), or -1.
+func secretFenceLine(text string) int {
+	for i, l := range strings.Split(text, "\n") {
+		l = strings.TrimLeft(l, " \t")
+		n := len(l) - len(strings.TrimLeft(l, ":"))
+		if n < 3 {
+			continue
+		}
+		rest := l[n:]
+		if len(rest) >= 6 && strings.EqualFold(rest[:6], "secret") && (len(rest) == 6 || rest[6] == ' ' || rest[6] == '\t') {
+			return i
+		}
+	}
+	return -1
 }
 
 // rawJSON checks that an lk-raw or lk-filter fence holds one JSON object

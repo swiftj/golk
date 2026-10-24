@@ -179,7 +179,7 @@ Rolled in a magic mud puddle.
 | unsupported or raw infobox row | `::unsupported id=…` or `lk-raw`, inside the infobox |
 
 - **M-OPQ-01:** `lk-raw` is a safety valve. Any block whose Markdown form wouldn't parse back to the identical block is rendered as `lk-raw` instead. ToMarkdown enforces this twice: explicit rules decide what each Markdown form can hold, and every block that can stand alone (and then the whole page) is parsed back and compared before it is written. A test renders every block shape the package can decode and asserts this.
-- **M-OPQ-02:** An `lk-raw` fence must hold one JSON object with a string `kind`. Anything else is an error.
+- **M-OPQ-02:** An `lk-raw` fence must hold one JSON object with a string `kind`. Anything else is an error. The key is matched exactly, as the server matches it (`"Kind"` is not a kind).
 
 ### 2.5 Tables
 
@@ -227,11 +227,12 @@ These are the choices the implementation makes (Phase 2b). Each is the simplest 
 - CRLF line endings are read as LF. A lone CR, a NUL byte or invalid UTF-8 is an error.
 - A soft line break (a plain newline inside a paragraph) is a space. A hard break is `\` + newline or two trailing spaces.
 - An autolink (`<https://…>`, `<me@x.test>`) becomes a link run whose text is the address (`mailto:` for an email). A bare URL stays text.
-- An indented code block is an error (write a fence), so a 4-space indent can't turn a `:::secret` into code or text. A directive fence that ends up inside paragraph text (a lazy or indented line) is an error. A code fence or `lk-raw` fence that is never closed is an error.
+- An indented code block is an error (write a fence), so a 4-space indent can't turn a `:::secret` into code or text. A directive fence that ends up inside paragraph text (a lazy or indented line) is an error, and so is a line of text that starts with `::` and then a name, even after spaces (`:: secret` is a mistyped fence; write `\::` for literal colons). The first line of a key-value row may still be `- :: value`, an empty key. A code fence or `lk-raw` fence that is never closed is an error.
 - An unescaped `{` that doesn't start a valid attribute set is an error; write `\{`. An attribute set is allowed only after an image, at the end of a heading or row value, or at the start of a list or task item (`#id`).
 - GFM tables: column alignment (`:---`) and a row with more or fewer cells than the header are errors. A header cell is `header` (true); `header=false` is written only on a `:::cell`.
 - `::unsupported` takes its id as `id=…` (it is content, not a hidden field). An infobox `::unsupported` row also takes the envelope attributes.
 - An info string that starts with `lk-raw` or `lk-filter` must be exactly that.
+- A code fence whose text holds a line that would open a secret (three or more colons, then `secret` in any case, alone or followed by a space) is an error. Otherwise a fence left unclosed before a secret, for example after an edit drops a closing ```` ``` ````, would publish the secret as a visible code block. Code with such a line renders as `lk-raw`.
 
 ---
 
@@ -293,12 +294,12 @@ Every parsed block is new. The server assigns ids, so a full-page replace of an 
 `FromMarkdown` returns an error, with a line number and the reason, and returns no blocks, for each of these:
 
 - **M-SAFE-01:** An unknown directive name, an unknown attribute, a duplicate attribute, or a value the field can't hold (wrong type, enum value outside the spec). Enum values the SDK doesn't know are accepted only inside `lk-raw`.
-- **M-SAFE-02:** An unclosed container directive, or a stray closing fence. In particular, a `:::secret` that is never closed doesn't let its text run into the rest of the page.
+- **M-SAFE-02:** An unclosed container directive, or a stray closing fence. In particular, a `:::secret` that is never closed doesn't let its text run into the rest of the page, and a code fence can't swallow a `:::secret` line (§2.7).
 - **M-SAFE-03:** Raw HTML (block or inline), a link reference definition, or a footnote.
 - **M-SAFE-04:** An edit that removes an `unsupported` or `lk-raw` block found in `Base`, at any depth (inside a removed or changed container, or as an infobox row), unless `AllowRemoveOpaque` is set. The error is a `*RemoveError` listing every such block; it matches `ErrRemovesOpaque` with `errors.Is`. Removing that content deletes something the editor couldn't see. Removed `secret` blocks are allowed, but `Report.Removed` lists them so the caller can confirm.
 - **M-SAFE-05:** An image that isn't alone in its paragraph, or an image inside a heading or table cell. The block model has no inline images.
-- **M-SAFE-06:** An `::unsupported` id that isn't in `Base` (the server would answer `UNSUPPORTED_KIND`), or the same block id twice. Also an `::unsupported` with no id. These come from base matching, so the error is an `*IDError` with the block's path rather than a line number.
-- **M-SAFE-07:** Input over 1 MiB or nested deeper than 64 levels (the server's own limit), rejected before parsing.
+- **M-SAFE-06:** An `::unsupported` id that isn't in `Base` (the server would answer `UNSUPPORTED_KIND`), or the same block id twice. Also an `::unsupported` with no id, and one whose base block is inside a secret placed outside any secret: its content can't be seen in the Markdown, so neither the editor nor a spoiler guard can tell whether it may be shown. These come from base matching, so the error is an `*IDError` with the block's path rather than a line number.
+- **M-SAFE-07:** Input over 1 MiB or nested deeper than 64 levels (the server's own limit), rejected before parsing. Also a paragraph or heading with more than 2000 unescaped `[`, `*`, `_` and `~`, rejected before its inline text is parsed: goldmark's link and emphasis parsing is quadratic in them. ToMarkdown writes such a block as `lk-raw`.
 
 The converter never checks what the server checks: colours, widths, callout icon and tone pairing, image URL ownership. The server's 400 is the authority, as with the builders (C-BUILD-06).
 
