@@ -30,8 +30,12 @@ type request struct {
 	// genKey lets a POST get a generated Idempotency-Key. Wrapped operations
 	// set it; the escape hatch does not.
 	genKey bool
-	// versioned operations accept IfMatch and fill a missing version from ETag.
+	// versioned operations (versioned writes) accept IfMatch and fill a
+	// missing version from ETag.
 	versioned bool
+	// readsVersion operations (reads that report the version) fill a missing
+	// version from ETag but do not accept IfMatch.
+	readsVersion bool
 	// header holds extra headers from the escape hatch.
 	header http.Header
 }
@@ -240,7 +244,7 @@ func decode(req *request, resp *response) error {
 			return fmt.Errorf("lk: decoding %s %s response: %w", req.method, req.path, err)
 		}
 	}
-	if vs, ok := req.out.(versionSetter); ok && req.versioned {
+	if vs, ok := req.out.(versionSetter); ok && (req.versioned || req.readsVersion) {
 		if v := etagVersion(resp.header.Get("ETag")); v != "" {
 			vs.setVersionIfEmpty(v)
 		}

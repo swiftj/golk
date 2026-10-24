@@ -18,19 +18,119 @@ type Op struct {
 
 // Operations generated in this file.
 var (
+	OpAssignBlockIDs             = Op{ID: "assignBlockIds", Method: "POST", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/block-ids"}
+	OpCreateAssetFolder          = Op{ID: "createAssetFolder", Method: "POST", Path: "/api/v3/projects/{projectId}/assets"}
+	OpCreateBlockProperty        = Op{ID: "createBlockProperty", Method: "POST", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/blocks/{blockId}/properties"}
+	OpCreateBlockPropertyRow     = Op{ID: "createBlockPropertyRow", Method: "POST", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/blocks/{blockId}/properties/{propertyId}/rows"}
+	OpCreateBlockRow             = Op{ID: "createBlockRow", Method: "POST", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/blocks/{blockId}/rows"}
+	OpCreateDocument             = Op{ID: "createDocument", Method: "POST", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs"}
+	OpCreateImageAsset           = Op{ID: "createImageAsset", Method: "POST", Path: "/api/v3/projects/{projectId}/assets/images"}
+	OpCreateImageUpload          = Op{ID: "createImageUpload", Method: "POST", Path: "/api/v3/projects/{projectId}/assets/uploads"}
 	OpCreateManyResources        = Op{ID: "createManyResources", Method: "POST", Path: "/api/v3/projects/{projectId}/resources/batch"}
+	OpCreateProperty             = Op{ID: "createProperty", Method: "POST", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/properties"}
+	OpCreatePropertyRow          = Op{ID: "createPropertyRow", Method: "POST", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/properties/{propertyId}/rows"}
 	OpCreateResource             = Op{ID: "createResource", Method: "POST", Path: "/api/v3/projects/{projectId}/resources"}
 	OpCreateResourceFromTemplate = Op{ID: "createResourceFromTemplate", Method: "POST", Path: "/api/v3/projects/{projectId}/resources/from-template"}
+	OpDeleteAsset                = Op{ID: "deleteAsset", Method: "DELETE", Path: "/api/v3/projects/{projectId}/assets/{assetId}"}
+	OpDeleteBlock                = Op{ID: "deleteBlock", Method: "DELETE", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/blocks/{blockId}"}
+	OpDeleteBlockProperty        = Op{ID: "deleteBlockProperty", Method: "DELETE", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/blocks/{blockId}/properties/{propertyId}"}
+	OpDeleteBlockPropertyRow     = Op{ID: "deleteBlockPropertyRow", Method: "DELETE", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/blocks/{blockId}/properties/{propertyId}/rows/{rowId}"}
+	OpDeleteBlockRow             = Op{ID: "deleteBlockRow", Method: "DELETE", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/blocks/{blockId}/rows/{rowId}"}
+	OpDeleteDocument             = Op{ID: "deleteDocument", Method: "DELETE", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}"}
+	OpDeleteProperty             = Op{ID: "deleteProperty", Method: "DELETE", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/properties/{propertyId}"}
+	OpDeletePropertyRow          = Op{ID: "deletePropertyRow", Method: "DELETE", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/properties/{propertyId}/rows/{rowId}"}
 	OpDeleteResource             = Op{ID: "deleteResource", Method: "DELETE", Path: "/api/v3/projects/{projectId}/resources/{resourceId}"}
+	OpGetAsset                   = Op{ID: "getAsset", Method: "GET", Path: "/api/v3/projects/{projectId}/assets/{assetId}"}
+	OpGetBlock                   = Op{ID: "getBlock", Method: "GET", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/blocks/{blockId}"}
+	OpGetBlockProperty           = Op{ID: "getBlockProperty", Method: "GET", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/blocks/{blockId}/properties/{propertyId}"}
+	OpGetDocument                = Op{ID: "getDocument", Method: "GET", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}"}
+	OpGetDocumentBlocks          = Op{ID: "getDocumentBlocks", Method: "GET", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/blocks"}
 	OpGetProject                 = Op{ID: "getProject", Method: "GET", Path: "/api/v3/projects/{projectId}"}
+	OpGetProperty                = Op{ID: "getProperty", Method: "GET", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/properties/{propertyId}"}
 	OpGetResource                = Op{ID: "getResource", Method: "GET", Path: "/api/v3/projects/{projectId}/resources/{resourceId}"}
+	OpInsertBlock                = Op{ID: "insertBlock", Method: "POST", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/blocks"}
+	OpListAssets                 = Op{ID: "listAssets", Method: "GET", Path: "/api/v3/projects/{projectId}/assets"}
+	OpListBlockProperties        = Op{ID: "listBlockProperties", Method: "GET", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/blocks/{blockId}/properties"}
+	OpListBlockPropertyRows      = Op{ID: "listBlockPropertyRows", Method: "GET", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/blocks/{blockId}/properties/{propertyId}/rows"}
+	OpListBlockRows              = Op{ID: "listBlockRows", Method: "GET", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/blocks/{blockId}/rows"}
+	OpListDocuments              = Op{ID: "listDocuments", Method: "GET", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs"}
 	OpListProjects               = Op{ID: "listProjects", Method: "GET", Path: "/api/v3/projects"}
+	OpListProperties             = Op{ID: "listProperties", Method: "GET", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/properties"}
+	OpListPropertyRows           = Op{ID: "listPropertyRows", Method: "GET", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/properties/{propertyId}/rows"}
 	OpListResources              = Op{ID: "listResources", Method: "GET", Path: "/api/v3/projects/{projectId}/resources"}
+	OpListTags                   = Op{ID: "listTags", Method: "GET", Path: "/api/v3/projects/{projectId}/tags"}
+	OpMoveBlock                  = Op{ID: "moveBlock", Method: "POST", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/blocks/{blockId}/move"}
 	OpMoveResource               = Op{ID: "moveResource", Method: "POST", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/move"}
+	OpReplaceBlock               = Op{ID: "replaceBlock", Method: "PUT", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/blocks/{blockId}"}
+	OpReplaceDocumentBlocks      = Op{ID: "replaceDocumentBlocks", Method: "PUT", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/blocks"}
+	OpRestoreDocument            = Op{ID: "restoreDocument", Method: "POST", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/restore"}
 	OpRestoreResource            = Op{ID: "restoreResource", Method: "POST", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/restore"}
 	OpSaveResourceAsTemplate     = Op{ID: "saveResourceAsTemplate", Method: "POST", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/save-as-template"}
+	OpSearch                     = Op{ID: "search", Method: "GET", Path: "/api/v3/projects/{projectId}/search"}
+	OpUpdateAsset                = Op{ID: "updateAsset", Method: "PATCH", Path: "/api/v3/projects/{projectId}/assets/{assetId}"}
+	OpUpdateBlock                = Op{ID: "updateBlock", Method: "PATCH", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/blocks/{blockId}"}
+	OpUpdateBlockProperty        = Op{ID: "updateBlockProperty", Method: "PATCH", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/blocks/{blockId}/properties/{propertyId}"}
+	OpUpdateBlockPropertyRow     = Op{ID: "updateBlockPropertyRow", Method: "PATCH", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/blocks/{blockId}/properties/{propertyId}/rows/{rowId}"}
+	OpUpdateBlockRow             = Op{ID: "updateBlockRow", Method: "PATCH", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/blocks/{blockId}/rows/{rowId}"}
+	OpUpdateDocument             = Op{ID: "updateDocument", Method: "PATCH", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}"}
+	OpUpdateProperty             = Op{ID: "updateProperty", Method: "PATCH", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/properties/{propertyId}"}
+	OpUpdatePropertyRow          = Op{ID: "updatePropertyRow", Method: "PATCH", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/properties/{propertyId}/rows/{rowId}"}
 	OpUpdateResource             = Op{ID: "updateResource", Method: "PATCH", Path: "/api/v3/projects/{projectId}/resources/{resourceId}"}
 )
+
+type Asset struct {
+	// CreatedAt ISO 8601 date-time in UTC, ending in `Z`.
+	CreatedAt   opt.Optional[time.Time] `json:"createdAt,omitzero"`
+	Description opt.Nullable[string]    `json:"description,omitzero"`
+	FolderID    opt.Nullable[string]    `json:"folderId,omitzero"`
+	// Height Pixel height of an IMAGE asset, read from the stored file.
+	Height   opt.Optional[float64] `json:"height,omitzero"`
+	ID       string                `json:"id"`
+	IsHidden opt.Optional[bool]    `json:"isHidden,omitzero"`
+	Name     string                `json:"name"`
+	Type     AssetType             `json:"type"`
+	// URL The file URL of an IMAGE asset, always on a LegendKeeper asset host.
+	URL opt.Optional[string] `json:"url,omitzero"`
+	// Width Pixel width of an IMAGE asset, read from the stored file.
+	Width opt.Optional[float64] `json:"width,omitzero"`
+}
+
+type AssetCreateParams struct {
+	// FolderID Parent folder ID (root if omitted). It must be the id of a FOLDER asset in this
+	// project; any other id answers 400 VALIDATION_ERROR at `folderId`.
+	FolderID opt.Optional[string] `json:"folderId,omitzero"`
+	// Name Folder name, 1–200 characters (this endpoint provisions a folder; images upload through
+	// createImageUpload and createImageAsset).
+	Name string `json:"name"`
+}
+
+type AssetList struct {
+	Data []Asset `json:"data"`
+	// HasMore True when more items exist beyond this page.
+	HasMore opt.Optional[bool] `json:"hasMore,omitzero"`
+	// NextCursor Cursor for the next page, or null.
+	NextCursor opt.Nullable[string] `json:"nextCursor,omitzero"`
+}
+
+type AssetType string
+
+const (
+	AssetTypeIMAGE  AssetType = "IMAGE"
+	AssetTypeMAP    AssetType = "MAP"
+	AssetTypeFOLDER AssetType = "FOLDER"
+	AssetTypeAUDIO  AssetType = "AUDIO"
+)
+
+type AssetUpdateParams struct {
+	Description opt.Optional[string] `json:"description,omitzero"`
+	// FolderID Move to a folder; null moves to root. It must be the id of a FOLDER asset in this
+	// project that is neither the asset itself nor inside it; any other id answers 400
+	// VALIDATION_ERROR at `folderId`.
+	FolderID opt.Nullable[string] `json:"folderId,omitzero"`
+	IsHidden opt.Optional[bool]   `json:"isHidden,omitzero"`
+	// Name New name, 1–200 characters.
+	Name opt.Optional[string] `json:"name,omitzero"`
+}
 
 // Block A content block. Container kinds carry `children`; text kinds carry `content` runs. A
 // container written with no children reads back holding one empty paragraph. `unsupported` blocks
@@ -96,6 +196,25 @@ var BlockVariants = map[string]string{
 	"unsupported":        "UnsupportedBlock",
 }
 
+type BlockIDsResult struct {
+	Assigned int64  `json:"assigned"`
+	Version  string `json:"version"`
+}
+
+// BlockInsertRequest At most one of after, before, parent; none appends at the end of the document.
+// An id in `block` or its subtree is kept. An id that another block of the document already uses
+// answers 409 DUPLICATE_ID with its path (`block.id`, `block.children[0].id`), and nothing is
+// written. The same id twice in the body answers 400 VALIDATION_ERROR.
+type BlockInsertRequest struct {
+	// After Insert after this block id.
+	After opt.Optional[string] `json:"after,omitzero"`
+	// Before Insert before this block id.
+	Before opt.Optional[string] `json:"before,omitzero"`
+	Block  Block                `json:"block"`
+	// Parent Append as the last child of this container block.
+	Parent opt.Optional[string] `json:"parent,omitzero"`
+}
+
 // BlockLayout Where a block sits in the flow of the page. `default` is full width. `wrapLeft` and
 // `wrapRight` float the block to that side and let the text after it wrap beside it. `center`,
 // `alignStart` and `alignEnd` place a narrowed block on its own line.
@@ -109,6 +228,111 @@ const (
 	BlockLayoutAlignStart BlockLayout = "alignStart"
 	BlockLayoutAlignEnd   BlockLayout = "alignEnd"
 )
+
+// BlockMoveRequest Exactly one of after, before, parent.
+type BlockMoveRequest struct {
+	// After Insert after this block id.
+	After opt.Optional[string] `json:"after,omitzero"`
+	// Before Insert before this block id.
+	Before opt.Optional[string] `json:"before,omitzero"`
+	// Parent Append as the last child of this container block.
+	Parent opt.Optional[string] `json:"parent,omitzero"`
+}
+
+// BlockPatch Shallow update of a block's own fields (content, level, align, background, text,
+// language, checked, title, isTitleHidden, fill, tone, icon, color, header, colspan, rowspan,
+// start, width, url, alt, provider, layout, display, rows, mode, items, showText, showIcon,
+// showMax, view, filter, resourceId, documentId, viewport, displayHeight). `kind`, `id` and
+// `children` cannot be patched and answer 400 VALIDATION_ERROR.
+type BlockPatch struct {
+	// Align Text alignment. An omitted `align` is `left`; reads omit `left`.
+	Align         opt.Optional[BlockPatchAlign]    `json:"align,omitzero"`
+	Alt           opt.Optional[string]             `json:"alt,omitzero"`
+	Background    opt.Optional[string]             `json:"background,omitzero"`
+	Checked       opt.Optional[bool]               `json:"checked,omitzero"`
+	Color         opt.Optional[string]             `json:"color,omitzero"`
+	Colspan       opt.Optional[int64]              `json:"colspan,omitzero"`
+	Content       opt.Optional[[]Run]              `json:"content,omitzero"`
+	Display       opt.Optional[BlockPatchDisplay]  `json:"display,omitzero"`
+	DisplayHeight opt.Optional[float64]            `json:"displayHeight,omitzero"`
+	DocumentID    opt.Optional[string]             `json:"documentId,omitzero"`
+	Fill          opt.Optional[bool]               `json:"fill,omitzero"`
+	Filter        opt.Optional[FilterPredicate]    `json:"filter,omitzero"`
+	Header        opt.Optional[bool]               `json:"header,omitzero"`
+	Icon          opt.Optional[string]             `json:"icon,omitzero"`
+	IsTitleHidden opt.Optional[bool]               `json:"isTitleHidden,omitzero"`
+	Items         opt.Optional[json.RawMessage]    `json:"items,omitzero"`
+	Language      opt.Optional[string]             `json:"language,omitzero"`
+	Layout        opt.Optional[BlockLayout]        `json:"layout,omitzero"`
+	Level         opt.Optional[int64]              `json:"level,omitzero"`
+	Mode          opt.Optional[BlockPatchMode]     `json:"mode,omitzero"`
+	Provider      opt.Optional[BlockPatchProvider] `json:"provider,omitzero"`
+	ResourceID    opt.Optional[string]             `json:"resourceId,omitzero"`
+	Rows          opt.Optional[json.RawMessage]    `json:"rows,omitzero"`
+	Rowspan       opt.Optional[int64]              `json:"rowspan,omitzero"`
+	ShowIcon      opt.Optional[bool]               `json:"showIcon,omitzero"`
+	ShowMax       opt.Optional[bool]               `json:"showMax,omitzero"`
+	ShowText      opt.Optional[bool]               `json:"showText,omitzero"`
+	Start         opt.Optional[int64]              `json:"start,omitzero"`
+	Text          opt.Optional[string]             `json:"text,omitzero"`
+	Title         opt.Optional[string]             `json:"title,omitzero"`
+	Tone          opt.Optional[BlockPatchTone]     `json:"tone,omitzero"`
+	URL           opt.Optional[string]             `json:"url,omitzero"`
+	Viewport      opt.Optional[MapViewport]        `json:"viewport,omitzero"`
+	Width         opt.Optional[json.RawMessage]    `json:"width,omitzero"`
+}
+
+// BlockPatchAlign Text alignment. An omitted `align` is `left`; reads omit `left`.
+type BlockPatchAlign string
+
+const (
+	BlockPatchAlignLeft   BlockPatchAlign = "left"
+	BlockPatchAlignCenter BlockPatchAlign = "center"
+	BlockPatchAlignRight  BlockPatchAlign = "right"
+)
+
+type BlockPatchDisplay string
+
+const (
+	BlockPatchDisplayList   BlockPatchDisplay = "list"
+	BlockPatchDisplayGrid   BlockPatchDisplay = "grid"
+	BlockPatchDisplayInline BlockPatchDisplay = "inline"
+)
+
+type BlockPatchMode string
+
+const (
+	BlockPatchModeBar      BlockPatchMode = "bar"
+	BlockPatchModeWheel    BlockPatchMode = "wheel"
+	BlockPatchModeGauge180 BlockPatchMode = "gauge-180"
+	BlockPatchModeGauge270 BlockPatchMode = "gauge-270"
+	BlockPatchModePool     BlockPatchMode = "pool"
+	BlockPatchModeRating   BlockPatchMode = "rating"
+)
+
+type BlockPatchProvider string
+
+const (
+	BlockPatchProviderYoutube    BlockPatchProvider = "youtube"
+	BlockPatchProviderSpotify    BlockPatchProvider = "spotify"
+	BlockPatchProviderSoundcloud BlockPatchProvider = "soundcloud"
+)
+
+type BlockPatchTone string
+
+const (
+	BlockPatchToneInfo    BlockPatchTone = "info"
+	BlockPatchToneNote    BlockPatchTone = "note"
+	BlockPatchToneSuccess BlockPatchTone = "success"
+	BlockPatchToneWarning BlockPatchTone = "warning"
+	BlockPatchToneError   BlockPatchTone = "error"
+	BlockPatchToneCustom  BlockPatchTone = "custom"
+)
+
+type BlockPropertyList struct {
+	Data    []PropertyBlock `json:"data"`
+	Version string          `json:"version"`
+}
 
 type BulletListBlock struct {
 	Children []Block              `json:"children"`
@@ -199,6 +423,56 @@ type Document struct {
 	UpdatedAt opt.Optional[time.Time] `json:"updatedAt,omitzero"`
 }
 
+type DocumentBlocks struct {
+	Blocks []Block `json:"blocks"`
+	ID     string  `json:"id"`
+	// Schema Block model version.
+	Schema float64 `json:"schema"`
+	// Text Plain text of the document, one line per text-bearing block. A mention reads as its label,
+	// or else its resource's name.
+	Text    string `json:"text"`
+	Version string `json:"version"`
+}
+
+// DocumentBlocksWrite Whole-document replacement. `unsupported` blocks are preserved only when
+// echoed by id.
+type DocumentBlocksWrite struct {
+	// Blocks The whole new tree. A block without an id is given a new id; a requested id is kept. The
+	// same block id twice answers 400 VALIDATION_ERROR at the second occurrence.
+	Blocks []Block `json:"blocks"`
+}
+
+type DocumentCreateParams struct {
+	// CalendarID The id of a calendar from listCalendars, custom or built-in, that a timeline (`time`)
+	// document's dates render in. An id that names no calendar in the project, or a `calendarId` on
+	// any other document type, answers 400 VALIDATION_ERROR at `calendarId`.
+	CalendarID opt.Optional[string] `json:"calendarId,omitzero"`
+	// IsFullWidth Defaults to false.
+	IsFullWidth opt.Optional[bool] `json:"isFullWidth,omitzero"`
+	// IsHidden Defaults to false.
+	IsHidden opt.Optional[bool]       `json:"isHidden,omitzero"`
+	Name     string                   `json:"name"`
+	Type     DocumentCreateParamsType `json:"type"`
+}
+
+type DocumentCreateParamsType string
+
+const (
+	DocumentCreateParamsTypeBlank DocumentCreateParamsType = "blank"
+	DocumentCreateParamsTypePage  DocumentCreateParamsType = "page"
+	DocumentCreateParamsTypeBoard DocumentCreateParamsType = "board"
+	DocumentCreateParamsTypeMap   DocumentCreateParamsType = "map"
+	DocumentCreateParamsTypeTime  DocumentCreateParamsType = "time"
+)
+
+type DocumentList struct {
+	Data []Document `json:"data"`
+	// HasMore True when more items exist beyond this page.
+	HasMore opt.Optional[bool] `json:"hasMore,omitzero"`
+	// NextCursor Cursor for the next page, or null.
+	NextCursor opt.Nullable[string] `json:"nextCursor,omitzero"`
+}
+
 type DocumentType string
 
 const (
@@ -208,6 +482,31 @@ const (
 	DocumentTypeMap   DocumentType = "map"
 	DocumentTypeTime  DocumentType = "time"
 )
+
+type DocumentUpdateParams struct {
+	// CalendarID The id of a calendar from listCalendars, custom or built-in, that a timeline (`time`)
+	// document's dates render in. An id that names no calendar in the project, or a `calendarId` on
+	// any other document type, answers 400 VALIDATION_ERROR at `calendarId`. Changing it does not
+	// touch the timeline's events: they keep their times and render in the new calendar.
+	CalendarID  opt.Optional[string]         `json:"calendarId,omitzero"`
+	IsFullWidth opt.Optional[bool]           `json:"isFullWidth,omitzero"`
+	IsHidden    opt.Optional[bool]           `json:"isHidden,omitzero"`
+	MapImage    opt.Optional[MapImageParams] `json:"mapImage,omitzero"`
+	Name        opt.Optional[string]         `json:"name,omitzero"`
+	Rank        opt.Optional[string]         `json:"rank,omitzero"`
+	// Sources The timelines this timeline (`time`) document chains, in order. `sources` replaces the
+	// timelines a timeline (`time`) document chains, as adding and removing timelines with the
+	// timeline picker on a timeline does in the app; `[]` removes them all. It takes at most 100
+	// references. Each must name a timeline (`time`) document of this project that the caller can read
+	// and that is not deleted, other than the document itself, and appear once. Chains may loop: a
+	// timeline may chain a timeline that chains it, directly or through others, and listLanes and
+	// listEvents include each timeline in the loop once. A reference that breaks a rule answers 400
+	// VALIDATION_ERROR at `sources[i]`, its index, and nothing is written; `sources` on a document
+	// that is not a timeline answers 400 VALIDATION_ERROR at `sources`. References stored on the
+	// document that the caller cannot read are kept after the write. The document's filters are not
+	// changed.
+	Sources opt.Optional[[]TimelineSource] `json:"sources,omitzero"`
+}
 
 // EmbedBlock An embedded player; the URL must belong to `provider` and may be on any host the
 // provider uses. A `data:` or `blob:` URI answers 400 VALIDATION_ERROR naming the field: documents
@@ -371,6 +670,20 @@ const (
 	HeadingBlockKindHeading HeadingBlockKind = "heading"
 )
 
+type ImageAssetCreateParams struct {
+	// Description Asset description, stored on the asset and returned by getAsset. Omitted, the asset
+	// has no description.
+	Description opt.Optional[string] `json:"description,omitzero"`
+	// FolderID Folder to place the asset in (root if omitted). It must be the id of a FOLDER asset in
+	// this project; any other id answers 400 VALIDATION_ERROR at `folderId`.
+	FolderID opt.Optional[string] `json:"folderId,omitzero"`
+	// Name Asset name, 1–200 characters.
+	Name string `json:"name"`
+	// UploadKey The `uploadKey` from createImageUpload in this project. A key from another project, or
+	// one with no image stored under it, answers 400 VALIDATION_ERROR.
+	UploadKey string `json:"uploadKey"`
+}
+
 // ImageBlock An image by `url`. The URL is the `url` of an image asset of this project (upload with
 // createImageUpload and createImageAsset). Any other URL, including an image asset of another
 // project, answers 400 VALIDATION_ERROR naming the field, unless the same document, resource or
@@ -428,6 +741,50 @@ type ImagePropertyKind string
 
 const (
 	ImagePropertyKindImage ImagePropertyKind = "image"
+)
+
+type ImageUpload struct {
+	// ExpiresAt ISO-8601 time after which `uploadUrl` is refused.
+	ExpiresAt string `json:"expiresAt"`
+	// Headers Headers the upload must send, exactly as given.
+	Headers map[string]string `json:"headers"`
+	// Method The HTTP method for the upload.
+	Method ImageUploadMethod `json:"method"`
+	// UploadKey Opaque key naming the upload. Pass it to createImageAsset once the upload succeeds.
+	UploadKey string `json:"uploadKey"`
+	// UploadURL The signed storage URL to send the file to.
+	UploadURL string `json:"uploadUrl"`
+}
+
+type ImageUploadCreateParams struct {
+	// ContentHash Optional lowercase hex SHA-256 of the file. When sent, storage rejects an upload
+	// whose bytes do not match it.
+	ContentHash opt.Optional[string] `json:"contentHash,omitzero"`
+	// ContentLength The size of the file in bytes, charged against the storage quota and the daily
+	// upload budget. The upload body must be exactly this many bytes. A size past the project owner's
+	// storage quota answers 413 STORAGE_QUOTA_EXCEEDED.
+	ContentLength int64 `json:"contentLength"`
+	// ContentType The MIME type of the image. The upload must send it as `content-type`.
+	ContentType ImageUploadCreateParamsContentType `json:"contentType"`
+}
+
+// ImageUploadCreateParamsContentType The MIME type of the image. The upload must send it as
+// `content-type`.
+type ImageUploadCreateParamsContentType string
+
+const (
+	ImageUploadCreateParamsContentTypeImageJpeg ImageUploadCreateParamsContentType = "image/jpeg"
+	ImageUploadCreateParamsContentTypeImageJpg  ImageUploadCreateParamsContentType = "image/jpg"
+	ImageUploadCreateParamsContentTypeImagePng  ImageUploadCreateParamsContentType = "image/png"
+	ImageUploadCreateParamsContentTypeImageGif  ImageUploadCreateParamsContentType = "image/gif"
+	ImageUploadCreateParamsContentTypeImageWebp ImageUploadCreateParamsContentType = "image/webp"
+)
+
+// ImageUploadMethod The HTTP method for the upload.
+type ImageUploadMethod string
+
+const (
+	ImageUploadMethodPUT ImageUploadMethod = "PUT"
 )
 
 // InfoboxBlock An infobox whose `rows` are properties. Carries `layout` and `width`. A new one
@@ -640,6 +997,20 @@ type MapImage struct {
 	URL opt.Nullable[string] `json:"url,omitzero"`
 	// Width The image width in pixels.
 	Width int64 `json:"width"`
+}
+
+// MapImageParams The image asset to show as a map document's image. It sets or replaces the image,
+// as "Add map" and "Replace map" do in the app. The map's coordinate frame follows from the image's
+// pixel size; the response's `mapImage` carries it (see MapImage). Features keep their `pos`: after
+// a replacement with an image of another size, a feature sits over a different pixel of the new
+// image. The app draws the image from tiles cut from the asset on request, so the map shows it with
+// no processing step. A document that is not a map or `blank` answers 400 KIND_MISMATCH. A write to
+// a `blank` document converts it to a map document and saves the content in the same request.
+type MapImageParams struct {
+	// AssetID An image asset in the project's library that the caller can read. An `assetId` that is
+	// not an asset of this project, is not an image, or is hidden from a caller who is not a project
+	// admin answers 400 VALIDATION_ERROR at `mapImage.assetId`.
+	AssetID string `json:"assetId"`
 }
 
 // MapImageTiles The map's 256px image tiles. `urlTemplate` is a URL with `{z}`, `{x}` and `{y}`
@@ -908,6 +1279,83 @@ var PropertyBlockVariants = map[string]string{
 	"resourceLink":       "ResourceLinkProperty",
 	"textField":          "TextFieldProperty",
 	"unsupported":        "UnsupportedProperty",
+}
+
+// PropertyCreateRequest A property to create: `kind` plus that kind's fields, an optional `id`, the
+// envelope fields `title`, `isTitleHidden` and `isHidden`, and optional `before`/`after` placement
+// (at most one; neither appends last). `rank` is set by placement and is rejected in the body with
+// 400 VALIDATION_ERROR. `kind: "unsupported"` cannot be created and answers 400 UNSUPPORTED_KIND.
+type PropertyCreateRequest = json.RawMessage
+
+type PropertyList struct {
+	Data []PropertyBlock `json:"data"`
+	// HasMore True when more items exist beyond this page.
+	HasMore opt.Optional[bool] `json:"hasMore,omitzero"`
+	// NextCursor Cursor for the next page, or null.
+	NextCursor opt.Nullable[string] `json:"nextCursor,omitzero"`
+}
+
+// PropertyUpdateRequest A partial PropertyBlock: any of the envelope fields (`rank`, `title`,
+// `isTitleHidden`, `isHidden`) and any field of the property's own kind. The patch is merged over
+// the current property and the result is validated as a whole, so a field of another kind answers
+// 400 VALIDATION_ERROR. `kind` and `id` cannot be patched.
+type PropertyUpdateRequest struct {
+	Alt           opt.Optional[string]                          `json:"alt,omitzero"`
+	Children      opt.Optional[[]Block]                         `json:"children,omitzero"`
+	Display       opt.Optional[PropertyUpdateRequestDisplay]    `json:"display,omitzero"`
+	DisplayHeight opt.Optional[float64]                         `json:"displayHeight,omitzero"`
+	DocumentID    opt.Optional[string]                          `json:"documentId,omitzero"`
+	Fill          opt.Optional[bool]                            `json:"fill,omitzero"`
+	Filter        opt.Optional[FilterPredicate]                 `json:"filter,omitzero"`
+	IsHidden      opt.Optional[bool]                            `json:"isHidden,omitzero"`
+	IsTitleHidden opt.Optional[bool]                            `json:"isTitleHidden,omitzero"`
+	Items         opt.Optional[json.RawMessage]                 `json:"items,omitzero"`
+	Mode          opt.Optional[PropertyUpdateRequestMode]       `json:"mode,omitzero"`
+	Provider      opt.Optional[PropertyUpdateRequestProvider]   `json:"provider,omitzero"`
+	Rank          opt.Optional[string]                          `json:"rank,omitzero"`
+	ResourceID    opt.Optional[string]                          `json:"resourceId,omitzero"`
+	Rows          opt.Optional[[]PropertyUpdateRequestRowsItem] `json:"rows,omitzero"`
+	ShowIcon      opt.Optional[bool]                            `json:"showIcon,omitzero"`
+	ShowMax       opt.Optional[bool]                            `json:"showMax,omitzero"`
+	ShowText      opt.Optional[bool]                            `json:"showText,omitzero"`
+	Title         opt.Optional[string]                          `json:"title,omitzero"`
+	URL           opt.Optional[string]                          `json:"url,omitzero"`
+	Viewport      opt.Optional[MapViewport]                     `json:"viewport,omitzero"`
+}
+
+type PropertyUpdateRequestDisplay string
+
+const (
+	PropertyUpdateRequestDisplayList   PropertyUpdateRequestDisplay = "list"
+	PropertyUpdateRequestDisplayGrid   PropertyUpdateRequestDisplay = "grid"
+	PropertyUpdateRequestDisplayInline PropertyUpdateRequestDisplay = "inline"
+)
+
+type PropertyUpdateRequestMode string
+
+const (
+	PropertyUpdateRequestModeBar      PropertyUpdateRequestMode = "bar"
+	PropertyUpdateRequestModeWheel    PropertyUpdateRequestMode = "wheel"
+	PropertyUpdateRequestModeGauge180 PropertyUpdateRequestMode = "gauge-180"
+	PropertyUpdateRequestModeGauge270 PropertyUpdateRequestMode = "gauge-270"
+	PropertyUpdateRequestModePool     PropertyUpdateRequestMode = "pool"
+	PropertyUpdateRequestModeRating   PropertyUpdateRequestMode = "rating"
+)
+
+type PropertyUpdateRequestProvider string
+
+const (
+	PropertyUpdateRequestProviderYoutube    PropertyUpdateRequestProvider = "youtube"
+	PropertyUpdateRequestProviderSpotify    PropertyUpdateRequestProvider = "spotify"
+	PropertyUpdateRequestProviderSoundcloud PropertyUpdateRequestProvider = "soundcloud"
+)
+
+type PropertyUpdateRequestRowsItem struct {
+	Content opt.Optional[[]json.RawMessage] `json:"content,omitzero"`
+	ID      opt.Optional[string]            `json:"id,omitzero"`
+	Key     string                          `json:"key"`
+	Rank    opt.Optional[string]            `json:"rank,omitzero"`
+	Text    opt.Optional[string]            `json:"text,omitzero"`
 }
 
 type QuoteBlock struct {
@@ -1497,6 +1945,42 @@ const (
 	ResourceWithAncestorsIconSizeSmall  ResourceWithAncestorsIconSize = "small"
 )
 
+type Row struct {
+	Content []Run                `json:"content"`
+	ID      opt.Nullable[string] `json:"id,omitzero"`
+	Key     string               `json:"key"`
+	Rank    string               `json:"rank"`
+	Text    string               `json:"text"`
+}
+
+type RowCreateRequest struct {
+	// After Place after this row id. At most one of `before` and `after`; neither appends last.
+	After opt.Optional[string] `json:"after,omitzero"`
+	// Before Place before this row id. At most one of `before` and `after`; neither appends last.
+	Before opt.Optional[string] `json:"before,omitzero"`
+	// Content The row value as runs. A `{ break: true }` run starts a new line; a stored line break
+	// and a paragraph boundary both read back as `break`. When both `content` and `text` are sent,
+	// `content` wins and `text` is ignored, so a row read from the API can be echoed back.
+	Content opt.Optional[[]Run] `json:"content,omitzero"`
+	Key     string              `json:"key"`
+	// Text The row value as a plain string. Ignored when `content` is sent.
+	Text opt.Optional[string] `json:"text,omitzero"`
+}
+
+type RowList struct {
+	Data    []Row  `json:"data"`
+	Version string `json:"version"`
+}
+
+type RowPatchRequest struct {
+	// Content The row value as runs. `null` clears the value. When both `content` and `text` are sent,
+	// `content` wins.
+	Content opt.Nullable[[]Run]  `json:"content,omitzero"`
+	Key     opt.Optional[string] `json:"key,omitzero"`
+	// Text The row value as a plain string. It cannot be null.
+	Text opt.Optional[string] `json:"text,omitzero"`
+}
+
 type RuleBlock struct {
 	ID   opt.Optional[string] `json:"id,omitzero"`
 	Kind RuleBlockKind        `json:"kind"`
@@ -1515,6 +1999,84 @@ const (
 // merged into one. A mention's `text` is an optional label. `name` is the resource's current name;
 // it is read-only.
 type Run = json.RawMessage
+
+type SearchHighlight struct {
+	Index      float64 `json:"index"`
+	MatchEnd   float64 `json:"matchEnd"`
+	MatchStart float64 `json:"matchStart"`
+	Segment    string  `json:"segment"`
+}
+
+// SearchHitDocument Present when the match is in the content of one of the resource's documents
+// rather than its name or aliases.
+type SearchHitDocument struct {
+	// Highlights The matching passage with the offsets of the first match in it.
+	Highlights opt.Optional[[]SearchHighlight] `json:"highlights,omitzero"`
+	ID         string                          `json:"id"`
+	// IsSolo True when this is the only document of the resource in the results.
+	IsSolo opt.Optional[bool] `json:"isSolo,omitzero"`
+	Name   string             `json:"name"`
+}
+
+type SearchHitResource struct {
+	// IconColor Fill color of this resource's map pins. Also tints its cards and graph nodes. Written
+	// as `#RRGGBB`; a resource from an import or an older version may hold another CSS color string.
+	// Null when no color is stored.
+	IconColor opt.Nullable[string] `json:"iconColor,omitzero"`
+	IconGlyph opt.Nullable[string] `json:"iconGlyph,omitzero"`
+	// IconShape The shape drawn behind the glyph on a map pin, or `none` for the glyph alone.
+	IconShape opt.Optional[SearchHitResourceIconShape] `json:"iconShape,omitzero"`
+	// IconSize The size of the pin shape. Absent when `iconShape` is `none`.
+	IconSize opt.Optional[SearchHitResourceIconSize] `json:"iconSize,omitzero"`
+	ID       string                                  `json:"id"`
+	Name     string                                  `json:"name"`
+	ParentID opt.Nullable[string]                    `json:"parentId,omitzero"`
+	// Path Ancestors of the resource from the root down; absent for a root resource.
+	Path opt.Optional[[]SearchHitResourcePathItem] `json:"path,omitzero"`
+	Tags []string                                  `json:"tags"`
+}
+
+// SearchHitResourceIconShape The shape drawn behind the glyph on a map pin, or `none` for the glyph
+// alone.
+type SearchHitResourceIconShape string
+
+const (
+	SearchHitResourceIconShapePin     SearchHitResourceIconShape = "pin"
+	SearchHitResourceIconShapeDiamond SearchHitResourceIconShape = "diamond"
+	SearchHitResourceIconShapeFlag    SearchHitResourceIconShape = "flag"
+	SearchHitResourceIconShapeMarker  SearchHitResourceIconShape = "marker"
+	SearchHitResourceIconShapeShield  SearchHitResourceIconShape = "shield"
+	SearchHitResourceIconShapeCircle  SearchHitResourceIconShape = "circle"
+	SearchHitResourceIconShapeBanner  SearchHitResourceIconShape = "banner"
+	SearchHitResourceIconShapeArch    SearchHitResourceIconShape = "arch"
+	SearchHitResourceIconShapeNone    SearchHitResourceIconShape = "none"
+)
+
+// SearchHitResourceIconSize The size of the pin shape. Absent when `iconShape` is `none`.
+type SearchHitResourceIconSize string
+
+const (
+	SearchHitResourceIconSizeMedium SearchHitResourceIconSize = "medium"
+	SearchHitResourceIconSizeSmall  SearchHitResourceIconSize = "small"
+)
+
+type SearchHitResourcePathItem struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
+
+type SearchResult struct {
+	Document opt.Optional[SearchHitDocument] `json:"document,omitzero"`
+	Resource SearchHitResource               `json:"resource"`
+}
+
+type SearchResultList struct {
+	Data []SearchResult `json:"data"`
+	// HasMore True when more items exist beyond this page.
+	HasMore opt.Optional[bool] `json:"hasMore,omitzero"`
+	// NextCursor Cursor for the next page, or null.
+	NextCursor opt.Nullable[string] `json:"nextCursor,omitzero"`
+}
 
 // SecretBlock Content hidden from players and stripped from public pages. Carries `layout` and
 // `width`. A new one written without them is full width; on a replace or an update an omitted field
@@ -1573,6 +2135,20 @@ type TableRowBlockKind string
 const (
 	TableRowBlockKindTableRow TableRowBlockKind = "tableRow"
 )
+
+type Tag struct {
+	// Count The number of resources in the project that carry the tag.
+	Count int64  `json:"count"`
+	Tag   string `json:"tag"`
+}
+
+type TagList struct {
+	Data []Tag `json:"data"`
+	// HasMore True when more items exist beyond this page.
+	HasMore opt.Optional[bool] `json:"hasMore,omitzero"`
+	// NextCursor Cursor for the next page, or null.
+	NextCursor opt.Nullable[string] `json:"nextCursor,omitzero"`
+}
 
 type TaskItemBlock struct {
 	Checked bool                 `json:"checked"`
@@ -1674,4 +2250,882 @@ type UnsupportedPropertyKind string
 
 const (
 	UnsupportedPropertyKindUnsupported UnsupportedPropertyKind = "unsupported"
+)
+
+// VersionedBlock A Block plus the document `version` it was read or written at.
+type VersionedBlock struct {
+	// Kind is the "kind" discriminator value.
+	Kind string
+	// Raw is the original JSON object.
+	Raw json.RawMessage
+}
+
+// UnmarshalJSON records the discriminator and keeps the raw JSON.
+func (u *VersionedBlock) UnmarshalJSON(b []byte) error {
+	var d struct {
+		V string `json:"kind"`
+	}
+	if err := json.Unmarshal(b, &d); err != nil {
+		return err
+	}
+	u.Kind, u.Raw = d.V, append(json.RawMessage(nil), b...)
+	return nil
+}
+
+// MarshalJSON returns the raw JSON unchanged.
+func (u VersionedBlock) MarshalJSON() ([]byte, error) {
+	if u.Raw == nil {
+		return []byte("null"), nil
+	}
+	return u.Raw, nil
+}
+
+// VersionedBlockVariants maps each "kind" value to its variant type name.
+var VersionedBlockVariants = map[string]string{
+	"bulletList":         "VersionedBulletListBlock",
+	"callout":            "VersionedCalloutBlock",
+	"code":               "VersionedCodeBlock",
+	"embed":              "VersionedEmbedBlock",
+	"expand":             "VersionedExpandBlock",
+	"heading":            "VersionedHeadingBlock",
+	"image":              "VersionedImageBlock",
+	"infobox":            "VersionedInfoboxBlock",
+	"keyValue":           "VersionedKeyValueBlock",
+	"layout":             "VersionedLayoutBlock",
+	"layoutColumn":       "VersionedLayoutColumnBlock",
+	"listItem":           "VersionedListItemBlock",
+	"map":                "VersionedMapBlock",
+	"meter":              "VersionedMeterBlock",
+	"orderedList":        "VersionedOrderedListBlock",
+	"paragraph":          "VersionedParagraphBlock",
+	"quote":              "VersionedQuoteBlock",
+	"resourceCollection": "VersionedResourceCollectionBlock",
+	"resourceLink":       "VersionedResourceLinkBlock",
+	"rule":               "VersionedRuleBlock",
+	"secret":             "VersionedSecretBlock",
+	"table":              "VersionedTableBlock",
+	"tableCell":          "VersionedTableCellBlock",
+	"tableRow":           "VersionedTableRowBlock",
+	"taskItem":           "VersionedTaskItemBlock",
+	"taskList":           "VersionedTaskListBlock",
+	"textField":          "VersionedTextFieldBlock",
+	"unsupported":        "VersionedUnsupportedBlock",
+}
+
+type VersionedBulletListBlock struct {
+	Children []Block                      `json:"children"`
+	ID       opt.Optional[string]         `json:"id,omitzero"`
+	Kind     VersionedBulletListBlockKind `json:"kind"`
+	Version  string                       `json:"version"`
+}
+
+type VersionedBulletListBlockKind string
+
+const (
+	VersionedBulletListBlockKindBulletList VersionedBulletListBlockKind = "bulletList"
+)
+
+type VersionedCalloutBlock struct {
+	Children []Block `json:"children"`
+	// Color Icon color and background tint, as `#RRGGBB`. Accepted only when `tone` is `custom`; the
+	// other tones draw their own color.
+	Color   opt.Optional[string]      `json:"color,omitzero"`
+	Icon    opt.Optional[string]      `json:"icon,omitzero"`
+	ID      opt.Optional[string]      `json:"id,omitzero"`
+	Kind    VersionedCalloutBlockKind `json:"kind"`
+	Tone    VersionedCalloutBlockTone `json:"tone"`
+	Version string                    `json:"version"`
+}
+
+type VersionedCalloutBlockKind string
+
+const (
+	VersionedCalloutBlockKindCallout VersionedCalloutBlockKind = "callout"
+)
+
+type VersionedCalloutBlockTone string
+
+const (
+	VersionedCalloutBlockToneInfo    VersionedCalloutBlockTone = "info"
+	VersionedCalloutBlockToneNote    VersionedCalloutBlockTone = "note"
+	VersionedCalloutBlockToneSuccess VersionedCalloutBlockTone = "success"
+	VersionedCalloutBlockToneWarning VersionedCalloutBlockTone = "warning"
+	VersionedCalloutBlockToneError   VersionedCalloutBlockTone = "error"
+	VersionedCalloutBlockToneCustom  VersionedCalloutBlockTone = "custom"
+)
+
+type VersionedCodeBlock struct {
+	ID       opt.Optional[string]   `json:"id,omitzero"`
+	Kind     VersionedCodeBlockKind `json:"kind"`
+	Language opt.Optional[string]   `json:"language,omitzero"`
+	Text     string                 `json:"text"`
+	Version  string                 `json:"version"`
+}
+
+type VersionedCodeBlockKind string
+
+const (
+	VersionedCodeBlockKindCode VersionedCodeBlockKind = "code"
+)
+
+type VersionedEmbedBlock struct {
+	ID            opt.Optional[string]        `json:"id,omitzero"`
+	IsTitleHidden opt.Optional[bool]          `json:"isTitleHidden,omitzero"`
+	Kind          VersionedEmbedBlockKind     `json:"kind"`
+	Layout        opt.Optional[BlockLayout]   `json:"layout,omitzero"`
+	Provider      VersionedEmbedBlockProvider `json:"provider"`
+	Title         opt.Optional[string]        `json:"title,omitzero"`
+	URL           string                      `json:"url"`
+	Version       string                      `json:"version"`
+	// Width Block width as a percentage of the column it sits in, 10 to 100. It applies when `layout`
+	// is not `default`.
+	Width opt.Optional[int64] `json:"width,omitzero"`
+}
+
+type VersionedEmbedBlockKind string
+
+const (
+	VersionedEmbedBlockKindEmbed VersionedEmbedBlockKind = "embed"
+)
+
+type VersionedEmbedBlockProvider string
+
+const (
+	VersionedEmbedBlockProviderYoutube    VersionedEmbedBlockProvider = "youtube"
+	VersionedEmbedBlockProviderSpotify    VersionedEmbedBlockProvider = "spotify"
+	VersionedEmbedBlockProviderSoundcloud VersionedEmbedBlockProvider = "soundcloud"
+)
+
+type VersionedEmbedProperty struct {
+	ID            opt.Optional[string]           `json:"id,omitzero"`
+	IsHidden      opt.Optional[bool]             `json:"isHidden,omitzero"`
+	IsTitleHidden opt.Optional[bool]             `json:"isTitleHidden,omitzero"`
+	Kind          VersionedEmbedPropertyKind     `json:"kind"`
+	Provider      VersionedEmbedPropertyProvider `json:"provider"`
+	Rank          opt.Optional[string]           `json:"rank,omitzero"`
+	Title         opt.Optional[string]           `json:"title,omitzero"`
+	URL           string                         `json:"url"`
+	Version       string                         `json:"version"`
+}
+
+type VersionedEmbedPropertyKind string
+
+const (
+	VersionedEmbedPropertyKindEmbed VersionedEmbedPropertyKind = "embed"
+)
+
+type VersionedEmbedPropertyProvider string
+
+const (
+	VersionedEmbedPropertyProviderYoutube    VersionedEmbedPropertyProvider = "youtube"
+	VersionedEmbedPropertyProviderSpotify    VersionedEmbedPropertyProvider = "spotify"
+	VersionedEmbedPropertyProviderSoundcloud VersionedEmbedPropertyProvider = "soundcloud"
+)
+
+type VersionedExpandBlock struct {
+	Children []Block                  `json:"children"`
+	ID       opt.Optional[string]     `json:"id,omitzero"`
+	Kind     VersionedExpandBlockKind `json:"kind"`
+	Title    string                   `json:"title"`
+	Version  string                   `json:"version"`
+}
+
+type VersionedExpandBlockKind string
+
+const (
+	VersionedExpandBlockKindExpand VersionedExpandBlockKind = "expand"
+)
+
+type VersionedHeadingBlock struct {
+	// Align Text alignment. An omitted `align` is `left`; reads omit `left`.
+	Align opt.Optional[VersionedHeadingBlockAlign] `json:"align,omitzero"`
+	// Background Background color, as `#RRGGBB`. The app draws it as a light wash of this color behind
+	// the block.
+	Background opt.Optional[string]      `json:"background,omitzero"`
+	Content    []Run                     `json:"content"`
+	ID         opt.Optional[string]      `json:"id,omitzero"`
+	Kind       VersionedHeadingBlockKind `json:"kind"`
+	Level      int64                     `json:"level"`
+	Version    string                    `json:"version"`
+}
+
+// VersionedHeadingBlockAlign Text alignment. An omitted `align` is `left`; reads omit `left`.
+type VersionedHeadingBlockAlign string
+
+const (
+	VersionedHeadingBlockAlignLeft   VersionedHeadingBlockAlign = "left"
+	VersionedHeadingBlockAlignCenter VersionedHeadingBlockAlign = "center"
+	VersionedHeadingBlockAlignRight  VersionedHeadingBlockAlign = "right"
+)
+
+type VersionedHeadingBlockKind string
+
+const (
+	VersionedHeadingBlockKindHeading VersionedHeadingBlockKind = "heading"
+)
+
+type VersionedImageBlock struct {
+	Alt           opt.Optional[string]      `json:"alt,omitzero"`
+	Fill          opt.Optional[bool]        `json:"fill,omitzero"`
+	ID            opt.Optional[string]      `json:"id,omitzero"`
+	IsTitleHidden opt.Optional[bool]        `json:"isTitleHidden,omitzero"`
+	Kind          VersionedImageBlockKind   `json:"kind"`
+	Layout        opt.Optional[BlockLayout] `json:"layout,omitzero"`
+	Title         opt.Optional[string]      `json:"title,omitzero"`
+	URL           string                    `json:"url"`
+	Version       string                    `json:"version"`
+	// Width Block width as a percentage of the column it sits in, 10 to 100. It applies when `layout`
+	// is not `default`.
+	Width opt.Optional[int64] `json:"width,omitzero"`
+}
+
+type VersionedImageBlockKind string
+
+const (
+	VersionedImageBlockKindImage VersionedImageBlockKind = "image"
+)
+
+type VersionedImageProperty struct {
+	Alt           opt.Optional[string]       `json:"alt,omitzero"`
+	Fill          opt.Optional[bool]         `json:"fill,omitzero"`
+	ID            opt.Optional[string]       `json:"id,omitzero"`
+	IsHidden      opt.Optional[bool]         `json:"isHidden,omitzero"`
+	IsTitleHidden opt.Optional[bool]         `json:"isTitleHidden,omitzero"`
+	Kind          VersionedImagePropertyKind `json:"kind"`
+	Rank          opt.Optional[string]       `json:"rank,omitzero"`
+	Title         opt.Optional[string]       `json:"title,omitzero"`
+	URL           string                     `json:"url"`
+	Version       string                     `json:"version"`
+}
+
+type VersionedImagePropertyKind string
+
+const (
+	VersionedImagePropertyKindImage VersionedImagePropertyKind = "image"
+)
+
+type VersionedInfoboxBlock struct {
+	ID      opt.Optional[string]      `json:"id,omitzero"`
+	Kind    VersionedInfoboxBlockKind `json:"kind"`
+	Layout  opt.Optional[BlockLayout] `json:"layout,omitzero"`
+	Rows    []PropertyBlock           `json:"rows"`
+	Version string                    `json:"version"`
+	// Width Block width as a percentage of the column it sits in, 10 to 100. It applies when `layout`
+	// is not `default`.
+	Width opt.Optional[int64] `json:"width,omitzero"`
+}
+
+type VersionedInfoboxBlockKind string
+
+const (
+	VersionedInfoboxBlockKindInfobox VersionedInfoboxBlockKind = "infobox"
+)
+
+type VersionedKeyValueBlock struct {
+	Display       opt.Optional[VersionedKeyValueBlockDisplay] `json:"display,omitzero"`
+	ID            opt.Optional[string]                        `json:"id,omitzero"`
+	IsTitleHidden opt.Optional[bool]                          `json:"isTitleHidden,omitzero"`
+	Kind          VersionedKeyValueBlockKind                  `json:"kind"`
+	Layout        opt.Optional[BlockLayout]                   `json:"layout,omitzero"`
+	Rows          []VersionedKeyValueBlockRowsItem            `json:"rows"`
+	Title         opt.Optional[string]                        `json:"title,omitzero"`
+	Version       string                                      `json:"version"`
+	// Width Block width as a percentage of the column it sits in, 10 to 100. It applies when `layout`
+	// is not `default`.
+	Width opt.Optional[int64] `json:"width,omitzero"`
+}
+
+type VersionedKeyValueBlockDisplay string
+
+const (
+	VersionedKeyValueBlockDisplayList   VersionedKeyValueBlockDisplay = "list"
+	VersionedKeyValueBlockDisplayGrid   VersionedKeyValueBlockDisplay = "grid"
+	VersionedKeyValueBlockDisplayInline VersionedKeyValueBlockDisplay = "inline"
+)
+
+type VersionedKeyValueBlockKind string
+
+const (
+	VersionedKeyValueBlockKindKeyValue VersionedKeyValueBlockKind = "keyValue"
+)
+
+type VersionedKeyValueBlockRowsItem struct {
+	Content opt.Optional[[]json.RawMessage] `json:"content,omitzero"`
+	ID      opt.Optional[string]            `json:"id,omitzero"`
+	Key     string                          `json:"key"`
+	Rank    opt.Optional[string]            `json:"rank,omitzero"`
+	Text    opt.Optional[string]            `json:"text,omitzero"`
+}
+
+type VersionedKeyValueProperty struct {
+	Display       opt.Optional[VersionedKeyValuePropertyDisplay] `json:"display,omitzero"`
+	ID            opt.Optional[string]                           `json:"id,omitzero"`
+	IsHidden      opt.Optional[bool]                             `json:"isHidden,omitzero"`
+	IsTitleHidden opt.Optional[bool]                             `json:"isTitleHidden,omitzero"`
+	Kind          VersionedKeyValuePropertyKind                  `json:"kind"`
+	Rank          opt.Optional[string]                           `json:"rank,omitzero"`
+	Rows          []VersionedKeyValuePropertyRowsItem            `json:"rows"`
+	Title         opt.Optional[string]                           `json:"title,omitzero"`
+	Version       string                                         `json:"version"`
+}
+
+type VersionedKeyValuePropertyDisplay string
+
+const (
+	VersionedKeyValuePropertyDisplayList   VersionedKeyValuePropertyDisplay = "list"
+	VersionedKeyValuePropertyDisplayGrid   VersionedKeyValuePropertyDisplay = "grid"
+	VersionedKeyValuePropertyDisplayInline VersionedKeyValuePropertyDisplay = "inline"
+)
+
+type VersionedKeyValuePropertyKind string
+
+const (
+	VersionedKeyValuePropertyKindKeyValue VersionedKeyValuePropertyKind = "keyValue"
+)
+
+type VersionedKeyValuePropertyRowsItem struct {
+	Content opt.Optional[[]json.RawMessage] `json:"content,omitzero"`
+	ID      opt.Optional[string]            `json:"id,omitzero"`
+	Key     string                          `json:"key"`
+	Rank    opt.Optional[string]            `json:"rank,omitzero"`
+	Text    opt.Optional[string]            `json:"text,omitzero"`
+}
+
+type VersionedLayoutBlock struct {
+	Children []Block                  `json:"children"`
+	ID       opt.Optional[string]     `json:"id,omitzero"`
+	Kind     VersionedLayoutBlockKind `json:"kind"`
+	Version  string                   `json:"version"`
+}
+
+type VersionedLayoutBlockKind string
+
+const (
+	VersionedLayoutBlockKindLayout VersionedLayoutBlockKind = "layout"
+)
+
+type VersionedLayoutColumnBlock struct {
+	// Background Column background color, as `#RRGGBB`. The app draws it as a light wash of this color
+	// over the column.
+	Background opt.Optional[string]           `json:"background,omitzero"`
+	Children   []Block                        `json:"children"`
+	ID         opt.Optional[string]           `json:"id,omitzero"`
+	Kind       VersionedLayoutColumnBlockKind `json:"kind"`
+	Version    string                         `json:"version"`
+	Width      opt.Optional[float64]          `json:"width,omitzero"`
+}
+
+type VersionedLayoutColumnBlockKind string
+
+const (
+	VersionedLayoutColumnBlockKindLayoutColumn VersionedLayoutColumnBlockKind = "layoutColumn"
+)
+
+type VersionedListItemBlock struct {
+	Children []Block                    `json:"children"`
+	ID       opt.Optional[string]       `json:"id,omitzero"`
+	Kind     VersionedListItemBlockKind `json:"kind"`
+	Version  string                     `json:"version"`
+}
+
+type VersionedListItemBlockKind string
+
+const (
+	VersionedListItemBlockKindListItem VersionedListItemBlockKind = "listItem"
+)
+
+type VersionedMapBlock struct {
+	DisplayHeight opt.Optional[float64]     `json:"displayHeight,omitzero"`
+	DocumentID    opt.Optional[string]      `json:"documentId,omitzero"`
+	Fill          opt.Optional[bool]        `json:"fill,omitzero"`
+	ID            opt.Optional[string]      `json:"id,omitzero"`
+	IsTitleHidden opt.Optional[bool]        `json:"isTitleHidden,omitzero"`
+	Kind          VersionedMapBlockKind     `json:"kind"`
+	Layout        opt.Optional[BlockLayout] `json:"layout,omitzero"`
+	ResourceID    opt.Optional[string]      `json:"resourceId,omitzero"`
+	Title         opt.Optional[string]      `json:"title,omitzero"`
+	Version       string                    `json:"version"`
+	Viewport      opt.Optional[MapViewport] `json:"viewport,omitzero"`
+	// Width Block width as a percentage of the column it sits in, 10 to 100. It applies when `layout`
+	// is not `default`.
+	Width opt.Optional[int64] `json:"width,omitzero"`
+}
+
+type VersionedMapBlockKind string
+
+const (
+	VersionedMapBlockKindMap VersionedMapBlockKind = "map"
+)
+
+type VersionedMapProperty struct {
+	DisplayHeight opt.Optional[float64]     `json:"displayHeight,omitzero"`
+	DocumentID    opt.Optional[string]      `json:"documentId,omitzero"`
+	Fill          opt.Optional[bool]        `json:"fill,omitzero"`
+	ID            opt.Optional[string]      `json:"id,omitzero"`
+	IsHidden      opt.Optional[bool]        `json:"isHidden,omitzero"`
+	IsTitleHidden opt.Optional[bool]        `json:"isTitleHidden,omitzero"`
+	Kind          VersionedMapPropertyKind  `json:"kind"`
+	Rank          opt.Optional[string]      `json:"rank,omitzero"`
+	ResourceID    opt.Optional[string]      `json:"resourceId,omitzero"`
+	Title         opt.Optional[string]      `json:"title,omitzero"`
+	Version       string                    `json:"version"`
+	Viewport      opt.Optional[MapViewport] `json:"viewport,omitzero"`
+}
+
+type VersionedMapPropertyKind string
+
+const (
+	VersionedMapPropertyKindMap VersionedMapPropertyKind = "map"
+)
+
+type VersionedMeterBlock struct {
+	ID            opt.Optional[string]           `json:"id,omitzero"`
+	IsTitleHidden opt.Optional[bool]             `json:"isTitleHidden,omitzero"`
+	Items         []VersionedMeterBlockItemsItem `json:"items"`
+	Kind          VersionedMeterBlockKind        `json:"kind"`
+	Layout        opt.Optional[BlockLayout]      `json:"layout,omitzero"`
+	Mode          VersionedMeterBlockMode        `json:"mode"`
+	ShowIcon      opt.Optional[bool]             `json:"showIcon,omitzero"`
+	ShowMax       opt.Optional[bool]             `json:"showMax,omitzero"`
+	ShowText      opt.Optional[bool]             `json:"showText,omitzero"`
+	Title         opt.Optional[string]           `json:"title,omitzero"`
+	Version       string                         `json:"version"`
+	// Width Block width as a percentage of the column it sits in, 10 to 100. It applies when `layout`
+	// is not `default`.
+	Width opt.Optional[int64] `json:"width,omitzero"`
+}
+
+type VersionedMeterBlockItemsItem struct {
+	// Color Fill color of the meter as `#RRGGBB`, or `none` to use the block tint. With `none` and no
+	// block tint the meter is drawn `#3B82F6`. Absent, `none`.
+	Color      opt.Optional[json.RawMessage] `json:"color,omitzero"`
+	Current    float64                       `json:"current"`
+	Icon       string                        `json:"icon"`
+	ID         opt.Optional[string]          `json:"id,omitzero"`
+	Max        float64                       `json:"max"`
+	Name       string                        `json:"name"`
+	RatingIcon opt.Optional[string]          `json:"ratingIcon,omitzero"`
+}
+
+type VersionedMeterBlockKind string
+
+const (
+	VersionedMeterBlockKindMeter VersionedMeterBlockKind = "meter"
+)
+
+type VersionedMeterBlockMode string
+
+const (
+	VersionedMeterBlockModeBar      VersionedMeterBlockMode = "bar"
+	VersionedMeterBlockModeWheel    VersionedMeterBlockMode = "wheel"
+	VersionedMeterBlockModeGauge180 VersionedMeterBlockMode = "gauge-180"
+	VersionedMeterBlockModeGauge270 VersionedMeterBlockMode = "gauge-270"
+	VersionedMeterBlockModePool     VersionedMeterBlockMode = "pool"
+	VersionedMeterBlockModeRating   VersionedMeterBlockMode = "rating"
+)
+
+type VersionedMeterProperty struct {
+	ID            opt.Optional[string]              `json:"id,omitzero"`
+	IsHidden      opt.Optional[bool]                `json:"isHidden,omitzero"`
+	IsTitleHidden opt.Optional[bool]                `json:"isTitleHidden,omitzero"`
+	Items         []VersionedMeterPropertyItemsItem `json:"items"`
+	Kind          VersionedMeterPropertyKind        `json:"kind"`
+	Mode          VersionedMeterPropertyMode        `json:"mode"`
+	Rank          opt.Optional[string]              `json:"rank,omitzero"`
+	ShowIcon      opt.Optional[bool]                `json:"showIcon,omitzero"`
+	ShowMax       opt.Optional[bool]                `json:"showMax,omitzero"`
+	ShowText      opt.Optional[bool]                `json:"showText,omitzero"`
+	Title         opt.Optional[string]              `json:"title,omitzero"`
+	Version       string                            `json:"version"`
+}
+
+type VersionedMeterPropertyItemsItem struct {
+	// Color Fill color of the meter as `#RRGGBB`, or `none` to use the block tint. With `none` and no
+	// block tint the meter is drawn `#3B82F6`. Absent, `none`.
+	Color      opt.Optional[json.RawMessage] `json:"color,omitzero"`
+	Current    float64                       `json:"current"`
+	Icon       string                        `json:"icon"`
+	ID         opt.Optional[string]          `json:"id,omitzero"`
+	Max        float64                       `json:"max"`
+	Name       string                        `json:"name"`
+	RatingIcon opt.Optional[string]          `json:"ratingIcon,omitzero"`
+}
+
+type VersionedMeterPropertyKind string
+
+const (
+	VersionedMeterPropertyKindMeter VersionedMeterPropertyKind = "meter"
+)
+
+type VersionedMeterPropertyMode string
+
+const (
+	VersionedMeterPropertyModeBar      VersionedMeterPropertyMode = "bar"
+	VersionedMeterPropertyModeWheel    VersionedMeterPropertyMode = "wheel"
+	VersionedMeterPropertyModeGauge180 VersionedMeterPropertyMode = "gauge-180"
+	VersionedMeterPropertyModeGauge270 VersionedMeterPropertyMode = "gauge-270"
+	VersionedMeterPropertyModePool     VersionedMeterPropertyMode = "pool"
+	VersionedMeterPropertyModeRating   VersionedMeterPropertyMode = "rating"
+)
+
+type VersionedOrderedListBlock struct {
+	Children []Block                       `json:"children"`
+	ID       opt.Optional[string]          `json:"id,omitzero"`
+	Kind     VersionedOrderedListBlockKind `json:"kind"`
+	Start    opt.Optional[int64]           `json:"start,omitzero"`
+	Version  string                        `json:"version"`
+}
+
+type VersionedOrderedListBlockKind string
+
+const (
+	VersionedOrderedListBlockKindOrderedList VersionedOrderedListBlockKind = "orderedList"
+)
+
+type VersionedParagraphBlock struct {
+	// Align Text alignment. An omitted `align` is `left`; reads omit `left`.
+	Align opt.Optional[VersionedParagraphBlockAlign] `json:"align,omitzero"`
+	// Background Background color, as `#RRGGBB`. The app draws it as a light wash of this color behind
+	// the block.
+	Background opt.Optional[string]        `json:"background,omitzero"`
+	Content    []Run                       `json:"content"`
+	ID         opt.Optional[string]        `json:"id,omitzero"`
+	Kind       VersionedParagraphBlockKind `json:"kind"`
+	Version    string                      `json:"version"`
+}
+
+// VersionedParagraphBlockAlign Text alignment. An omitted `align` is `left`; reads omit `left`.
+type VersionedParagraphBlockAlign string
+
+const (
+	VersionedParagraphBlockAlignLeft   VersionedParagraphBlockAlign = "left"
+	VersionedParagraphBlockAlignCenter VersionedParagraphBlockAlign = "center"
+	VersionedParagraphBlockAlignRight  VersionedParagraphBlockAlign = "right"
+)
+
+type VersionedParagraphBlockKind string
+
+const (
+	VersionedParagraphBlockKindParagraph VersionedParagraphBlockKind = "paragraph"
+)
+
+// VersionedProperty A PropertyBlock plus the document `version` it was read or written at.
+type VersionedProperty struct {
+	// Kind is the "kind" discriminator value.
+	Kind string
+	// Raw is the original JSON object.
+	Raw json.RawMessage
+}
+
+// UnmarshalJSON records the discriminator and keeps the raw JSON.
+func (u *VersionedProperty) UnmarshalJSON(b []byte) error {
+	var d struct {
+		V string `json:"kind"`
+	}
+	if err := json.Unmarshal(b, &d); err != nil {
+		return err
+	}
+	u.Kind, u.Raw = d.V, append(json.RawMessage(nil), b...)
+	return nil
+}
+
+// MarshalJSON returns the raw JSON unchanged.
+func (u VersionedProperty) MarshalJSON() ([]byte, error) {
+	if u.Raw == nil {
+		return []byte("null"), nil
+	}
+	return u.Raw, nil
+}
+
+// VersionedPropertyVariants maps each "kind" value to its variant type name.
+var VersionedPropertyVariants = map[string]string{
+	"embed":              "VersionedEmbedProperty",
+	"image":              "VersionedImageProperty",
+	"keyValue":           "VersionedKeyValueProperty",
+	"map":                "VersionedMapProperty",
+	"meter":              "VersionedMeterProperty",
+	"resourceCollection": "VersionedResourceCollectionProperty",
+	"resourceLink":       "VersionedResourceLinkProperty",
+	"textField":          "VersionedTextFieldProperty",
+	"unsupported":        "VersionedUnsupportedProperty",
+}
+
+type VersionedQuoteBlock struct {
+	Children []Block `json:"children"`
+	// Color Quote color, as `#RRGGBB`. The app draws the quote bar in this color and tints the quote
+	// with it.
+	Color   opt.Optional[string]    `json:"color,omitzero"`
+	ID      opt.Optional[string]    `json:"id,omitzero"`
+	Kind    VersionedQuoteBlockKind `json:"kind"`
+	Version string                  `json:"version"`
+}
+
+type VersionedQuoteBlockKind string
+
+const (
+	VersionedQuoteBlockKindQuote VersionedQuoteBlockKind = "quote"
+)
+
+type VersionedResourceCollectionBlock struct {
+	Filter        opt.Optional[FilterPredicate]                             `json:"filter,omitzero"`
+	ID            opt.Optional[string]                                      `json:"id,omitzero"`
+	IsTitleHidden opt.Optional[bool]                                        `json:"isTitleHidden,omitzero"`
+	Items         opt.Optional[[]VersionedResourceCollectionBlockItemsItem] `json:"items,omitzero"`
+	Kind          VersionedResourceCollectionBlockKind                      `json:"kind"`
+	Layout        opt.Optional[BlockLayout]                                 `json:"layout,omitzero"`
+	Title         opt.Optional[string]                                      `json:"title,omitzero"`
+	Version       string                                                    `json:"version"`
+	// Width Block width as a percentage of the column it sits in, 10 to 100. It applies when `layout`
+	// is not `default`.
+	Width opt.Optional[int64] `json:"width,omitzero"`
+}
+
+type VersionedResourceCollectionBlockItemsItem struct {
+	DocumentID opt.Optional[string] `json:"documentId,omitzero"`
+	ID         opt.Optional[string] `json:"id,omitzero"`
+	Rank       opt.Optional[string] `json:"rank,omitzero"`
+	ResourceID string               `json:"resourceId"`
+}
+
+type VersionedResourceCollectionBlockKind string
+
+const (
+	VersionedResourceCollectionBlockKindResourceCollection VersionedResourceCollectionBlockKind = "resourceCollection"
+)
+
+type VersionedResourceCollectionProperty struct {
+	Filter        opt.Optional[FilterPredicate]                                `json:"filter,omitzero"`
+	ID            opt.Optional[string]                                         `json:"id,omitzero"`
+	IsHidden      opt.Optional[bool]                                           `json:"isHidden,omitzero"`
+	IsTitleHidden opt.Optional[bool]                                           `json:"isTitleHidden,omitzero"`
+	Items         opt.Optional[[]VersionedResourceCollectionPropertyItemsItem] `json:"items,omitzero"`
+	Kind          VersionedResourceCollectionPropertyKind                      `json:"kind"`
+	Rank          opt.Optional[string]                                         `json:"rank,omitzero"`
+	Title         opt.Optional[string]                                         `json:"title,omitzero"`
+	Version       string                                                       `json:"version"`
+}
+
+type VersionedResourceCollectionPropertyItemsItem struct {
+	DocumentID opt.Optional[string] `json:"documentId,omitzero"`
+	ID         opt.Optional[string] `json:"id,omitzero"`
+	Rank       opt.Optional[string] `json:"rank,omitzero"`
+	ResourceID string               `json:"resourceId"`
+}
+
+type VersionedResourceCollectionPropertyKind string
+
+const (
+	VersionedResourceCollectionPropertyKindResourceCollection VersionedResourceCollectionPropertyKind = "resourceCollection"
+)
+
+type VersionedResourceLinkBlock struct {
+	ID            opt.Optional[string]                  `json:"id,omitzero"`
+	IsTitleHidden opt.Optional[bool]                    `json:"isTitleHidden,omitzero"`
+	Items         []VersionedResourceLinkBlockItemsItem `json:"items"`
+	Kind          VersionedResourceLinkBlockKind        `json:"kind"`
+	Layout        opt.Optional[BlockLayout]             `json:"layout,omitzero"`
+	Title         opt.Optional[string]                  `json:"title,omitzero"`
+	Version       string                                `json:"version"`
+	// Width Block width as a percentage of the column it sits in, 10 to 100. It applies when `layout`
+	// is not `default`.
+	Width opt.Optional[int64] `json:"width,omitzero"`
+}
+
+type VersionedResourceLinkBlockItemsItem struct {
+	DocumentID opt.Optional[string] `json:"documentId,omitzero"`
+	ID         opt.Optional[string] `json:"id,omitzero"`
+	Rank       opt.Optional[string] `json:"rank,omitzero"`
+	ResourceID string               `json:"resourceId"`
+}
+
+type VersionedResourceLinkBlockKind string
+
+const (
+	VersionedResourceLinkBlockKindResourceLink VersionedResourceLinkBlockKind = "resourceLink"
+)
+
+type VersionedResourceLinkProperty struct {
+	ID            opt.Optional[string]                     `json:"id,omitzero"`
+	IsHidden      opt.Optional[bool]                       `json:"isHidden,omitzero"`
+	IsTitleHidden opt.Optional[bool]                       `json:"isTitleHidden,omitzero"`
+	Items         []VersionedResourceLinkPropertyItemsItem `json:"items"`
+	Kind          VersionedResourceLinkPropertyKind        `json:"kind"`
+	Rank          opt.Optional[string]                     `json:"rank,omitzero"`
+	Title         opt.Optional[string]                     `json:"title,omitzero"`
+	Version       string                                   `json:"version"`
+}
+
+type VersionedResourceLinkPropertyItemsItem struct {
+	DocumentID opt.Optional[string] `json:"documentId,omitzero"`
+	ID         opt.Optional[string] `json:"id,omitzero"`
+	Rank       opt.Optional[string] `json:"rank,omitzero"`
+	ResourceID string               `json:"resourceId"`
+}
+
+type VersionedResourceLinkPropertyKind string
+
+const (
+	VersionedResourceLinkPropertyKindResourceLink VersionedResourceLinkPropertyKind = "resourceLink"
+)
+
+type VersionedRuleBlock struct {
+	ID      opt.Optional[string]   `json:"id,omitzero"`
+	Kind    VersionedRuleBlockKind `json:"kind"`
+	Version string                 `json:"version"`
+}
+
+type VersionedRuleBlockKind string
+
+const (
+	VersionedRuleBlockKindRule VersionedRuleBlockKind = "rule"
+)
+
+type VersionedSecretBlock struct {
+	Children []Block                   `json:"children"`
+	ID       opt.Optional[string]      `json:"id,omitzero"`
+	Kind     VersionedSecretBlockKind  `json:"kind"`
+	Layout   opt.Optional[BlockLayout] `json:"layout,omitzero"`
+	Version  string                    `json:"version"`
+	// Width Block width as a percentage of the column it sits in, 10 to 100. It applies when `layout`
+	// is not `default`.
+	Width opt.Optional[int64] `json:"width,omitzero"`
+}
+
+type VersionedSecretBlockKind string
+
+const (
+	VersionedSecretBlockKindSecret VersionedSecretBlockKind = "secret"
+)
+
+type VersionedTableBlock struct {
+	Children []Block                 `json:"children"`
+	ID       opt.Optional[string]    `json:"id,omitzero"`
+	Kind     VersionedTableBlockKind `json:"kind"`
+	Version  string                  `json:"version"`
+}
+
+type VersionedTableBlockKind string
+
+const (
+	VersionedTableBlockKindTable VersionedTableBlockKind = "table"
+)
+
+type VersionedTableCellBlock struct {
+	Children []Block                     `json:"children"`
+	Colspan  opt.Optional[int64]         `json:"colspan,omitzero"`
+	Header   opt.Optional[bool]          `json:"header,omitzero"`
+	ID       opt.Optional[string]        `json:"id,omitzero"`
+	Kind     VersionedTableCellBlockKind `json:"kind"`
+	Rowspan  opt.Optional[int64]         `json:"rowspan,omitzero"`
+	Version  string                      `json:"version"`
+}
+
+type VersionedTableCellBlockKind string
+
+const (
+	VersionedTableCellBlockKindTableCell VersionedTableCellBlockKind = "tableCell"
+)
+
+type VersionedTableRowBlock struct {
+	Children []Block                    `json:"children"`
+	ID       opt.Optional[string]       `json:"id,omitzero"`
+	Kind     VersionedTableRowBlockKind `json:"kind"`
+	Version  string                     `json:"version"`
+}
+
+type VersionedTableRowBlockKind string
+
+const (
+	VersionedTableRowBlockKindTableRow VersionedTableRowBlockKind = "tableRow"
+)
+
+type VersionedTaskItemBlock struct {
+	Checked bool                       `json:"checked"`
+	Content []Run                      `json:"content"`
+	ID      opt.Optional[string]       `json:"id,omitzero"`
+	Kind    VersionedTaskItemBlockKind `json:"kind"`
+	Version string                     `json:"version"`
+}
+
+type VersionedTaskItemBlockKind string
+
+const (
+	VersionedTaskItemBlockKindTaskItem VersionedTaskItemBlockKind = "taskItem"
+)
+
+type VersionedTaskListBlock struct {
+	Children []Block                    `json:"children"`
+	ID       opt.Optional[string]       `json:"id,omitzero"`
+	Kind     VersionedTaskListBlockKind `json:"kind"`
+	Version  string                     `json:"version"`
+}
+
+type VersionedTaskListBlockKind string
+
+const (
+	VersionedTaskListBlockKindTaskList VersionedTaskListBlockKind = "taskList"
+)
+
+type VersionedTextFieldBlock struct {
+	Children      []Block                     `json:"children"`
+	ID            opt.Optional[string]        `json:"id,omitzero"`
+	IsTitleHidden opt.Optional[bool]          `json:"isTitleHidden,omitzero"`
+	Kind          VersionedTextFieldBlockKind `json:"kind"`
+	Layout        opt.Optional[BlockLayout]   `json:"layout,omitzero"`
+	Title         opt.Optional[string]        `json:"title,omitzero"`
+	Version       string                      `json:"version"`
+	// Width Block width as a percentage of the column it sits in, 10 to 100. It applies when `layout`
+	// is not `default`.
+	Width opt.Optional[int64] `json:"width,omitzero"`
+}
+
+type VersionedTextFieldBlockKind string
+
+const (
+	VersionedTextFieldBlockKindTextField VersionedTextFieldBlockKind = "textField"
+)
+
+type VersionedTextFieldProperty struct {
+	Children      []Block                        `json:"children"`
+	ID            opt.Optional[string]           `json:"id,omitzero"`
+	IsHidden      opt.Optional[bool]             `json:"isHidden,omitzero"`
+	IsTitleHidden opt.Optional[bool]             `json:"isTitleHidden,omitzero"`
+	Kind          VersionedTextFieldPropertyKind `json:"kind"`
+	Rank          opt.Optional[string]           `json:"rank,omitzero"`
+	Title         opt.Optional[string]           `json:"title,omitzero"`
+	Version       string                         `json:"version"`
+}
+
+type VersionedTextFieldPropertyKind string
+
+const (
+	VersionedTextFieldPropertyKindTextField VersionedTextFieldPropertyKind = "textField"
+)
+
+type VersionedUnsupportedBlock struct {
+	ID      string                        `json:"id"`
+	Kind    VersionedUnsupportedBlockKind `json:"kind"`
+	Version string                        `json:"version"`
+}
+
+type VersionedUnsupportedBlockKind string
+
+const (
+	VersionedUnsupportedBlockKindUnsupported VersionedUnsupportedBlockKind = "unsupported"
+)
+
+type VersionedUnsupportedProperty struct {
+	ID            string                           `json:"id"`
+	IsHidden      opt.Optional[bool]               `json:"isHidden,omitzero"`
+	IsTitleHidden opt.Optional[bool]               `json:"isTitleHidden,omitzero"`
+	Kind          VersionedUnsupportedPropertyKind `json:"kind"`
+	Rank          opt.Optional[string]             `json:"rank,omitzero"`
+	Title         opt.Optional[string]             `json:"title,omitzero"`
+	Version       string                           `json:"version"`
+}
+
+type VersionedUnsupportedPropertyKind string
+
+const (
+	VersionedUnsupportedPropertyKindUnsupported VersionedUnsupportedPropertyKind = "unsupported"
 )

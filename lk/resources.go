@@ -3,6 +3,7 @@ package lk
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"iter"
 	"net/http"
 	"net/url"
@@ -11,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/swiftj/golk/lk/blocks"
 	"github.com/swiftj/golk/lk/internal/gen"
 	"github.com/swiftj/golk/lk/internal/opt"
 )
@@ -105,15 +107,6 @@ type DocumentSummary struct {
 	Type DocumentType
 }
 
-// RawProperty is a sidebar property, kept as the API's JSON. Typed
-// properties arrive with the wiki surface (phase 2).
-type RawProperty struct {
-	// Kind is the property's kind, such as "keyValue" or "image".
-	Kind string
-	// JSON is the property exactly as the API returned it.
-	JSON json.RawMessage
-}
-
 // ResourceAncestor is one ancestor of a resource, root first.
 type ResourceAncestor struct {
 	ID   string
@@ -147,7 +140,8 @@ type Resource struct {
 	Banner      *Banner
 	Permissions map[string]PermissionLevel
 	Documents   []Document
-	Properties  []RawProperty
+	// Properties are the sidebar properties, sorted by rank.
+	Properties []blocks.Property
 	// Ancestors is filled by Resources.Get only.
 	Ancestors []ResourceAncestor
 	CreatedAt time.Time
@@ -267,16 +261,21 @@ type ResourceCreate struct {
 	Documents Optional[[]ResourceDocument]
 }
 
-// ResourceDocument is one document to create with a resource. Page content
-// (blocks) arrives with the wiki surface (phase 2).
+// ResourceDocument is one document to create with a resource.
 type ResourceDocument struct {
+	// Type defaults to page when Blocks is set, otherwise to blank.
 	Type Optional[DocumentType]
+	// Name defaults to "Main".
 	Name Optional[string]
 	// CalendarID sets a timeline document's calendar.
 	CalendarID Optional[string]
+	// Blocks is a page document's content, validated as
+	// Documents.ReplaceBlocks validates it. Nil sends none. The created
+	// resource is returned without content.
+	Blocks blocks.List
 }
 
-func (r ResourceCreate) wire() gen.ResourceCreateParams {
+func (r ResourceCreate) wire() (gen.ResourceCreateParams, error) {
 	w := gen.ResourceCreateParams{
 		ID: r.ID, Name: r.Name, ParentID: r.ParentID, After: r.After, Before: r.Before,
 		Tags: r.Tags, Aliases: r.Aliases, IconGlyph: r.IconGlyph, IconColor: r.IconColor,
@@ -293,17 +292,41 @@ func (r ResourceCreate) wire() gen.ResourceCreateParams {
 			wd[i] = gen.ResourceDocumentParams{
 				Type: convOpt[gen.ResourceDocumentParamsType](d.Type), Name: d.Name, CalendarID: d.CalendarID,
 			}
+			if d.Blocks != nil {
+				bs, err := rawBlocks(d.Blocks)
+				if err != nil {
+					return w, fmt.Errorf("lk: documents[%d].blocks: %w", i, err)
+				}
+				wd[i].Blocks = opt.Some(bs)
+			}
 		}
 		w.Documents = opt.Some(wd)
 	}
-	return w
+	return w, nil
+}
+
+// rawBlocks encodes blocks for a generated wire field.
+func rawBlocks(l blocks.List) ([]gen.Block, error) {
+	out := make([]gen.Block, len(l))
+	for i, b := range l {
+		raw, err := json.Marshal(b)
+		if err != nil {
+			return nil, err
+		}
+		out[i] = gen.Block{Kind: string(b.Kind()), Raw: raw}
+	}
+	return out, nil
 }
 
 // Create creates a resource and returns it.
 func (s *ResourcesService) Create(ctx context.Context, r ResourceCreate, opts ...CallOption) (*Resource, error) {
+	body, err := r.wire()
+	if err != nil {
+		return nil, err
+	}
 	var w gen.Resource
 	if err := s.c.call(ctx, gen.OpCreateResource.Method, gen.OpCreateResource.Path, nil,
-		request{body: r.wire(), out: &w}, opts); err != nil {
+		request{body: body, out: &w}, opts); err != nil {
 		return nil, err
 	}
 	res := resourceFromWire(w)
@@ -319,7 +342,11 @@ func (s *ResourcesService) Create(ctx context.Context, r ResourceCreate, opts ..
 func (s *ResourcesService) CreateMany(ctx context.Context, rs []ResourceCreate, opts ...CallOption) ([]Resource, error) {
 	body := gen.ResourceBatchCreateParams{Resources: make([]gen.ResourceCreateParams, len(rs))}
 	for i, r := range rs {
-		body.Resources[i] = r.wire()
+		w, err := r.wire()
+		if err != nil {
+			return nil, fmt.Errorf("resources[%d]: %w", i, err)
+		}
+		body.Resources[i] = w
 	}
 	var w gen.ResourceBatch
 	if err := s.c.call(ctx, gen.OpCreateManyResources.Method, gen.OpCreateManyResources.Path, nil,
@@ -474,15 +501,16 @@ func resourceFromWire(w gen.Resource) Resource {
 		}
 	}
 	for _, d := range w.Documents {
-		r.Documents = append(r.Documents, Document{
-			ID: d.ID, Name: d.Name, Type: DocumentType(d.Type), Rank: d.Rank,
-			IsHidden: d.IsHidden, IsFullWidth: d.IsFullWidth.Or(false), CalendarID: d.CalendarID.Or(""),
-			CreatedAt: utc(d.CreatedAt.Or(time.Time{})), UpdatedAt: utc(d.UpdatedAt.Or(time.Time{})),
-			DeletedAt: utc(d.DeletedAt.Or(time.Time{})),
-		})
+		r.Documents = append(r.Documents, documentFromWire(d))
 	}
 	for _, p := range w.Properties {
-		r.Properties = append(r.Properties, RawProperty{Kind: p.Kind, JSON: p.Raw})
+		prop, err := blocks.UnmarshalProperty(p.Raw)
+		if err != nil {
+			// Not a property object the blocks package can read; keep it
+			// as is rather than fail the whole resource.
+			prop = &blocks.RawProperty{KindName: blocks.Kind(p.Kind), JSON: p.Raw}
+		}
+		r.Properties = append(r.Properties, prop)
 	}
 	return r
 }

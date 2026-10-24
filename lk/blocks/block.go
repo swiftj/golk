@@ -71,7 +71,9 @@ func (l *List) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// Unmarshal decodes one block by its kind. An unknown kind decodes to *RawBlock.
+// Unmarshal decodes one block by its kind. An unknown kind, or a known
+// kind in a shape this package does not expect, decodes to *RawBlock. Only
+// JSON that is not an object with a string "kind" is an error.
 func Unmarshal(data []byte) (Block, error) {
 	kind, err := kindOf(data)
 	if err != nil {
@@ -83,7 +85,9 @@ func Unmarshal(data []byte) (Block, error) {
 	}
 	b := newBlock()
 	if err := json.Unmarshal(data, b); err != nil {
-		return nil, fmt.Errorf("%s: %w", kind, err)
+		// A known kind in a shape this package does not expect is kept as
+		// is rather than failing the whole page.
+		return &RawBlock{KindName: Kind(kind), JSON: append(json.RawMessage(nil), data...)}, nil
 	}
 	return b, nil
 }
@@ -119,8 +123,9 @@ var blockKinds = map[Kind]func() Block{
 	KindUnsupported:        func() Block { return new(UnsupportedBlock) },
 }
 
-// RawBlock is a block of a kind this package does not know. It keeps the JSON
-// it was read from and writes it back unchanged.
+// RawBlock is a block this package cannot decode: a kind it does not know,
+// or a known kind in an unexpected shape. It keeps the JSON it was read from
+// and writes it back unchanged.
 type RawBlock struct {
 	KindName Kind
 	JSON     json.RawMessage

@@ -47,6 +47,18 @@ type Client struct {
 	Projects *ProjectsService
 	// Resources manages entries in the project tree.
 	Resources *ResourcesService
+	// Documents manages a resource's documents and page content.
+	Documents *DocumentsService
+	// Blocks reads and changes single blocks, key-value rows and infoboxes.
+	Blocks *BlocksService
+	// Properties manages a resource's sidebar properties.
+	Properties *PropertiesService
+	// Assets manages the asset library and image uploads.
+	Assets *AssetsService
+	// Search searches the project.
+	Search *SearchService
+	// Tags lists the project's tags.
+	Tags *TagsService
 }
 
 // New returns a client that authenticates with apiKey. It never reads the
@@ -98,6 +110,12 @@ func New(apiKey string, opts ...Option) (*Client, error) {
 	}
 	c.Projects = &ProjectsService{c: c}
 	c.Resources = &ResourcesService{c: c}
+	c.Documents = &DocumentsService{c: c}
+	c.Blocks = &BlocksService{c: c}
+	c.Properties = &PropertiesService{c: c}
+	c.Assets = &AssetsService{c: c}
+	c.Search = &SearchService{c: c}
+	c.Tags = &TagsService{c: c}
 	return c, nil
 }
 

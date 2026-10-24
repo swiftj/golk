@@ -66,8 +66,9 @@ func (ps *Properties) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// UnmarshalProperty decodes one property by its kind. An unknown kind
-// decodes to *RawProperty.
+// UnmarshalProperty decodes one property by its kind. An unknown kind, or a
+// known kind in a shape this package does not expect, decodes to
+// *RawProperty.
 func UnmarshalProperty(data []byte) (Property, error) {
 	kind, err := kindOf(data)
 	if err != nil {
@@ -79,7 +80,7 @@ func UnmarshalProperty(data []byte) (Property, error) {
 	}
 	p := newProp()
 	if err := json.Unmarshal(data, p); err != nil {
-		return nil, fmt.Errorf("%s: %w", kind, err)
+		return &RawProperty{KindName: Kind(kind), JSON: append(json.RawMessage(nil), data...)}, nil
 	}
 	return p, nil
 }
@@ -96,8 +97,9 @@ var propertyKinds = map[Kind]func() Property{
 	KindUnsupported:        func() Property { return new(UnsupportedProperty) },
 }
 
-// RawProperty is a property of a kind this package does not know. It keeps
-// the JSON it was read from and writes it back unchanged.
+// RawProperty is a property this package cannot decode: a kind it does not
+// know, or a known kind in an unexpected shape. It keeps the JSON it was
+// read from and writes it back unchanged.
 type RawProperty struct {
 	KindName Kind
 	JSON     json.RawMessage

@@ -87,19 +87,17 @@ func (r KVRows) MarshalJSON() ([]byte, error)        { return encodeSlice([]KVRo
 func (r MeterItems) MarshalJSON() ([]byte, error)    { return encodeSlice([]MeterItem(r)) }
 func (r ResourceItems) MarshalJSON() ([]byte, error) { return encodeSlice([]ResourceItem(r)) }
 
-// encodeSlice encodes s with nil as [], each element through its pointer
-// so the element's MarshalJSON applies.
+// encodeSlice encodes s with nil as [].
 func encodeSlice[T any](s []T) ([]byte, error) {
-	ptrs := make([]*T, len(s))
-	for i := range s {
-		ptrs[i] = &s[i]
+	if s == nil {
+		return []byte("[]"), nil
 	}
-	return json.Marshal(ptrs)
+	return json.Marshal(s)
 }
 
-func (b *KVRow) MarshalJSON() ([]byte, error) {
+func (b KVRow) MarshalJSON() ([]byte, error) {
 	type plain KVRow
-	return encodeObject("", (*plain)(b), b.m)
+	return encodeObject("", plain(b), b.m)
 }
 
 func (b *KVRow) UnmarshalJSON(data []byte) error {
@@ -107,9 +105,9 @@ func (b *KVRow) UnmarshalJSON(data []byte) error {
 	return decodeObject(data, (*plain)(b), &b.extras)
 }
 
-func (b *MeterItem) MarshalJSON() ([]byte, error) {
+func (b MeterItem) MarshalJSON() ([]byte, error) {
 	type plain MeterItem
-	return encodeObject("", (*plain)(b), b.m)
+	return encodeObject("", plain(b), b.m)
 }
 
 func (b *MeterItem) UnmarshalJSON(data []byte) error {
@@ -117,9 +115,9 @@ func (b *MeterItem) UnmarshalJSON(data []byte) error {
 	return decodeObject(data, (*plain)(b), &b.extras)
 }
 
-func (b *ResourceItem) MarshalJSON() ([]byte, error) {
+func (b ResourceItem) MarshalJSON() ([]byte, error) {
 	type plain ResourceItem
-	return encodeObject("", (*plain)(b), b.m)
+	return encodeObject("", plain(b), b.m)
 }
 
 func (b *ResourceItem) UnmarshalJSON(data []byte) error {
@@ -127,9 +125,9 @@ func (b *ResourceItem) UnmarshalJSON(data []byte) error {
 	return decodeObject(data, (*plain)(b), &b.extras)
 }
 
-func (b *Viewport) MarshalJSON() ([]byte, error) {
+func (b Viewport) MarshalJSON() ([]byte, error) {
 	type plain Viewport
-	return encodeObject("", (*plain)(b), b.m)
+	return encodeObject("", plain(b), b.m)
 }
 
 func (b *Viewport) UnmarshalJSON(data []byte) error {
@@ -137,14 +135,12 @@ func (b *Viewport) UnmarshalJSON(data []byte) error {
 	return decodeObject(data, (*plain)(b), &b.extras)
 }
 
-func (b *Filter) MarshalJSON() ([]byte, error) {
+func (b Filter) MarshalJSON() ([]byte, error) {
 	if b.Type == "" {
-		c := *b
-		c.Type = "filter"
-		b = &c
+		b.Type = "filter"
 	}
 	type plain Filter
-	return encodeObject("", (*plain)(b), b.m)
+	return encodeObject("", plain(b), b.m)
 }
 
 func (b *Filter) UnmarshalJSON(data []byte) error {
