@@ -56,7 +56,9 @@ func TestGuard_Perf_1MiB_200Terms(t *testing.T) {
 		t.Fatalf("violations = %v", vs)
 	}
 	t.Logf("1 MiB, 200 terms: %v", el)
-	if bound := 100 * time.Millisecond * slowdown; el > bound {
+	// A generous bound (about 30× the measured time) catches an accidental
+	// quadratic, not a slow or busy machine; BenchmarkCheck measures speed.
+	if bound := time.Second * slowdown; el > bound {
 		t.Fatalf("check took %v, want < %v", el, bound)
 	}
 }

@@ -256,3 +256,9 @@ That is the whole module graph (`go mod graph`). UUIDs (idempotency keys) and cu
   - The template tree is walked with `Templates.All` grouped by `parentId`, the documented listing, rather than `Resources.List` with a template id as parent.
   - `set_map_feature` and `set_map_image` accept a `blank` document named explicitly, since the write converts it to a map; `read_map` refuses one.
   - `set_map_feature` checks the feature as it will be (the current feature with the changes laid over it) plus the map's name.
+- **lk-mcp timeline and calendar tools:**
+  - `set_timeline_event` requires `type` on create rather than defaulting it, so nothing is sent the caller didn't give; `type` isn't changeable on update.
+  - A timeline's chained sources are checked even when the source document or resource is hidden, because what a chain shows players isn't documented (fail safe).
+  - Setting a custom `calendar_id` on a visible timeline checks that calendar's spec, since its names render on the timeline.
+  - The API has no single-calendar read, so `get_calendar` takes the calendar from the list. Dry runs of replace and delete warn when the version is stale.
+  - A calendar `spec` is decoded into the lossless `lk.CalendarSpec`; required fields the caller leaves out go out as zero values (the API replaces the whole spec).
