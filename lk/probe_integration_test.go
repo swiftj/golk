@@ -295,12 +295,7 @@ func TestProbe_UploadAndReplace(t *testing.T) {
 
 	asset, meta := p.must("POST", "/assets/images", map[string]any{"uploadKey": up["uploadKey"], "name": sandbox.Name("probe image")})
 	t.Logf("A-23 createImage: status=%d asset=%s", meta.Status, show(asset))
-	assetID := fmt.Sprint(asset["id"])
-	t.Cleanup(func() {
-		if _, _, err := p.do("DELETE", "/assets/"+assetID, nil); err != nil && !errors.Is(err, lk.ErrNotFound) {
-			t.Errorf("deleting probe asset: %v", err)
-		}
-	})
+	sandbox.CleanupAsset(t, fmt.Sprint(asset["id"]))
 
 	_, doc := p.page("Probe replace")
 	full := []any{

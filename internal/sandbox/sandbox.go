@@ -130,8 +130,23 @@ func Cleanup(t testing.TB, id string) {
 	})
 }
 
-// Sweep deletes every live resource whose name carries RunPrefix and reports
-// how many it found. A non-zero count means a test leaked a resource.
+// CleanupAsset deletes asset id (a folder with its contents) when the test
+// ends. An asset the test already deleted is fine.
+func CleanupAsset(t testing.TB, id string) {
+	t.Helper()
+	c := Client(t)
+	t.Cleanup(func() {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+		defer cancel()
+		if err := c.Assets.Delete(ctx, id); err != nil && !errors.Is(err, lk.ErrNotFound) {
+			t.Errorf("cleanup: deleting asset %s: %v", id, err)
+		}
+	})
+}
+
+// Sweep deletes every live resource and every root asset whose name carries
+// RunPrefix and reports how many it found. A non-zero count means a test
+// leaked something.
 func Sweep() (int, error) {
 	if err := Guard(); err != nil {
 		return 0, err
@@ -153,7 +168,21 @@ func Sweep() (int, error) {
 			return len(leaked), err
 		}
 	}
-	return len(leaked), nil
+	var assets []lk.Asset
+	for a, err := range client.Assets.All(ctx, lk.AssetListParams{Limit: 100}) {
+		if err != nil {
+			return len(leaked), err
+		}
+		if strings.HasPrefix(a.Name, RunPrefix) {
+			assets = append(assets, a)
+		}
+	}
+	for _, a := range assets {
+		if err := client.Assets.Delete(ctx, a.ID); err != nil && !errors.Is(err, lk.ErrNotFound) {
+			return len(leaked) + len(assets), err
+		}
+	}
+	return len(leaked) + len(assets), nil
 }
 
 // Main is TestMain for integration packages: guard, run, then sweep.
@@ -169,7 +198,7 @@ func Main(m interface{ Run() int }) int {
 		fmt.Fprintln(os.Stderr, "sandbox sweep:", err)
 		return 1
 	case n > 0:
-		fmt.Fprintf(os.Stderr, "sandbox sweep: %d resource(s) named %q were left behind and have been deleted\n", n, RunPrefix)
+		fmt.Fprintf(os.Stderr, "sandbox sweep: %d resource(s) or asset(s) named %q were left behind and have been deleted\n", n, RunPrefix)
 		return 1
 	}
 	return code

@@ -12,20 +12,20 @@ import (
 )
 
 var (
-	contractRow = regexp.MustCompile(`^\| (C-[A-Z]+-\d+)\b[^|]*\|.*\| ([^|]+) \|$`)
+	contractRow = regexp.MustCompile(`^\| (C-[A-Z][A-Z0-9]*-\d+)\b[^|]*\|.*\| ([^|]+) \|$`)
 	// A test names an ID in its function name (C_RETRY_03) or in a t.Run
 	// subtest name ("C-RETRY-03 ...").
 	testFuncID = regexp.MustCompile(`func (?:Test|Fuzz|Example)\w*`)
-	idInFunc   = regexp.MustCompile(`C_[A-Z]+_\d+`)
-	idInRun    = regexp.MustCompile(`t\.Run\("(C-[A-Z]+-\d+)`)
-	idInCase   = regexp.MustCompile(`name:\s*"(C-[A-Z]+-\d+)`)
+	idInFunc   = regexp.MustCompile(`C_[A-Z][A-Z0-9]*_\d+`)
+	idInRun    = regexp.MustCompile(`t\.Run\("(C-[A-Z][A-Z0-9]*-\d+)`)
+	idInCase   = regexp.MustCompile(`name:\s*"(C-[A-Z][A-Z0-9]*-\d+)`)
 )
 
-// Every in-scope contract item (phase column starting with "1") must be named
+// Every in-scope contract item (phase column starting with "1" or "2a") must be named
 // by at least one test in the module (docs/SDK_CONTRACT.md, Rules).
 func TestContractCoverage(t *testing.T) {
 	inScope := contractItems(t)
-	if len(inScope) < 90 {
+	if len(inScope) < 165 {
 		t.Fatalf("parsed only %d in-scope items; is the table format still recognised?", len(inScope))
 	}
 	covered := map[string]bool{}
@@ -78,7 +78,8 @@ func contractItems(t *testing.T) []string {
 		if m == nil {
 			continue
 		}
-		if strings.HasPrefix(strings.TrimSpace(m[2]), "1") && !slices.Contains(ids, m[1]) {
+		phase := strings.TrimSpace(m[2])
+		if (strings.HasPrefix(phase, "1") || strings.HasPrefix(phase, "2a")) && !slices.Contains(ids, m[1]) {
 			ids = append(ids, m[1])
 		}
 	}

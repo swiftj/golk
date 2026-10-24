@@ -128,6 +128,29 @@ func TestBlock_C_BLOCK_02_UnknownKindKept(t *testing.T) {
 	if out := mustEncode(t, l); !sameJSON(t, out, []byte(in)) {
 		t.Errorf("re-encoded %s", out)
 	}
+	// A known kind in a shape the package does not expect is kept raw rather
+	// than failing the page.
+	in = `[{"kind":"heading","level":"one","content":[]},{"kind":"keyValue","rows":{"k":"v"}},{"kind":"rule"}]`
+	if err := json.Unmarshal([]byte(in), &l); err != nil {
+		t.Fatal(err)
+	}
+	for i := range 2 {
+		if _, ok := l[i].(*RawBlock); !ok {
+			t.Errorf("block %d = %#v, want RawBlock", i, l[i])
+		}
+	}
+	if out := mustEncode(t, l); string(out) != in {
+		t.Errorf("re-encoded %s", out)
+	}
+	if p, err := UnmarshalProperty([]byte(`{"kind":"image","url":7}`)); err != nil || p.Kind() != KindImage || p.PropertyEnvelope() != nil {
+		t.Errorf("bad image property = %#v, %v", p, err)
+	}
+	// Only JSON that is not a block object is an error.
+	for _, bad := range []string{`[1]`, `[{"id":"x"}]`, `[{"kind":3}]`, `{}`} {
+		if err := json.Unmarshal([]byte(bad), &l); err == nil {
+			t.Errorf("%s decoded", bad)
+		}
+	}
 }
 
 func TestBlock_C_CONTENT_04_UnsupportedEchoedByID(t *testing.T) {

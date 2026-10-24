@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/swiftj/golk/internal/testutil"
+	"github.com/swiftj/golk/lk/blocks"
 	"github.com/swiftj/golk/lk/internal/gen"
 )
 
@@ -75,7 +76,7 @@ func TestRes_C_RES_02_C_WIRE_06_GetMapsEveryField(t *testing.T) {
 	if r.Permissions["MEMBER"] != PermissionCanEdit || r.IconShape != IconShapeShield || r.Documents[0].Type != DocumentPage {
 		t.Errorf("enum mapping: %+v", r)
 	}
-	if r.Properties[0].Kind != "keyValue" || !json.Valid(r.Properties[0].JSON) {
+	if _, ok := r.Properties[0].(*blocks.KeyValueProperty); !ok {
 		t.Errorf("property = %+v", r.Properties[0])
 	}
 }
@@ -147,8 +148,7 @@ func TestRes_C_WIRE_07_SpecDriftDetected(t *testing.T) {
 	check("ResourceCreateParams", gen.ResourceCreateParams{}, fieldsOfPublic(ResourceCreate{})...)
 	check("ResourceUpdateParams", gen.ResourceUpdateParams{}, fieldsOfPublic(ResourceUpdate{})...)
 	check("ResourceMoveParams", gen.ResourceMoveParams{}, fieldsOfPublic(ResourceMove{})...)
-	// Blocks arrive with the wiki surface (phase 2).
-	check("ResourceDocumentParams", gen.ResourceDocumentParams{}, append(fieldsOfPublic(ResourceDocument{}), "Blocks")...)
+	check("ResourceDocumentParams", gen.ResourceDocumentParams{}, fieldsOfPublic(ResourceDocument{})...)
 	check("ProjectDetail", gen.ProjectDetail{}, "CoverGradient", "CoverImageURL", "CreatedAt", "HomeResourceID", "ID",
 		"IsPublic", "LastActivityAt", "Name")
 }
@@ -395,13 +395,13 @@ func FuzzDecodeResource(f *testing.F) {
 			return
 		}
 		res := resourceFromWire(r)
-		// Unknown property kinds are kept verbatim, never dropped.
+		// Every property is kept, typed or raw, never dropped.
 		if len(res.Properties) != len(r.Properties) {
 			t.Fatalf("properties dropped: %d -> %d", len(r.Properties), len(res.Properties))
 		}
 		for i, p := range res.Properties {
-			if p.Kind != r.Properties[i].Kind || string(p.JSON) != string(r.Properties[i].Raw) {
-				t.Fatalf("property %d changed", i)
+			if string(p.Kind()) != r.Properties[i].Kind {
+				t.Fatalf("property %d kind changed", i)
 			}
 		}
 		// Re-encoding the wire type and decoding again is stable.
