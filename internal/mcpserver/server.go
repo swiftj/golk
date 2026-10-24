@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log/slog"
+	"sync"
 	"time"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -37,6 +38,8 @@ type server struct {
 	log      *slog.Logger
 	projects *projects
 	guard    Checker
+	// writeMu serializes the write tools (see serial).
+	writeMu sync.Mutex
 }
 
 // New returns the MCP server with its tools registered. In read-only mode

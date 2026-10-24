@@ -7,6 +7,8 @@
 //   - The terms file is UTF-8, one term per line. Lines are trimmed; blank
 //     lines and lines starting with '#' are skipped. It is read on the
 //     first Check and re-read whenever its identity, size or mtime changes.
+//     A file that changes while it is read, or that held terms and now
+//     holds none (a rewrite in progress), fails the Check.
 //   - A term matches case-insensitively (Unicode simple folding) as whole
 //     words inside one string; see match.go.
 //   - Every string value of the checked content is examined, except inside

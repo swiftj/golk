@@ -15,52 +15,74 @@ func (s *server) addWriteTools(ms *mcp.Server) {
 		Name:        "update_document",
 		Description: "Rename a document (a tab of a resource), or hide it from players or show it to them. Showing a page checks its whole content with the spoiler guard first.",
 		Annotations: write("Update document", true, true),
-	}, func(in UpdateDocumentIn) string { return in.Project }, s.updateDocument)
+	}, func(in UpdateDocumentIn) string { return in.Project }, serial(s, s.updateDocument))
 	addTool(s, ms, &mcp.Tool{
 		Name:        "create_resource",
 		Description: "Create a resource (wiki entry), optionally with its first page as LK Markdown. Its name, aliases, tags and page are checked by the spoiler guard unless it is created hidden.",
 		Annotations: write("Create resource", false, false),
-	}, func(in CreateResourceIn) string { return in.Project }, s.createResource)
+	}, func(in CreateResourceIn) string { return in.Project }, serial(s, s.createResource))
 	addTool(s, ms, &mcp.Tool{
 		Name:        "update_resource",
 		Description: "Rename a resource, set its tags or aliases, hide or show it, or move it (parent_id or move_to_root). Only the fields given change. Showing a hidden resource checks everything it would show with the spoiler guard first.",
 		Annotations: write("Update resource", true, true),
-	}, func(in UpdateResourceIn) string { return in.Project }, s.updateResource)
+	}, func(in UpdateResourceIn) string { return in.Project }, serial(s, s.updateResource))
 	addTool(s, ms, &mcp.Tool{
 		Name:        "edit_page",
 		Description: "Replace a page with edited LK Markdown. Call read_page first and pass its version as base_version and the whole edited page as markdown; blocks left out are deleted. Use dry_run to see what would be kept, changed, added and removed.",
 		Annotations: write("Edit page", true, false),
-	}, func(in EditPageIn) string { return in.Project }, s.editPage)
+	}, func(in EditPageIn) string { return in.Project }, serial(s, s.editPage))
 	addTool(s, ms, &mcp.Tool{
 		Name:        "set_property",
 		Description: "Create or update a resource's sidebar property by exact title: a text field from markdown, or key-value rows from rows (replacing all rows). Can also hide or show it.",
 		Annotations: write("Set property", true, true),
-	}, func(in SetPropertyIn) string { return in.Project }, s.setProperty)
+	}, func(in SetPropertyIn) string { return in.Project }, serial(s, s.setProperty))
 	addTool(s, ms, &mcp.Tool{
 		Name:        "delete_property",
 		Description: "Delete a resource's sidebar property by exact title or by property_id.",
 		Annotations: write("Delete property", true, false),
-	}, func(in DeletePropertyIn) string { return in.Project }, s.deleteProperty)
+	}, func(in DeletePropertyIn) string { return in.Project }, serial(s, s.deleteProperty))
 	addTool(s, ms, &mcp.Tool{
 		Name:        "create_document",
 		Description: "Add a page or blank document (a tab) to a resource, optionally with the page's content as LK Markdown.",
 		Annotations: write("Create document", false, false),
-	}, func(in CreateDocumentIn) string { return in.Project }, s.createDocument)
+	}, func(in CreateDocumentIn) string { return in.Project }, serial(s, s.createDocument))
 	addTool(s, ms, &mcp.Tool{
 		Name:        "upload_image",
 		Description: "Upload a local JPEG, PNG, GIF or WebP file to the project's asset library and return its URL, for image blocks and properties.",
 		Annotations: write("Upload image", false, false),
-	}, func(in UploadImageIn) string { return in.Project }, s.uploadImage)
+	}, func(in UploadImageIn) string { return in.Project }, serial(s, s.uploadImage))
 	addTool(s, ms, &mcp.Tool{
 		Name:        "delete_resource",
 		Description: "Delete a resource with its documents and properties. A resource with children needs cascade, which deletes them too. Use dry_run to see what would go; restore_resource undoes it.",
 		Annotations: write("Delete resource", true, false),
-	}, func(in DeleteResourceIn) string { return in.Project }, s.deleteResource)
+	}, func(in DeleteResourceIn) string { return in.Project }, serial(s, s.deleteResource))
 	addTool(s, ms, &mcp.Tool{
 		Name:        "restore_resource",
 		Description: "Restore a deleted resource and the descendants deleted with it. Its content is checked by the spoiler guard right after; anything flagged is hidden from players at once.",
 		Annotations: write("Restore resource", false, true),
-	}, func(in RestoreResourceIn) string { return in.Project }, s.restoreResource)
+	}, func(in RestoreResourceIn) string { return in.Project }, serial(s, s.restoreResource))
+}
+
+// serial runs h holding the server's write lock. MCP tool calls run
+// concurrently, and a write tool's guard decision rests on what it read
+// (a target's hidden flag, the content an unhide shows): without the lock
+// an edit_page on a hidden resource could be checked as hidden, an
+// update_resource could unhide it after scanning the old content, and the
+// edit would land on a visible page unchecked. Holding one lock from a
+// write tool's first read to its last write makes each check-then-write
+// atomic with respect to every other write tool of this server.
+func serial[In, Out any](s *server, h func(context.Context, *lk.Client, In) (toolResult[Out], error)) func(context.Context, *lk.Client, In) (toolResult[Out], error) {
+	return func(ctx context.Context, c *lk.Client, in In) (toolResult[Out], error) {
+		// Without a guard every write tool refuses (D-011), also those
+		// that can't show anything (delete, hide, move).
+		if err := s.guardReady(); err != nil {
+			var zero toolResult[Out]
+			return zero, err
+		}
+		s.writeMu.Lock()
+		defer s.writeMu.Unlock()
+		return h(ctx, c, in)
+	}
 }
 
 // DryRunArg is the dry_run parameter every write tool takes.
@@ -130,6 +152,11 @@ func (s *server) updateDocument(ctx context.Context, c *lk.Client, in UpdateDocu
 	// being shown, its whole page.
 	if !r.IsHidden && !out.Hidden {
 		visible := map[string]any{"name": out.Name}
+		if d.IsHidden && !s.cfg.GuardOff {
+			if err := uncheckable(r, d); err != nil {
+				return zero, err
+			}
+		}
 		if d.IsHidden && (d.Type == lk.DocumentPage || d.Type == lk.DocumentBlank) {
 			db, err := c.Documents.GetBlocks(ctx, lk.DocRef{ResourceID: r.ID, DocumentID: d.ID})
 			if err != nil {

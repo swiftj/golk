@@ -53,9 +53,9 @@ func secretTree(seed uint64, public bool) (json.RawMessage, string) {
 		switch r.IntN(6) {
 		case 0: // secret block
 			return map[string]any{"kind": "secret", "children": kids(depth, true, path)}
-		case 1: // hidden infobox property
-			return map[string]any{"kind": "textField", "isHidden": true, "title": str(true, path+".title"),
-				"content": []any{map[string]any{"text": str(true, path+".content[0].text")}}}
+		case 1: // hidden infobox row (a property where the API reads one)
+			return map[string]any{"kind": "infobox", "rows": []any{map[string]any{"kind": "textField", "isHidden": true, "title": str(true, path+".rows[0].title"),
+				"content": []any{map[string]any{"text": str(true, path+".rows[0].content[0].text")}}}}}
 		case 2: // paragraph
 			return map[string]any{"kind": "paragraph", "content": []any{map[string]any{"text": str(dm, path+".content[0].text")}}}
 		case 3: // container

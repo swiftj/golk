@@ -54,17 +54,22 @@ func (s *server) guardReady() error {
 }
 
 // visibleResource is everything players would see of r if it were
-// visible: its name, aliases and tags, the names and blocks of its
+// visible: its name, aliases and tags, its image and banner URLs, the names and blocks of its
 // documents that are not hidden, and its sidebar properties (hidden ones
 // carry "isHidden":true, which the guard skips). Hidden documents are left
 // out: players can't see them whatever the resource's flag. Only page and
-// blank documents have blocks the SDK can read; other document kinds
-// (map, board, timeline) contribute their names only.
+// blank documents have blocks the SDK can read; a visible document of any
+// other kind (map, board, timeline) holds content the guard can't check,
+// so it is an error (errUncheckable): showing it would show that content
+// unchecked.
 func visibleResource(ctx context.Context, c *lk.Client, r *lk.Resource) (map[string]any, error) {
 	var docs []map[string]any
 	for _, d := range r.Documents {
 		if d.IsHidden {
 			continue
+		}
+		if err := uncheckable(r, &d); err != nil {
+			return nil, err
 		}
 		doc := map[string]any{"name": d.Name}
 		if d.Type == lk.DocumentPage || d.Type == lk.DocumentBlank {
@@ -80,10 +85,24 @@ func visibleResource(ctx context.Context, c *lk.Client, r *lk.Resource) (map[str
 	if err != nil {
 		return nil, err
 	}
-	return map[string]any{
-		"name": r.Name, "aliases": r.Aliases, "tags": r.Tags,
+	v := map[string]any{
+		"name": r.Name, "aliases": r.Aliases, "tags": r.Tags, "imageUrl": r.ImageURL,
 		"documents": docs, "properties": props.Items,
-	}, nil
+	}
+	if r.Banner != nil {
+		v["bannerUrl"] = r.Banner.URL
+	}
+	return v, nil
+}
+
+// uncheckable refuses to show document d of r when the guard can't read
+// its content: only page and blank documents have blocks lk can read.
+func uncheckable(r *lk.Resource, d *lk.Document) error {
+	if d.Type == lk.DocumentPage || d.Type == lk.DocumentBlank {
+		return nil
+	}
+	return fmt.Errorf("document %q (%s) of %q (%s) is a %s document, whose content the spoiler guard can't read, so lk-mcp won't show it to players. "+
+		"Hint: review it in LegendKeeper and show it there, or hide that document first (update_document is_hidden=true)", d.Name, d.ID, r.Name, r.ID, d.Type)
 }
 
 // CreateResourceIn is create_resource's input.

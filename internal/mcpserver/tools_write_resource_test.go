@@ -16,6 +16,11 @@ const (
 {"id":"d1","name":"Main","type":"page","rank":"a","isHidden":false},
 {"id":"d2","name":"DM Notes","type":"page","rank":"b","isHidden":true},
 {"id":"m1","name":"Map","type":"map","rank":"c"}]}`
+	// wtResPages is wtRes without its map document, which the guard can't
+	// read and so won't show.
+	wtResPages = `{"id":"r1","name":"Ooo","isHidden":false,"documents":[
+{"id":"d1","name":"Main","type":"page","rank":"a","isHidden":false},
+{"id":"d2","name":"DM Notes","type":"page","rank":"b","isHidden":true}]}`
 	wtResHidden = `{"id":"r1","name":"Ooo","isHidden":true,"documents":[
 {"id":"d1","name":"Main","type":"page","rank":"a","isHidden":false},
 {"id":"d2","name":"DM Notes","type":"page","rank":"b","isHidden":true}]}`
@@ -236,9 +241,9 @@ func TestDeleteResource_X_TOOL_03_Cascade(t *testing.T) {
 func TestRestoreResource_X_TOOL_08_CleanRestore(t *testing.T) {
 	h := newHarness(t)
 	h.lk.Enqueue(wtOK(wtRes), // restore
-		wtOK(wtRes),                                    // hide r1
-		wtOK(wtNoKids),                                 // r1 has no children
-		wtOK(wtRes), wtOK(blocksJSON), wtOK(wtNoProps), // recheck r1
+		wtOK(wtRes),                                         // hide r1
+		wtOK(wtNoKids),                                      // r1 has no children
+		wtOK(wtResPages), wtOK(blocksJSON), wtOK(wtNoProps), // recheck r1
 		wtOK(wtRes)) // show r1 again
 	got := wtMustOK(t, h, "restore_resource", map[string]any{"id": "r1"})
 	if !strings.Contains(got, `Restored resource "Ooo" (r1)`) || !strings.Contains(got, "checked 1 visible resource(s)") {
@@ -262,7 +267,7 @@ func TestRestoreResource_X_GUARD_05_HiddenWhileChecked(t *testing.T) {
 	kid := `{"id":"k1","name":"Zorblax Kid","isHidden":true,"parentId":"r1","documents":[]}`
 	h.lk.Enqueue(wtOK(wtRes),
 		wtOK(wtRes), wtOK(kids), wtOK(kid), wtOK(wtNoKids), // hide r1, list, hide k1, list k1
-		wtOK(wtRes), wtOK(blocksJSON), wtOK(wtNoProps), wtOK(wtRes), // r1 clean: shown again
+		wtOK(wtResPages), wtOK(blocksJSON), wtOK(wtNoProps), wtOK(wtRes), // r1 clean: shown again
 		wtOK(kid), wtOK(wtNoProps)) // k1 flagged: stays hidden
 	got := wtMustFail(t, h, "restore_resource", map[string]any{"id": "r1"}, "stay hidden from players")
 	if !strings.Contains(got, `"Kid" (k1)`) || strings.Contains(got, `(r1):`) {
