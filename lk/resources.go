@@ -95,9 +95,17 @@ type Document struct {
 	IsFullWidth bool
 	// CalendarID is set on a timeline (time) document.
 	CalendarID string
-	CreatedAt  time.Time
-	UpdatedAt  time.Time
-	DeletedAt  time.Time
+	// Sources is the timelines a timeline (time) document chains, in order.
+	// Documents.List, Get, Create and Update return it; Resources.Get does
+	// not.
+	Sources []DocRef
+	// MapImage is a map document's image and coordinate frame, or nil when
+	// it has none. Documents.Get, Create and Update return it;
+	// Documents.List and Resources.Get do not.
+	MapImage  *MapImage
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt time.Time
 }
 
 // DocumentSummary is a document as resource list items carry it.

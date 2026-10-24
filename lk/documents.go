@@ -9,6 +9,7 @@ import (
 
 	"github.com/swiftj/golk/lk/blocks"
 	"github.com/swiftj/golk/lk/internal/gen"
+	"github.com/swiftj/golk/lk/internal/opt"
 )
 
 // DocRef names one document of a resource.
@@ -82,12 +83,61 @@ type DocumentUpdate struct {
 	IsFullWidth Optional[bool]
 	// CalendarID changes a timeline (time) document's calendar.
 	CalendarID Optional[string]
+	// Sources replaces the timelines a timeline (time) document chains, in
+	// order (at most 100). Some([]DocRef{}) removes them all.
+	Sources Optional[[]DocRef]
+	// MapImage sets or replaces a map document's image. Features keep their
+	// Pos, so after a replacement with an image of another size they sit
+	// over other pixels. A blank document becomes a map.
+	MapImage Optional[MapImageRef]
+}
+
+// MapImageRef names the image asset to show as a map document's image.
+type MapImageRef struct {
+	AssetID string
+}
+
+// MapImage is a map document's image and the coordinate frame its features'
+// positions are in (see PixelToPos).
+type MapImage struct {
+	// AssetID is empty when no image asset the caller can read has URL, or
+	// the map is a legacy tiled map.
+	AssetID string
+	// URL is empty for a legacy tiled map.
+	URL string
+	// Width and Height are the image size in pixels.
+	Width, Height int
+	// Bounds is [[south, west], [north, east]], the [lat, lng] corners the
+	// image covers. North and west are 0 at the image's top-left corner;
+	// south is negative and east is positive.
+	Bounds [2][2]float64
+	// Tiles is nil when the map has no image id.
+	Tiles *MapTiles
+}
+
+// MapTiles describes a map image's 256px tiles.
+type MapTiles struct {
+	// URLTemplate has {z}, {x} and {y} placeholders.
+	URLTemplate string
+	// MaxNativeZoom is the highest zoom with native tiles.
+	MaxNativeZoom int
 }
 
 // Update changes the document's fields and returns it.
 func (s *DocumentsService) Update(ctx context.Context, doc DocRef, u DocumentUpdate, opts ...CallOption) (*Document, error) {
 	body := gen.DocumentUpdateParams{
 		Name: u.Name, Rank: u.Rank, IsHidden: u.IsHidden, IsFullWidth: u.IsFullWidth, CalendarID: u.CalendarID,
+	}
+	if src, ok := u.Sources.Get(); ok {
+		// Never nil, so Some([]DocRef{}) is sent as [] and clears the chain.
+		w := make([]gen.TimelineSource, len(src))
+		for i, d := range src {
+			w[i] = gen.TimelineSource{ResourceID: d.ResourceID, DocumentID: d.DocumentID}
+		}
+		body.Sources = opt.Some(w)
+	}
+	if m, ok := u.MapImage.Get(); ok {
+		body.MapImage = opt.Some(gen.MapImageParams{AssetID: m.AssetID})
 	}
 	return s.document(ctx, gen.OpUpdateDocument, doc.params(), body, opts)
 }
@@ -109,8 +159,31 @@ func (s *DocumentsService) document(ctx context.Context, op gen.Op, params map[s
 	if err := s.c.call(ctx, op.Method, op.Path, params, request{body: body, out: &w}, opts); err != nil {
 		return nil, err
 	}
+	// documentFromWire drops a malformed mapImage; a single-document
+	// response reports it instead.
+	if m, ok := w.MapImage.Get(); ok {
+		if _, err := mapImageFromWire(m); err != nil {
+			return nil, fmt.Errorf("lk: decoding document %s mapImage: %w", w.ID, err)
+		}
+	}
 	d := documentFromWire(w)
 	return &d, nil
+}
+
+func mapImageFromWire(w gen.MapImage) (*MapImage, error) {
+	if len(w.Bounds) != 2 {
+		return nil, fmt.Errorf("bounds: want 2 corners, got %d", len(w.Bounds))
+	}
+	m := &MapImage{AssetID: w.AssetID.Or(""), URL: w.URL.Or(""), Width: int(w.Width), Height: int(w.Height)}
+	for i, raw := range w.Bounds {
+		if err := json.Unmarshal(raw, &m.Bounds[i]); err != nil {
+			return nil, fmt.Errorf("bounds[%d]: %w", i, err)
+		}
+	}
+	if t, ok := w.Tiles.Get(); ok {
+		m.Tiles = &MapTiles{URLTemplate: t.URLTemplate, MaxNativeZoom: int(t.MaxNativeZoom)}
+	}
+	return m, nil
 }
 
 // DocumentBlocks is a page's content.
@@ -202,10 +275,28 @@ func (s *DocumentsService) AssignBlockIDs(ctx context.Context, doc DocRef, opts 
 }
 
 func documentFromWire(d gen.Document) Document {
-	return Document{
+	doc := Document{
 		ID: d.ID, Name: d.Name, Type: DocumentType(d.Type), Rank: d.Rank,
 		IsHidden: d.IsHidden, IsFullWidth: d.IsFullWidth.Or(false), CalendarID: d.CalendarID.Or(""),
 		CreatedAt: utc(d.CreatedAt.Or(time.Time{})), UpdatedAt: utc(d.UpdatedAt.Or(time.Time{})),
 		DeletedAt: utc(d.DeletedAt.Or(time.Time{})),
+		Sources:   sourcesFromWire(d.Sources.Or(nil)),
 	}
+	if m, ok := d.MapImage.Get(); ok {
+		if img, err := mapImageFromWire(m); err == nil {
+			doc.MapImage = img
+		}
+	}
+	return doc
+}
+
+func sourcesFromWire(w []gen.TimelineSource) []DocRef {
+	if w == nil {
+		return nil
+	}
+	out := make([]DocRef, len(w))
+	for i, s := range w {
+		out[i] = DocRef{ResourceID: s.ResourceID, DocumentID: s.DocumentID}
+	}
+	return out
 }
