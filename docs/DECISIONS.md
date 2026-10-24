@@ -250,3 +250,9 @@ That is the whole module graph (`go mod graph`). UUIDs (idempotency keys) and cu
   - `listEvents` and `listLanes` on a chaining timeline include its sources'; `getLane` on a source's lane answers 404.
   - `listTemplates` returns the `resources.list` item shape.
   - An explicit `null` on an optional calendar field reads as unset and isn't written back.
+- **lk-mcp map and template tools:**
+  - A template's own name and the name given to a copy are always checked, even when the root resource is hidden (stricter than resources): a template list shows names.
+  - `create_from_template` without a name checks the template's full name, which contains every word of the server's default (the name without "Template").
+  - The template tree is walked with `Templates.All` grouped by `parentId`, the documented listing, rather than `Resources.List` with a template id as parent.
+  - `set_map_feature` and `set_map_image` accept a `blank` document named explicitly, since the write converts it to a map; `read_map` refuses one.
+  - `set_map_feature` checks the feature as it will be (the current feature with the changes laid over it) plus the map's name.
