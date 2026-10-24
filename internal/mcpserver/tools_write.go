@@ -13,7 +13,7 @@ import (
 
 func (s *server) addWriteTools(ms *mcp.Server) {
 	addTool(s, ms, &mcp.Tool{
-		Name:        "update_document",
+		Name: "update_document",
 		Description: "Rename a document (a tab of a resource), or hide it from players or show it to them. Showing a page checks its whole content with the spoiler guard first. " +
 			"For a timeline document, calendar_id sets its calendar and sources sets the timelines it chains ([] clears them); the chained lanes and events are checked by the spoiler guard first.",
 		Annotations: write("Update document", true, true),
