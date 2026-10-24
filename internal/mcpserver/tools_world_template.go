@@ -170,6 +170,27 @@ func subtree(id string, kids func(string) ([]treeNode, error)) ([]treeNode, erro
 	return out, nil
 }
 
+// dropTemplate is name with every "template", in any case, removed: the
+// widest readings of the server's default copy name. It is removed both
+// outright ("ZorTemplateblax" reads "Zorblax") and leaving a word break
+// ("ZorblaxTemplateKeep" reads "Zorblax Keep").
+func dropTemplate(name string) []string {
+	var joined, spaced strings.Builder
+	rs := []rune(name)
+	const word = "template"
+	for i := 0; i < len(rs); {
+		if i+len(word) <= len(rs) && strings.EqualFold(string(rs[i:i+len(word)]), word) {
+			spaced.WriteByte(' ')
+			i += len(word)
+			continue
+		}
+		joined.WriteRune(rs[i])
+		spaced.WriteRune(rs[i])
+		i++
+	}
+	return []string{strings.TrimSpace(joined.String()), strings.TrimSpace(spaced.String())}
+}
+
 // SaveAsTemplateIn is save_as_template's input.
 type SaveAsTemplateIn struct {
 	ProjectArg
@@ -281,7 +302,16 @@ func (s *server) createFromTemplate(ctx context.Context, c *lk.Client, in Create
 			return zero, err
 		}
 	}
-	if err := s.check(map[string]any{"name": name}); err != nil {
+	visibleName := map[string]any{"name": name}
+	if in.Name == nil {
+		// The guide says only that the name "drops the word Template". If
+		// the server drops it inside a word, "ZorblaxTemplate" becomes
+		// "Zorblax", which whole-word matching on the full name misses
+		// (red-team review), so the name with every "template" removed is
+		// checked too.
+		visibleName["defaultName"] = dropTemplate(name)
+	}
+	if err := s.check(visibleName); err != nil {
 		return zero, err
 	}
 	copied, checked, err := s.checkCopy(ctx, c, t, name, desc)

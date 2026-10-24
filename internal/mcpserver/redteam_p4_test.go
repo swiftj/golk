@@ -159,7 +159,60 @@ func TestRedteamP4_X_GUARD_09_SpecRootCantExemptItself(t *testing.T) {
 	}
 }
 
+// X-GUARD-10: without a name, a copy is named after the template less the
+// word "Template". If the server drops it inside a word, the copy of
+// "ZorblaxTemplate" is "Zorblax", which whole-word matching on the
+// template's name missed.
+func TestRedteamP4_X_GUARD_10_DefaultCopyNameIsChecked(t *testing.T) {
+	for _, name := range []string{"ZorblaxTemplate", "Zorblaxtemplate Keep", "ZorTEMPLATEblax", "TemplateZorblax"} {
+		t.Run(name, func(t *testing.T) {
+			h := rgHarness(t, "Zorblax")
+			h.lk.Enqueue(wtOK(`{"id":"tp1","name":"` + name + `","parentId":"templates","isHidden":false,"documents":[]}`))
+			r := h.call("create_from_template", map[string]any{"template_id": "tp1", "dry_run": true})
+			if !r.IsError {
+				t.Fatalf("accepted: %s", text(r))
+			}
+			wtRefused(t, h, text(r))
+		})
+	}
+	t.Run("a given name is what is checked", func(t *testing.T) {
+		h := rgHarness(t, "Zorblax")
+		h.lk.Enqueue(wtOK(`{"id":"tp1","name":"ZorblaxTemplate","parentId":"templates","isHidden":true,"documents":[]}`))
+		wtMustOK(t, h, "create_from_template", map[string]any{"template_id": "tp1", "name": "Realm", "dry_run": true})
+	})
+}
+
 // Attacks that held, kept as regressions.
+
+// X-RO-01: in read-only mode the Phase 4 read tools send only GETs.
+func TestRedteamP4_X_RO_01_Phase4ReadToolsOnlyGET(t *testing.T) {
+	for _, tc := range []struct {
+		tool    string
+		args    map[string]any
+		replies []string
+	}{
+		{"read_map", map[string]any{"resource_id": "r1"}, []string{mtRes, mtDoc, mtFeatures}},
+		{"read_timeline", map[string]any{"resource_id": "r1"}, []string{tlRes, tlDoc, `{"data":[]}`, tlNoEvents}},
+		{"list_calendars", map[string]any{}, []string{calList}},
+		{"get_calendar", map[string]any{"calendar_id": "cal1"}, []string{calList}},
+		{"list_templates", map[string]any{}, []string{`{"data":[],"hasMore":false,"nextCursor":null}`}},
+	} {
+		t.Run(tc.tool, func(t *testing.T) {
+			h := newHarness(t, readOnlyMode())
+			for _, b := range tc.replies {
+				h.lk.Enqueue(wtOK(b))
+			}
+			if r := h.call(tc.tool, tc.args); r.IsError {
+				t.Fatal(text(r))
+			}
+			for _, rq := range h.lk.Requests() {
+				if rq.Method != http.MethodGet {
+					t.Errorf("%s sent %s %s", tc.tool, rq.Method, rq.Path)
+				}
+			}
+		})
+	}
+}
 
 // X-GUARD-08: every player-visible field set_map_feature takes is checked,
 // style fields and the pin image URL included.
