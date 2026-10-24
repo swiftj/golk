@@ -95,7 +95,7 @@ func timeline(ctx context.Context, c *lk.Client, a TimelineRefArg, allowBlank bo
 	} else if d, err = findDoc(r, a.DocumentID); err != nil {
 		return zero, err
 	}
-	if d.Type != lk.DocumentTime && !(allowBlank && d.Type == lk.DocumentBlank) {
+	if d.Type != lk.DocumentTime && (!allowBlank || d.Type != lk.DocumentBlank) {
 		return zero, fmt.Errorf("document %q (%s) of %q is a %s document, not a timeline", d.Name, d.ID, r.Name, d.Type)
 	}
 	return timelineTarget{r: r, d: d, ref: lk.DocRef{ResourceID: r.ID, DocumentID: d.ID}}, nil
