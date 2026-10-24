@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -349,7 +350,11 @@ func (s *server) setLane(ctx context.Context, c *lk.Client, in SetLaneIn) (toolR
 			style["imageUrl"] = *in.Style.ImageURL
 		}
 	}
-	if !t.hidden() {
+	shown, err := s.shownToPlayers(ctx, c, t)
+	if err != nil {
+		return zero, err
+	}
+	if shown {
 		if err := s.check(map[string]any{"lane": map[string]any{"name": after.Name, "style": style}}); err != nil {
 			return zero, err
 		}
@@ -554,7 +559,11 @@ func (s *server) setEvent(ctx context.Context, c *lk.Client, in SetEventIn) (too
 	}
 	// A hidden event is exempt only once hidden events are confirmed
 	// DM-only (X-GUARD-11).
-	if !t.hidden() && len(shownEvents([]lk.Event{after})) > 0 {
+	shown, err := s.shownToPlayers(ctx, c, t)
+	if err != nil {
+		return zero, err
+	}
+	if shown && len(shownEvents([]lk.Event{after})) > 0 {
 		visible := map[string]any{"event": map[string]any{
 			"name": after.Name, "uri": after.URI, "imageUrl": after.ImageURL, "iconGlyph": after.IconGlyph, "color": after.Color,
 			"formattedStart": after.FormattedStart, "formattedEnd": after.FormattedEnd,
@@ -680,4 +689,74 @@ func chainContent(ctx context.Context, c *lk.Client, srcs []lk.DocRef) ([]map[st
 		out = append(out, map[string]any{"lanes": lanes.Items, "events": shownEvents(events)})
 	}
 	return out, nil
+}
+
+// chainedIntoVisible returns a visible timeline that shows target through
+// its chain, directly or through other chained timelines, or nil. A
+// visible timeline's sources are checked even when hidden (D-014), so a
+// write to a hidden timeline that a visible one chains is player-visible
+// too (red-team review, X-GUARD-08). LegendKeeper has no reverse lookup,
+// so every timeline document of the project is read: one listing per
+// resource holding a timeline. Only writes to hidden timelines pay this.
+func chainedIntoVisible(ctx context.Context, c *lk.Client, target lk.DocRef) (*lk.DocRef, error) {
+	type node struct {
+		visible bool
+		sources []lk.DocRef
+	}
+	graph := map[lk.DocRef]node{}
+	var order []lk.DocRef
+	for it, err := range c.Resources.All(ctx, lk.ResourceListParams{Limit: 100}) {
+		if err != nil {
+			return nil, fmt.Errorf("listing timelines to see which chain this one: %w", err)
+		}
+		if !slices.ContainsFunc(it.Documents, func(d lk.DocumentSummary) bool { return d.Type == lk.DocumentTime }) {
+			continue
+		}
+		ds, err := c.Documents.List(ctx, it.ID)
+		if err != nil {
+			return nil, fmt.Errorf("listing timelines to see which chain this one: %w", err)
+		}
+		for _, d := range ds.Items {
+			if d.Type != lk.DocumentTime {
+				continue
+			}
+			ref := lk.DocRef{ResourceID: it.ID, DocumentID: d.ID}
+			graph[ref] = node{visible: !it.IsHidden && !d.IsHidden, sources: d.Sources}
+			order = append(order, ref)
+		}
+	}
+	for _, ref := range order {
+		if !graph[ref].visible || ref == target {
+			continue
+		}
+		seen := map[lk.DocRef]bool{ref: true}
+		stack := slices.Clone(graph[ref].sources)
+		for len(stack) > 0 {
+			cur := stack[len(stack)-1]
+			stack = stack[:len(stack)-1]
+			if cur == target {
+				return &ref, nil
+			}
+			if seen[cur] {
+				continue
+			}
+			seen[cur] = true
+			stack = append(stack, graph[cur].sources...)
+		}
+	}
+	return nil, nil
+}
+
+// shownToPlayers reports whether players can see timeline t: it is
+// visible, or a visible timeline chains it (chainedIntoVisible). With the
+// guard off nothing is read.
+func (s *server) shownToPlayers(ctx context.Context, c *lk.Client, t timelineTarget) (bool, error) {
+	if !t.hidden() {
+		return true, nil
+	}
+	if s.cfg.GuardOff {
+		return false, nil
+	}
+	via, err := chainedIntoVisible(ctx, c, t.ref)
+	return via != nil, err
 }

@@ -220,8 +220,12 @@ func (s *server) updateDocument(ctx context.Context, c *lk.Client, in UpdateDocu
 			content["name"] = out.Name
 			visible = content
 		}
-		if calendar != nil && !lk.IsBuiltinCalendar(calendar.ID) {
-			visible["calendar"] = calendar.Spec
+		if calendar != nil {
+			// The new calendar replaces the one documentContent read.
+			delete(visible, "calendar")
+			if !lk.IsBuiltinCalendar(calendar.ID) {
+				visible["calendar"] = calendar.Spec
+			}
 		}
 		if len(newSources) > 0 && !s.cfg.GuardOff {
 			chain, err := chainContent(ctx, c, newSources)
@@ -232,6 +236,22 @@ func (s *server) updateDocument(ctx context.Context, c *lk.Client, in UpdateDocu
 		}
 		if err := s.check(visible); err != nil {
 			return zero, err
+		}
+	} else if len(newSources) > 0 && !s.cfg.GuardOff {
+		// A hidden timeline that a visible one chains shows its own
+		// chain to players through it (red-team review, X-GUARD-08).
+		via, err := chainedIntoVisible(ctx, c, lk.DocRef{ResourceID: r.ID, DocumentID: d.ID})
+		if err != nil {
+			return zero, err
+		}
+		if via != nil {
+			chain, err := chainContent(ctx, c, newSources)
+			if err != nil {
+				return zero, err
+			}
+			if err := s.check(map[string]any{"sources": chain}); err != nil {
+				return zero, err
+			}
 		}
 	}
 	summary := strings.Join(did, " and ")

@@ -256,7 +256,7 @@ func TestTimelineGuard_X_GUARD_08(t *testing.T) {
 	}
 	t.Run("hidden document skips", func(t *testing.T) {
 		h := rgHarness(t, "Zorblax")
-		h.lk.Enqueue(wtOK(tlRes), testutil.JSON(http.StatusCreated, `{"id":"e3","laneId":"l1","type":"event","name":"Zorblax","start":1,"startDate":{"era":{}}}`))
+		h.lk.Enqueue(wtOK(tlRes), wtOK(`{"data":[],"hasMore":false,"nextCursor":null}`), testutil.JSON(http.StatusCreated, `{"id":"e3","laneId":"l1","type":"event","name":"Zorblax","start":1,"startDate":{"era":{}}}`))
 		wtMustOK(t, h, "set_timeline_event", map[string]any{"resource_id": "r1", "document_id": "t9", "lane_id": "l1", "type": "event", "name": "Zorblax", "start": 1})
 		if len(h.writes()) != 1 {
 			t.Errorf("writes %+v", h.writes())
@@ -264,7 +264,7 @@ func TestTimelineGuard_X_GUARD_08(t *testing.T) {
 	})
 	t.Run("hidden resource skips", func(t *testing.T) {
 		h := rgHarness(t, "Zorblax")
-		h.lk.Enqueue(wtOK(tlResHidden), testutil.JSON(http.StatusCreated, `{"id":"l2","name":"Zorblax","rank":"a1","size":"sm"}`))
+		h.lk.Enqueue(wtOK(tlResHidden), wtOK(`{"data":[],"hasMore":false,"nextCursor":null}`), testutil.JSON(http.StatusCreated, `{"id":"l2","name":"Zorblax","rank":"a1","size":"sm"}`))
 		wtMustOK(t, h, "set_timeline_lane", map[string]any{"resource_id": "r1", "name": "Zorblax", "rank": "a1", "size": "sm"})
 		if len(h.writes()) != 1 {
 			t.Errorf("writes %+v", h.writes())
@@ -373,13 +373,13 @@ func TestUpdateDocumentTimeline_X_TL_02(t *testing.T) {
 			})
 		}
 	})
-	t.Run("hidden target skips the scan", func(t *testing.T) {
+	t.Run("hidden unchained target skips the scan", func(t *testing.T) {
 		h := rgHarness(t, "Zorblax")
-		h.lk.Enqueue(wtOK(tlRes), wtOK(`{"id":"t9","name":"DM History","type":"time","rank":"d","isHidden":true}`), wtOK(`{"id":"t9","name":"DM History","type":"time","rank":"d","isHidden":true}`))
+		h.lk.Enqueue(wtOK(tlRes), wtOK(`{"id":"t9","name":"DM History","type":"time","rank":"d","isHidden":true}`), wtOK(`{"data":[],"hasMore":false,"nextCursor":null}`), wtOK(`{"id":"t9","name":"DM History","type":"time","rank":"d","isHidden":true}`))
 		wtMustOK(t, h, "update_document", map[string]any{"resource_id": "r1", "document_id": "t9",
 			"sources": []map[string]string{{"resource_id": "r2", "document_id": "t2"}}})
-		if n := len(h.lk.Requests()); n != 3 {
-			t.Errorf("want resource, document, update; got %d requests", n)
+		if n := len(h.lk.Requests()); n != 4 {
+			t.Errorf("want resource, document, chain scan, update; got %d requests", n)
 		}
 	})
 	t.Run("clear sources", func(t *testing.T) {
