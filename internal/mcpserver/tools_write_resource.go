@@ -134,6 +134,20 @@ func documentContent(ctx context.Context, c *lk.Client, r *lk.Resource, d *lk.Do
 			events = append(events, e)
 		}
 		doc["lanes"], doc["events"] = lanes.Items, shownEvents(events)
+		// A custom calendar's names render on the timeline (red-team
+		// review): showing the timeline shows them. getResource carries
+		// calendarId; an id no calendar has renders as Gregorian.
+		if d.CalendarID != "" && !lk.IsBuiltinCalendar(d.CalendarID) {
+			for cal, err := range c.Calendars.All(ctx) {
+				if err != nil {
+					return nil, err
+				}
+				if cal.ID == d.CalendarID {
+					doc["calendar"] = cal.Spec
+					break
+				}
+			}
+		}
 	default:
 		return nil, uncheckable(r, d)
 	}

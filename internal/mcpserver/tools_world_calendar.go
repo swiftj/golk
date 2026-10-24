@@ -183,7 +183,7 @@ func (s *server) createCalendar(ctx context.Context, c *lk.Client, in CreateCale
 		return zero, err
 	}
 	// X-GUARD-09: every string of the spec.
-	if err := s.check(spec); err != nil {
+	if err := s.check(map[string]any{"calendar": spec}); err != nil { // wrapped: the spec is never in a block or property position (red-team review)
 		return zero, err
 	}
 	out := CalendarOut{ID: spec.ID, Name: spec.Name, DryRun: in.DryRun}
@@ -223,7 +223,7 @@ func (s *server) replaceCalendar(ctx context.Context, c *lk.Client, in ReplaceCa
 	if spec.ID != "" && spec.ID != in.CalendarID {
 		return zero, fmt.Errorf("spec.id %q differs from calendar_id %q", spec.ID, in.CalendarID)
 	}
-	if err := s.check(spec); err != nil {
+	if err := s.check(map[string]any{"calendar": spec}); err != nil { // wrapped: the spec is never in a block or property position (red-team review)
 		return zero, err
 	}
 	out := CalendarOut{ID: in.CalendarID, Name: spec.Name, Version: in.Version, DryRun: in.DryRun}
