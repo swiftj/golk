@@ -120,6 +120,9 @@ func (c Config) String() string {
 	return fmt.Sprintf("lk-mcp config: projects %v, read-only %t, guard %s", c.Projects(), c.ReadOnly, guard)
 }
 
+// GoString describes c for %#v, also without its keys.
+func (c Config) GoString() string { return c.String() }
+
 func validName(s string) bool {
 	for _, r := range s {
 		if r != '_' && (r < 'a' || r > 'z') && (r < '0' || r > '9') {
