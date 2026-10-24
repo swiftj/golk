@@ -12,13 +12,13 @@ import (
 )
 
 var (
-	contractRow = regexp.MustCompile(`^\| (C-[A-Z][A-Z0-9]*-\d+)\b[^|]*\|.*\| ([^|]+) \|$`)
+	contractRow = regexp.MustCompile(`^\| ([CM]-[A-Z][A-Z0-9]*-\d+)\b[^|]*\|.*\| ([^|]+) \|$`)
 	// A test names an ID in its function name (C_RETRY_03) or in a t.Run
 	// subtest name ("C-RETRY-03 ...").
 	testFuncID = regexp.MustCompile(`func (?:Test|Fuzz|Example)\w*`)
-	idInFunc   = regexp.MustCompile(`C_[A-Z][A-Z0-9]*_\d+`)
-	idInRun    = regexp.MustCompile(`t\.Run\("(C-[A-Z][A-Z0-9]*-\d+)`)
-	idInCase   = regexp.MustCompile(`name:\s*"(C-[A-Z][A-Z0-9]*-\d+)`)
+	idInFunc   = regexp.MustCompile(`[CM]_[A-Z][A-Z0-9]*_\d+`)
+	idInRun    = regexp.MustCompile(`t\.Run\("([CM]-[A-Z][A-Z0-9]*-\d+)`)
+	idInCase   = regexp.MustCompile(`name:\s*"([CM]-[A-Z][A-Z0-9]*-\d+)`)
 )
 
 // Every in-scope contract item (phase column starting with "1" or "2a") must be named

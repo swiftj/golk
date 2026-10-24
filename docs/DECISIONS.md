@@ -91,6 +91,8 @@ approved.
 |---|---|---|
 | `golang.org/x/time` v0.16.0 (`rate`) | Client-side pacing, which CLAUDE.md mandates. Its `ReserveN(t, n)` takes an explicit time, so the limiter runs on the injected clock and tests never sleep. | None (pure Go) |
 
+| `github.com/yuin/goldmark` v1.8.6 (added 2026-10-24, Phase 2b) | CommonMark + GFM parser for `lk/markdown` (LK_MARKDOWN.md §7). Writing a CommonMark-correct parser by hand would be large and error-prone, and the converter guards player-visible content. Only `lk/markdown` imports it, so `lk` callers who don't use Markdown don't link it. | None (pure Go, no dependencies of its own; `CGO_ENABLED=0 go build` checked) |
+
 That is the whole module graph (`go mod graph`). UUIDs (idempotency keys) and cuid2-format IDs use `crypto/rand` instead of a dependency. The generator (`internal/cmd/lkgen`) uses only the standard library.
 
 ## D-007 — Core implementation choices

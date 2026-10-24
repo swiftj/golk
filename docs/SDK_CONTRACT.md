@@ -360,6 +360,38 @@ All paths are under `/api/v3/projects/{projectId}/assets`.
 | C-SEARCH-01 | `Search.Search`: `GET …/search` with `q`, plus `limit` only when set. Returns a single page of `{Resource, Document?}` in server order. Duplicates per resource are kept (one per matching document). | G§search; S `search` | 2a |
 | C-TAG-01 | `Tags.List`: `GET …/tags`. Returns a single page of `{Tag, Count}` in server order. | G§tags | 2a |
 
+## MD — LK Markdown (`lk/markdown`)
+
+The format is ours, not LegendKeeper's ([`LK_MARKDOWN.md`](LK_MARKDOWN.md), cited as **M§n**; approved in Phase 2b). Its IDs are `M-<AREA>-NN` and follow the same rules as `C-` IDs.
+
+| ID | Requirement | Source | Phase |
+|---|---|---|---|
+| M-API-01 | `FromMarkdown(ToMarkdown(p), {Base: p})` encodes to exactly the JSON of `p` for any decodable `p`, including unknown kinds, unsupported blocks and unmodelled fields. Without `Base` the result differs only in fields Markdown can't show. | M§1 | 2b |
+| M-API-02 | `ToMarkdown` is deterministic: the same page always renders the same bytes. | M§1 | 2b |
+| M-API-03 | `ToMarkdown` and `FromMarkdown` make no request, don't log, and never panic on any input (fuzzed). | M§1 | 2b |
+| M-API-04 | `markdown.Replace` always sends `If-Match` with the base page's version. | M§6 | 2b |
+| M-API-05 | `ReplaceOptions.DryRun` sends no request and returns the parsed blocks and report. | M§6 | 2b |
+| M-INL-01 | Text is escaped so it round-trips verbatim; leading and trailing spaces inside a mark move outside it. | M§2.2 | 2b |
+| M-INL-02 | Marks render in a fixed order: link, bold, italic, strike, span, code. | M§2.2 | 2b |
+| M-INL-03 | An unknown span attribute or inline HTML is an error. | M§2.2 | 2b |
+| M-DIR-01 | Directive attribute names are the spec's JSON field names; values are bare tokens or quoted strings; a bare flag means `true`. | M§2.3 | 2b |
+| M-DIR-02 | Every optional field can be written as an attribute; a field not written is unset. | M§2.3 | 2b |
+| M-DIR-03 | Key-value rows, meter items and resource items use the `- key :: value`, `- name :: current/max`, `- @resourceId` item forms. | M§2.3 | 2b |
+| M-DIR-04 | Block attributes of standard-syntax kinds go in a `{…}` set after the block. | M§2.3 | 2b |
+| M-OPQ-01 | A block whose Markdown form would not parse back to the identical block renders as an `lk-raw` fence; `unsupported` renders as `::unsupported id=…`. | M§2.4, §2.5, §2.6 | 2b |
+| M-OPQ-02 | An `lk-raw` fence must hold one JSON object with a string `kind`. | M§2.4 | 2b |
+| M-ID-01 | With `Base`, an unchanged block comes back byte-identical to its base block. | M§3.1 | 2b |
+| M-ID-02 | Editing one paragraph changes only that paragraph; its siblings and container keep their ids. | M§3.1 | 2b |
+| M-ID-03 | Matching never moves an id onto a block of another kind and never uses a base block twice. Explicit `{#id}` wins over matching. | M§3.1, §3.2 | 2b |
+| M-TXT-01 | The visible text of a block's Markdown equals `blocks.PlainText` of the block. | M§4 | 2b |
+| M-SAFE-01 | Unknown directive, unknown or duplicate attribute, or a value the field can't hold is an error. | M§5 | 2b |
+| M-SAFE-02 | An unclosed container directive or a stray closing fence is an error; an unclosed `:::secret` never leaks into the page. | M§5 | 2b |
+| M-SAFE-03 | Raw HTML, link reference definitions and footnotes are errors. | M§5 | 2b |
+| M-SAFE-04 | Removing an `unsupported` or `lk-raw` block of `Base` (at any depth) is an error unless `AllowRemoveOpaque`; removed secrets are listed in `Report.Removed`. | M§5 | 2b |
+| M-SAFE-05 | An image not alone in its paragraph, or in a heading or table cell, is an error. | M§5 | 2b |
+| M-SAFE-06 | An `::unsupported` id not in `Base`, or the same id twice, is an error. | M§5 | 2b |
+| M-SAFE-07 | Input over 1 MiB or nested deeper than 64 levels is rejected before parsing. | M§5 | 2b |
+
 ---
 
 ## Ambiguities and conflicts
