@@ -244,3 +244,9 @@ That is the whole module graph (`go mod graph`). UUIDs (idempotency keys) and cu
   - `mapImage` comes back on document get, create and update, not on list or `getResource`; `sources` on list, get, create and update, not on `getResource`. A legacy tiled map has `assetId`, `url` and `tiles` null.
   - Read label sizes are free strings (app-drawn features read `small`/`medium`/`large`); writes are limited to the spec's `xs`–`3xl`.
   - The spec's `MapImage` description gives the pixel formula itself, identical to A-37's, so the helpers follow the spec. The sandbox confirmed `bounds` `[[-128,0],[0,256]]` for a 512×256 image and exact pixel round trips.
+- **Spec findings (timelines, calendars, templates):**
+  - **Conflict:** changing a built-in calendar answers 400 `KIND_MISMATCH` (spec and sandbox), while the guide's example catches it as `ValidationError`. The spec wins on shape: the SDK documents and tests `ErrKindMismatch`.
+  - Events can read back with type `placeholder` or `invisible-placeholder`; `startDate` is always present, `endDate` and `iso` optional.
+  - `listEvents` and `listLanes` on a chaining timeline include its sources'; `getLane` on a source's lane answers 404.
+  - `listTemplates` returns the `resources.list` item shape.
+  - An explicit `null` on an optional calendar field reads as unset and isn't written back.
