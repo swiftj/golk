@@ -19,12 +19,16 @@ import (
 // blocks (which encode as their own JSON). Numbers, booleans and null are
 // not text.
 //
-// An object is DM-only, and its whole subtree is skipped, when it has a
-// "kind" member whose value is the string "secret", or when it is a
+// An object is DM-only, and its whole subtree is skipped, when it is a
+// block (an element of a "blocks" or "children" array, or the checked
+// value itself or an element of it) with a "kind" member whose value is the string "secret"
+// (a "kind":"secret" member on a text run or any other object exempts
+// nothing, as for "isHidden" below), or when it is a
 // property (a sidebar property or an infobox row: its "kind" is one of the
 // property-capable kinds) with an "isHidden" member whose value is true.
 // Only properties can be hidden; "isHidden" on any other object (a text
-// run, a paragraph) exempts nothing, so a field the API ignores can't hide
+// run, a paragraph) exempts nothing, and both exemptions apply only where
+// the API reads such an object (see at below), so a field the API ignores can't hide
 // player-visible text from the guard. Key names and values are matched
 // exactly (case-sensitive, as the API reads them).
 //
@@ -99,6 +103,7 @@ func (w *walker) after(tok json.Token) ([]Violation, error) {
 
 func (w *walker) object() ([]Violation, error) {
 	var vs []Violation
+	asBlock, asProp := w.at(blockListKeys, nil), w.at(propListKeys, propKeys)
 	kinds, secretKinds, propKinds, hiddens, trueHiddens := 0, 0, 0, 0, 0
 	for w.dec.More() {
 		kt, err := w.dec.Token()
@@ -138,10 +143,38 @@ func (w *walker) object() ([]Violation, error) {
 	if _, err := w.dec.Token(); err != nil { // '}'
 		return nil, err
 	}
-	if (kinds > 0 && kinds == secretKinds) || (hiddens > 0 && hiddens == trueHiddens && kinds > 0 && kinds == propKinds) {
+	if (asBlock && kinds > 0 && kinds == secretKinds) || (asProp && hiddens > 0 && hiddens == trueHiddens && kinds > 0 && kinds == propKinds) {
 		return nil, nil
 	}
 	return vs, nil
+}
+
+// Exemptions are positional: an object can be DM-only only where the API
+// reads that kind of object. "kind":"secret" exempts a block, an element
+// of a block list; "isHidden":true exempts a property, a sidebar property
+// or an infobox row. The same members on a text run or any other object
+// exempt nothing. The checked value itself, and each element of it when it
+// is an array, may be either.
+var (
+	blockListKeys = map[string]bool{"blocks": true, "children": true}
+	propListKeys  = map[string]bool{"properties": true, "rows": true}
+	propKeys      = map[string]bool{"property": true}
+)
+
+// at reports whether the object being read is an element of an array that
+// is the value of a member named in lists, or the value of a member named
+// in members, or the checked value or one of its elements.
+func (w *walker) at(lists, members map[string]bool) bool {
+	n := len(w.path)
+	switch {
+	case n == 0, n == 1 && !w.path[0].isKey:
+		return true
+	case w.path[n-1].isKey:
+		return members[w.path[n-1].key]
+	case n >= 2 && w.path[n-2].isKey:
+		return lists[w.path[n-2].key]
+	}
+	return false
 }
 
 func (w *walker) array() ([]Violation, error) {
