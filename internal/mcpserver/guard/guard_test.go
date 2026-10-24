@@ -274,7 +274,9 @@ func TestGuard_X_GUARD_03_Visible(t *testing.T) {
 		{"isHidden string is visible", raw(`{"isHidden":"true","t":"Zorblax"}`), []Violation{{"Zorblax", "$.t"}}},
 		{"kind case-sensitive", raw(`{"kind":"Secret","t":"Zorblax"}`), []Violation{{"Zorblax", "$.t"}}},
 		{"key case-sensitive", raw(`{"Kind":"secret","IsHidden":true,"t":"Zorblax"}`), []Violation{{"Zorblax", "$.t"}}},
-		{"hidden key after content", raw(`{"t":"Zorblax","isHidden":true}`), nil},
+		{"hidden key after content", raw(`{"kind":"textField","t":"Zorblax","isHidden":true}`), nil},
+		{"isHidden on a run is visible", raw(`{"text":"Zorblax","isHidden":true}`), []Violation{{"Zorblax", "$.text"}}},
+		{"isHidden on a paragraph is visible", raw(`{"kind":"paragraph","isHidden":true,"content":[{"text":"Zorblax"}]}`), []Violation{{"Zorblax", "$.content[0].text"}}},
 		{"secret kind after content", raw(`{"children":[{"text":"Zorblax"}],"kind":"secret"}`), nil},
 		{"html escaping", map[string]any{"t": "<Zorblax>&"}, []Violation{{"Zorblax", "$.t"}}},
 	}
@@ -336,7 +338,8 @@ func TestGuard_X_GUARD_03_DuplicateKeys(t *testing.T) {
 		// and last-wins parsers alike.
 		{"hidden then shown", `{"isHidden":true,"isHidden":false,"t":"Zorblax"}`, []Violation{{"Zorblax", "$.t"}}},
 		{"shown then hidden", `{"isHidden":false,"isHidden":true,"t":"Zorblax"}`, []Violation{{"Zorblax", "$.t"}}},
-		{"hidden twice", `{"isHidden":true,"t":"Zorblax","isHidden":true}`, nil},
+		{"hidden twice", `{"kind":"keyValue","isHidden":true,"t":"Zorblax","isHidden":true}`, nil},
+		{"hidden property, second kind not a property", `{"kind":"keyValue","kind":"paragraph","isHidden":true,"t":"Zorblax"}`, []Violation{{"Zorblax", "$.t"}}},
 		{"secret then paragraph", `{"kind":"secret","kind":"paragraph","t":"Zorblax"}`, []Violation{{"Zorblax", "$.t"}}},
 		{"paragraph then secret", `{"kind":"paragraph","kind":"secret","t":"Zorblax"}`, []Violation{{"Zorblax", "$.t"}}},
 		{"secret kind, mixed hidden", `{"kind":"secret","isHidden":false,"t":"Zorblax"}`, nil},

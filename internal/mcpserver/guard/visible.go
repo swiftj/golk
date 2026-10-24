@@ -20,9 +20,13 @@ import (
 // not text.
 //
 // An object is DM-only, and its whole subtree is skipped, when it has a
-// "kind" member whose value is the string "secret", or an "isHidden"
-// member whose value is true. Key names and values are matched exactly
-// (case-sensitive, as the API reads them).
+// "kind" member whose value is the string "secret", or when it is a
+// property (a sidebar property or an infobox row: its "kind" is one of the
+// property-capable kinds) with an "isHidden" member whose value is true.
+// Only properties can be hidden; "isHidden" on any other object (a text
+// run, a paragraph) exempts nothing, so a field the API ignores can't hide
+// player-visible text from the guard. Key names and values are matched
+// exactly (case-sensitive, as the API reads them).
 //
 // Duplicate keys. Raw JSON (lk-raw blocks, unmodelled fields) can repeat a
 // key, and JSON parsers disagree on which occurrence wins. The guard is
@@ -95,7 +99,7 @@ func (w *walker) after(tok json.Token) ([]Violation, error) {
 
 func (w *walker) object() ([]Violation, error) {
 	var vs []Violation
-	kinds, secretKinds, hiddens, trueHiddens := 0, 0, 0, 0
+	kinds, secretKinds, propKinds, hiddens, trueHiddens := 0, 0, 0, 0, 0
 	for w.dec.More() {
 		kt, err := w.dec.Token()
 		if err != nil {
@@ -114,6 +118,8 @@ func (w *walker) object() ([]Violation, error) {
 			kinds++
 			if s, ok := tok.(string); ok && s == "secret" {
 				secretKinds++
+			} else if ok && propertyKinds[s] {
+				propKinds++
 			}
 		case "isHidden":
 			hiddens++
@@ -132,7 +138,7 @@ func (w *walker) object() ([]Violation, error) {
 	if _, err := w.dec.Token(); err != nil { // '}'
 		return nil, err
 	}
-	if (kinds > 0 && kinds == secretKinds) || (hiddens > 0 && hiddens == trueHiddens) {
+	if (kinds > 0 && kinds == secretKinds) || (hiddens > 0 && hiddens == trueHiddens && kinds > 0 && kinds == propKinds) {
 		return nil, nil
 	}
 	return vs, nil
@@ -205,4 +211,11 @@ func isIdent(s string) bool {
 		return false
 	}
 	return true
+}
+
+// propertyKinds are the kinds a property (sidebar property or infobox row)
+// can have: the property-capable block kinds, and unsupported.
+var propertyKinds = map[string]bool{
+	"textField": true, "keyValue": true, "image": true, "meter": true, "resourceCollection": true,
+	"resourceLink": true, "embed": true, "map": true, "unsupported": true,
 }
