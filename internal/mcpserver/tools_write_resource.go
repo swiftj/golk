@@ -243,7 +243,7 @@ func (s *server) updateResource(ctx context.Context, c *lk.Client, in UpdateReso
 	// when it is being unhidden (X-GUARD-05); otherwise the new name,
 	// tags and aliases. Moving changes nobody's view: hidden is not
 	// inherited (D-012).
-	if !out.Hidden {
+	if !out.Hidden && !s.cfg.GuardOff {
 		visible := changed
 		if unhide {
 			if visible, err = visibleResource(ctx, c, &after); err != nil {
