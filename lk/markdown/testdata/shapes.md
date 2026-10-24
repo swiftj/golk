@@ -211,7 +211,7 @@ see [here](https://x.test/a_\(b\)?c=1\&d=2)
 \> c\
 \+ d\
 \===\
-\:::secret\
+\:::callout\
 &#32;&#32;&#32;&#32;code?\
 \---
 
@@ -439,7 +439,20 @@ x
 ```lk-raw
 {
   "kind": "code",
-  "text": "a\n:::\n\u003e b"
+  "text": "a\n:\u003a:\n\u003e b"
+}
+```
+
+###### text mentioning ::secret
+
+```lk-raw
+{
+  "kind": "paragraph",
+  "content": [
+    {
+      "text": "The :\u003aSecret word"
+    }
+  ]
 }
 ```
 
@@ -449,7 +462,7 @@ x
 {
   "kind": "code",
   "language": "md",
-  "text": "```\n````\n:::secret\n"
+  "text": "```\n````\n:\u003a:secret\n"
 }
 `````
 

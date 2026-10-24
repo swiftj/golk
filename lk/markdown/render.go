@@ -287,7 +287,7 @@ func (r *renderer) raw(v any) *rendered {
 		}
 		return &rendered{opaque: true}
 	}
-	return &rendered{lines: fenced("lk-raw", buf.String()), opaque: true}
+	return &rendered{lines: fenced("lk-raw", escapeColons(buf.String())), opaque: true}
 }
 
 // fenced writes body in a backtick fence longer than any backtick run in it.
@@ -855,7 +855,7 @@ func (r *renderer) collectionBody(items blocks.ResourceItems, f *blocks.Filter) 
 	if len(lines) > 0 {
 		lines = append(lines, "")
 	}
-	return append(lines, fenced("lk-filter", string(data))...), true
+	return append(lines, fenced("lk-filter", escapeColons(string(data)))...), true
 }
 
 // checkedProp renders an infobox row, checked the way checked checks a
@@ -947,3 +947,9 @@ func (r *renderer) propLines(p blocks.Property, o ropt) ([]string, bool) {
 	}
 	return lines, ok && w.ok
 }
+
+// escapeColons writes "::" in JSON as ":\u003a", so text inside lk-raw and
+// lk-filter fences never reads as "::secret" (see strayMentions). JSON
+// structure never holds "::", so only string contents change, and they
+// decode the same.
+func escapeColons(js string) string { return strings.ReplaceAll(js, "::", `:\u003a`) }

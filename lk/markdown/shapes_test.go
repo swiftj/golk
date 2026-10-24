@@ -51,7 +51,7 @@ var shapes = []shape{
 	{"code one space", `{"kind":"paragraph","content":[{"text":" ","code":true}]}`, "md"},
 	{"code starting backtick", "{\"kind\":\"paragraph\",\"content\":[{\"text\":\"`a\",\"code\":true}]}", "md"},
 	{"text needing escapes", `{"kind":"paragraph","content":[{"text":"# not *a* _heading_ [x](y) {z} <b> \\ ~s~ ` + "`c`" + ` | &amp; &#35; !"}]}`, "md"},
-	{"line start markers", `{"kind":"paragraph","content":[{"text":"- a"},{"break":true},{"text":"1. b"},{"break":true},{"text":"> c"},{"break":true},{"text":"+ d"},{"break":true},{"text":"==="},{"break":true},{"text":":::secret"},{"break":true},{"text":"    code?"},{"break":true},{"text":"---"}]}`, "md"},
+	{"line start markers", `{"kind":"paragraph","content":[{"text":"- a"},{"break":true},{"text":"1. b"},{"break":true},{"text":"> c"},{"break":true},{"text":"+ d"},{"break":true},{"text":"==="},{"break":true},{"text":":::callout"},{"break":true},{"text":"    code?"},{"break":true},{"text":"---"}]}`, "md"},
 	{"edge whitespace", `{"kind":"paragraph","content":[{"text":"\t two  spaces  "}]}`, "md"},
 	{"only spaces", `{"kind":"paragraph","content":[{"text":"   "}]}`, "md"},
 	{"bang before span", `{"kind":"paragraph","content":[{"text":"wow!"},{"text":"x","underline":true}]}`, "md"},
@@ -92,6 +92,9 @@ var shapes = []shape{
 	// fence (a dropped closing fence must not publish a secret as code),
 	// so such code is lk-raw.
 	{"code with a closing fence line", `{"kind":"code","text":"a\n:::\n> b"}`, "raw"},
+	// M-SAFE-02: "::secret" is accepted only where it opens a secret, so
+	// text holding it is exact only as lk-raw.
+	{"text mentioning ::secret", `{"kind":"paragraph","content":[{"text":"The ::Secret word"}]}`, "raw"},
 	{"code with a secret fence line", "{\"kind\":\"code\",\"language\":\"md\",\"text\":\"```\\n````\\n:::secret\\n\"}", "raw"},
 	{"code with tabs", `{"kind":"code","text":"\tindented\n  two"}`, "md"},
 	{"code language spaces", `{"kind":"code","language":"c sharp","text":"x"}`, "md"},

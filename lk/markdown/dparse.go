@@ -105,6 +105,10 @@ func (c *conv) directiveBlock(d *directiveNode, a *attrR, depth int) (blocks.Blo
 		return b, err
 	case "secret":
 		b := &blocks.SecretBlock{ID: id}
+		if c.secretLines == nil {
+			c.secretLines = map[int]int{}
+		}
+		c.secretLines[c.line(d.Pos())]++
 		if b.Layout, b.Width, err = placed(a); err != nil {
 			return nil, err
 		}

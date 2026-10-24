@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"maps"
+	"regexp"
 	"sort"
 	"strings"
 	"unicode/utf8"
@@ -55,7 +57,35 @@ func parseIn(src string, secrets int) (blocks.List, error) {
 	if err != nil {
 		return nil, err
 	}
+	if err := c.strayMentions(src); err != nil {
+		return nil, err
+	}
 	return l, nil
+}
+
+// secretMention matches "::secret" in any case: every spelling of an
+// attempt to open a secret. ":: secret" with a space is ordinary text ("Key
+// :: Secret society" in a row); at the start of a line it is a mistyped
+// fence, which fenceLike rejects.
+var secretMention = regexp.MustCompile(`(?i)::secret`)
+
+// strayMentions fails unless every secretMention in src opened a secret
+// block. A secret typed wrongly, or in a place where Markdown reads it as
+// text (a lazy continuation line, a table row, code), would otherwise put
+// the DM's text in front of players. Rather than recognise each such place,
+// the converter accepts "::secret" only where it made a secret block
+// (M-SAFE-02). The renderer writes text containing it as lk-raw, whose JSON
+// escapes "::".
+func (c *conv) strayMentions(src string) error {
+	left := maps.Clone(c.secretLines)
+	for _, m := range secretMention.FindAllStringIndex(src, -1) {
+		if ln := c.line(m[0]); left[ln] > 0 {
+			left[ln]--
+			continue
+		}
+		return c.errf(m[0], "%q here doesn't open a secret block: open one with \":::secret\" on its own line, or escape the colons", src[m[0]:m[1]])
+	}
+	return nil
 }
 
 // conv converts a goldmark document into blocks.
@@ -64,6 +94,8 @@ type conv struct {
 	nl       []int // offsets of '\n'
 	lineBase int   // added to line numbers, for a sub-parse
 	secrets  int   // how many secrets enclose the block being converted
+	// secretLines counts the :::secret directives opened on each line.
+	secretLines map[int]int
 }
 
 func newConv(src []byte, lineBase int) *conv {

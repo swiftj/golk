@@ -165,13 +165,11 @@ func TestRedteam_M_SAFE_02_SecretFenceTextInCode(t *testing.T) {
 			t.Fatalf("want lk-raw:\n%s", md)
 		}
 	}
+	// Even inside a secret, "::secret" in code is refused: it opens no
+	// secret block (strayMentions).
 	src := ":::secret\n```\n:::secret\nx\n:::\n```\n:::\n"
-	got, err := parse(src)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !strings.Contains(mustJSON(t, got), `"kind":"code"`) {
-		t.Fatalf("want code in the secret: %s", mustJSON(t, got))
+	if got, err := parse(src); err == nil {
+		t.Fatalf("want an error, got %s", mustJSON(t, got))
 	}
 }
 
