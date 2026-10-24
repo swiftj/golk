@@ -258,7 +258,7 @@ All paths are under `/api/v3/projects/{projectId}/resources/{resourceId}/docs`.
 
 | ID | Requirement | Source | Phase |
 |---|---|---|---|
-| C-DOC-01 | `Documents.List`: `GET …/docs`. Returns a single page (C-PAGE-05) of summaries `{ID, Name, Type}`, where `Name` and `Type` may be absent (they're nullable in the spec). | G§documents; S `ListedDocument`, `listDocuments` | 2a |
+| C-DOC-01 | `Documents.List`: `GET …/docs`. Returns a single page (C-PAGE-05) of documents with the same fields as `Documents.Get`. | G§documents; S `DocumentList` | 2a |
 | C-DOC-02 | `Documents.Get`: `GET …/docs/{documentId}`. Returns `ID, Name, Type, Rank, IsHidden, IsFullWidth`, the timestamps (UTC) and `CalendarID`. `mapImage` and `sources` are kept raw until Phase 4. | G§documents; S `Document` | 2a |
 | C-DOC-03 | `Documents.Create`: `POST …/docs` with `name` and `type` required, and `isHidden`, `isFullWidth`, `calendarId` optional. It's a keyed POST. | G§documents | 2a |
 | C-DOC-04 | `Documents.Update`: `PATCH …/docs/{documentId}` sends only the fields set: `name`, `rank`, `isHidden`, `isFullWidth`, `calendarId`. `mapImage` and `sources` are Phase 4. | G§documents | 2a |

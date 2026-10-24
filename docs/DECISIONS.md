@@ -157,3 +157,37 @@ That is the whole module graph (`go mod graph`). UUIDs (idempotency keys) and cu
 | A-24 | Echoing blocks as read, including mention `name`, is accepted and leaves `text` unchanged. | Mentions are echoed as read; nothing is stripped. |
 | — | Inside an infobox, a `textField` row's paragraph has no `id`. Rows of keyValue blocks and properties carry `rank`. | Ids are optional on decode everywhere. |
 | C-CONTENT-03 | A `data:` image URL → 400 `VALIDATION_ERROR` at `blocks[0].url`. | Server-side rule confirmed; covered by the probe. |
+
+## D-010 — Phase 2a implementation choices
+
+- **Date:** 2026-10-23
+- **The block types are the wire types** (`lk/blocks`).
+  - Each of the 28 kinds is a hand-written struct with the spec's field names.
+  - Required fields are plain; optional ones are `lk.Optional` with `omitzero`.
+  - Block, property, run and filter types are not generated, and they don't map to generated structs. Duplicating 28 kinds as both wire and public types would add boilerplate and nothing else, and the sealed `Block` interface needs its own types anyway.
+  - Drift is caught by `TestBlock_C_BLOCK_03_FieldsMatchSpec`, which compares every struct's JSON field set with its spec schema, including inline row and item objects and the three run shapes. A removed field fails the test (checked by mutation).
+  - The generator still produces the simpler wire types (documents, assets, search, tags) and every `Op`.
+- **Type names follow the spec: `ParagraphBlock`, `ImageProperty`, and so on.** That leaves the guide's builder names free: `P`, `H`, `Quote`, `Image`, `Callout`, `Layout`. The callout's `Tone` and the layout's `BlockLayout` keep their spec names too.
+- **Nothing the SDK reads is dropped:**
+  - An unknown kind decodes to `RawBlock` or `RawProperty`.
+  - A known kind in a shape the SDK doesn't expect also decodes raw, rather than failing the whole page.
+  - Fields the SDK doesn't model are kept and written back in name order after the modelled ones (A-32).
+  - Unknown run shapes decode to `RawRun`.
+  - Unknown enum values are kept as is.
+  - Only JSON that isn't an object with a string `kind` is an error.
+- **Read-only fields are echoed back.** A mention's `name` is sent back as read (D-009, A-24). The `version` of a versioned response is removed before the block is decoded, so it can't come back as an unmodelled field and be written into the page.
+- **Builders take `...any` for text and children.** Strings, runs, blocks and `[]any` mix freely, as in the guide (`P("Hi ", Bold("there"))`). Anything else becomes its `fmt.Sprint` text, never a panic. Kinds that need children take a typed first argument.
+- **Options are fields, not option bags.** Builders take only what the guide's positional arguments take; set everything else on the returned struct (`img.Fill = lk.Some(true)`). `Column(width, …)` treats a width of 0 or less as unset.
+- **`Walk` visits `Node`s.** Infobox rows are properties, not blocks, so `Walk` and `FindBlock` work over a `Node` interface that both blocks and properties satisfy. The paths match the server's error paths (D-009, A-18).
+- **Operations take a `DocRef{ResourceID, DocumentID}`.** Block and row ids follow positionally. This keeps calls readable while still sending the five path ids correctly.
+- **`IfMatch` is split from version reporting.** Reads that report a version (`getBlocks`, `blocks.get`, row and infobox lists) fill it from the ETag but refuse `IfMatch`. Versioned writes do both. `assignBlockIds` reports a version and refuses `IfMatch` (C-CORE2-02). The escape hatch accepts `IfMatch`, since it can't know whether an endpoint is versioned.
+- **Sidebar property creates drop `rank`** and send the placement as `before`/`after`, because a create with `rank` is a 400.
+- **Union fields in patches are separate Go fields.** `BlockPatch.Rows`/`InfoboxRows` and `MeterItems`/`ResourceItems` both map to one wire field each; setting both fails before sending (`ErrPatchConflict`).
+- **Storage uploads go through the same `http.Client`, without the SDK's headers.**
+  - The request carries the returned headers plus a `Content-Type` only if they lack one. It has no `Authorization`, `Idempotency-Key`, `If-Match`, `Accept` or `User-Agent`; Go's default User-Agent is suppressed too.
+  - It gets the per-attempt timeout, no retries and no rate-limit wait (A-31).
+  - `UploadImage` detects the content type with `http.DetectContentType` and refuses anything outside the five accepted types before any request.
+- **`Resource.Properties` is now `[]blocks.Property`.** This replaces Phase 1's `lk.RawProperty` placeholder.
+- **`ResourceDocument.Blocks`** carries page content on `Resources.Create`, which closes Phase 1's deferred `ResourceDocumentParams.Blocks`.
+- **Integration polling.** `TestIntegration_SearchAndTags` polls search for up to 30s with real sleeps, because the index may lag a write. That is the only real sleep in any test, and unit tests still never sleep.
+- **Sandbox sweep covers assets.** `sandbox.Sweep` also deletes root assets named with the run prefix, and `sandbox.CleanupAsset` registers deletes.
