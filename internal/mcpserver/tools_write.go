@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -12,8 +13,9 @@ import (
 
 func (s *server) addWriteTools(ms *mcp.Server) {
 	addTool(s, ms, &mcp.Tool{
-		Name:        "update_document",
-		Description: "Rename a document (a tab of a resource), or hide it from players or show it to them. Showing a page checks its whole content with the spoiler guard first.",
+		Name: "update_document",
+		Description: "Rename a document (a tab of a resource), or hide it from players or show it to them. Showing a page checks its whole content with the spoiler guard first. " +
+			"For a timeline document, calendar_id sets its calendar and sources sets the timelines it chains ([] clears them); the chained lanes and events are checked by the spoiler guard first.",
 		Annotations: write("Update document", true, true),
 	}, func(in UpdateDocumentIn) string { return in.Project }, serial(s, s.updateDocument))
 	addTool(s, ms, &mcp.Tool{
@@ -98,6 +100,10 @@ type UpdateDocumentIn struct {
 	DocumentID string  `json:"document_id"`
 	Name       *string `json:"name,omitempty" jsonschema:"the new name"`
 	IsHidden   *bool   `json:"is_hidden,omitempty" jsonschema:"true hides the document from players; false shows it"`
+	CalendarID *string `json:"calendar_id,omitempty" jsonschema:"a timeline document's calendar (list_calendars); its dates and names show on the timeline"`
+	// Sources is a pointer so that [] (clear the chain) differs from
+	// omitted.
+	Sources *[]SourceOut `json:"sources,omitempty" jsonschema:"the timelines a timeline document chains, in order, replacing the list; [] clears it. Their lanes and events are checked by the spoiler guard unless this timeline is hidden"`
 }
 
 // DocumentOut describes a document after a write (or, with dry_run, as it
@@ -122,8 +128,8 @@ func findDoc(r *lk.Resource, id string) (*lk.Document, error) {
 
 func (s *server) updateDocument(ctx context.Context, c *lk.Client, in UpdateDocumentIn) (toolResult[DocumentOut], error) {
 	var zero toolResult[DocumentOut]
-	if in.Name == nil && in.IsHidden == nil {
-		return zero, errors.New("nothing to change: give name, is_hidden or both")
+	if in.Name == nil && in.IsHidden == nil && in.CalendarID == nil && in.Sources == nil {
+		return zero, errors.New("nothing to change: give name, is_hidden, calendar_id or sources")
 	}
 	r, err := c.Resources.Get(ctx, in.ResourceID)
 	if err != nil {
@@ -144,12 +150,66 @@ func (s *server) updateDocument(ctx context.Context, c *lk.Client, in UpdateDocu
 		u.IsHidden, out.Hidden = lk.Some(*in.IsHidden), *in.IsHidden
 		did = append(did, map[bool]string{true: "hide it from players", false: "show it to players"}[*in.IsHidden])
 	}
+	// Calendar and chain belong to timeline documents. Resources.Get
+	// leaves out a document's sources, so read the document itself.
+	var calendar *lk.Calendar
+	var newSources []lk.DocRef
+	if in.CalendarID != nil || in.Sources != nil {
+		if d.Type != lk.DocumentTime {
+			return zero, fmt.Errorf("calendar_id and sources need a timeline (time) document; %q (%s) is a %s document", d.Name, d.ID, d.Type)
+		}
+		full, err := c.Documents.Get(ctx, lk.DocRef{ResourceID: r.ID, DocumentID: d.ID})
+		if err != nil {
+			return zero, err
+		}
+		if in.CalendarID != nil && *in.CalendarID != full.CalendarID {
+			if *in.CalendarID == "" {
+				return zero, errors.New("calendar_id is empty: give a calendar id from list_calendars")
+			}
+			// The calendar must exist; a custom one's spec is checked
+			// below, as the timeline shows its names.
+			for cal, err := range c.Calendars.All(ctx) {
+				if err != nil {
+					return zero, err
+				}
+				if cal.ID == *in.CalendarID {
+					calendar = &cal
+					break
+				}
+			}
+			if calendar == nil {
+				return zero, fmt.Errorf("no calendar %q. Hint: list_calendars lists the ids", *in.CalendarID)
+			}
+			u.CalendarID = lk.Some(*in.CalendarID)
+			did = append(did, fmt.Sprintf("set its calendar to %q (%s)", calendar.Spec.Name, calendar.ID))
+		}
+		if in.Sources != nil {
+			newSources = make([]lk.DocRef, 0, len(*in.Sources))
+			for _, src := range *in.Sources {
+				if src.ResourceID == "" || src.DocumentID == "" {
+					return zero, errors.New("each source needs resource_id and document_id")
+				}
+				newSources = append(newSources, lk.DocRef{ResourceID: src.ResourceID, DocumentID: src.DocumentID})
+			}
+			if !slices.Equal(newSources, full.Sources) {
+				u.Sources = lk.Some(newSources)
+				if len(newSources) == 0 {
+					did = append(did, "clear its chained timelines")
+				} else {
+					did = append(did, fmt.Sprintf("chain %d timeline(s)", len(newSources)))
+				}
+			} else {
+				newSources = nil
+			}
+		}
+	}
 	if len(did) == 0 {
 		return toolResult[DocumentOut]{out: out, text: fmt.Sprintf("Document %q (%s) already matches; nothing to change.", d.Name, d.ID)}, nil
 	}
 	// The guard checks what players would see: nothing when the resource
 	// or the document stays hidden; the name, and when the document is
-	// being shown, its whole page.
+	// being shown, its whole page; a newly set custom calendar's spec; and
+	// the lanes and events of newly chained timelines (X-GUARD-08).
 	if !r.IsHidden && !out.Hidden {
 		visible := map[string]any{"name": out.Name}
 		if d.IsHidden && !s.cfg.GuardOff {
@@ -159,6 +219,16 @@ func (s *server) updateDocument(ctx context.Context, c *lk.Client, in UpdateDocu
 			}
 			content["name"] = out.Name
 			visible = content
+		}
+		if calendar != nil && !lk.IsBuiltinCalendar(calendar.ID) {
+			visible["calendar"] = calendar.Spec
+		}
+		if len(newSources) > 0 && !s.cfg.GuardOff {
+			chain, err := chainContent(ctx, c, newSources)
+			if err != nil {
+				return zero, err
+			}
+			visible["sources"] = chain
 		}
 		if err := s.check(visible); err != nil {
 			return zero, err
