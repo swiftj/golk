@@ -29,13 +29,13 @@ func (b *blockingGuard) Check(v any) ([]guard.Violation, error) {
 	return b.g.Check(v)
 }
 
-// A map, board or timeline document's content can't be read by the guard,
+// A board document's content can't be read by the guard yet (Phase 5),
 // so lk-mcp refuses to show one: unhiding the document, or unhiding a
 // resource with such a document visible.
 func TestRedteam_X_GUARD_05_UncheckableDocumentsStayHidden(t *testing.T) {
 	hiddenMap := `{"id":"r1","name":"Ooo","isHidden":false,"documents":[
 {"id":"d1","name":"Main","type":"page","rank":"a","isHidden":false},
-{"id":"m1","name":"Map","type":"map","rank":"c","isHidden":true}]}`
+{"id":"m1","name":"Board","type":"board","rank":"c","isHidden":true}]}`
 	h := rgHarness(t, "Zorblax")
 	h.lk.Enqueue(wtOK(hiddenMap))
 	wtMustFail(t, h, "update_document", map[string]any{"resource_id": "r1", "document_id": "m1", "is_hidden": false}, "can't read")
@@ -45,7 +45,7 @@ func TestRedteam_X_GUARD_05_UncheckableDocumentsStayHidden(t *testing.T) {
 
 	resHidden := `{"id":"r1","name":"Ooo","isHidden":true,"documents":[
 {"id":"d1","name":"Main","type":"page","rank":"a","isHidden":false},
-{"id":"m1","name":"Map","type":"map","rank":"c","isHidden":false}]}`
+{"id":"m1","name":"Board","type":"board","rank":"c","isHidden":false}]}`
 	h = rgHarness(t, "Zorblax")
 	h.lk.Enqueue(wtOK(resHidden), wtOK(rgBlocks))
 	wtMustFail(t, h, "update_resource", map[string]any{"id": "r1", "is_hidden": false, "dry_run": true}, "can't read")
@@ -136,5 +136,45 @@ func TestRedteam_X_GUARD_05_ConcurrentEditDuringUnhide(t *testing.T) {
 		if w.Method == "PUT" {
 			t.Errorf("the term was written: %s %s", w.Method, w.Path)
 		}
+	}
+}
+
+// Showing a map checks its image URL and every feature; showing a
+// timeline checks its lanes and events (X-GUARD-08). Hidden pins and events
+// count as public until confirmed (X-GUARD-11).
+func TestGuard_X_GUARD_08_ShowingMapsAndTimelinesScansThem(t *testing.T) {
+	res := `{"id":"r1","name":"Ooo","isHidden":false,"documents":[
+{"id":"m1","name":"Map","type":"map","rank":"a","isHidden":true},
+{"id":"t1","name":"History","type":"time","rank":"b","isHidden":true}]}`
+	mapDoc := `{"id":"m1","name":"Map","type":"map","rank":"a","isHidden":true,
+"mapImage":{"assetId":"a1","url":"https://assets.legendkeeper.com/p1/ooo.png","width":512,"height":256,"bounds":[[-128,0],[0,256]]}}`
+	cases := []struct {
+		name, doc string
+		replies  []string
+		refuse   bool
+	}{
+		{"public pin", "m1", []string{res, mapDoc, `{"data":[{"id":"f1","type":"pin","name":"Zorblax Keep"}]}`}, true},
+		{"X-GUARD-11 hidden pin still checked", "m1", []string{res, mapDoc, `{"data":[{"id":"f1","type":"pin","name":"Zorblax Keep","isHidden":true}]}`}, true},
+		{"clean map", "m1", []string{res, mapDoc, `{"data":[{"id":"f1","type":"pin","name":"Candy Castle"}]}`}, false},
+		{"lane", "t1", []string{res, `{"data":[{"id":"l1","name":"Zorblax","rank":"a0","size":"lg"}]}`, `{"data":[],"hasMore":false}`}, true},
+		{"event", "t1", []string{res, `{"data":[{"id":"l1","name":"Kings","rank":"a0","size":"lg"}]}`,
+			`{"data":[{"id":"e1","laneId":"l1","type":"event","start":0,"startDate":{"year":1,"month":1,"monthName":"Jan","day":1,"hour":0,"minute":0,"era":{"id":"ce","name":"CE","abbr":"CE"}},"name":"Zorblax crowned"}],"hasMore":false}`}, true},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			h := rgHarness(t, "Zorblax")
+			for _, r := range c.replies {
+				h.lk.Enqueue(wtOK(r))
+			}
+			args := map[string]any{"resource_id": "r1", "document_id": c.doc, "is_hidden": false, "dry_run": true}
+			if c.refuse {
+				wtMustFail(t, h, "update_document", args, "Zorblax")
+			} else {
+				wtMustOK(t, h, "update_document", args)
+			}
+			if len(h.writes()) != 0 {
+				t.Errorf("writes %+v", h.writes())
+			}
+		})
 	}
 }

@@ -153,16 +153,12 @@ func (s *server) updateDocument(ctx context.Context, c *lk.Client, in UpdateDocu
 	if !r.IsHidden && !out.Hidden {
 		visible := map[string]any{"name": out.Name}
 		if d.IsHidden && !s.cfg.GuardOff {
-			if err := uncheckable(r, d); err != nil {
-				return zero, err
-			}
-		}
-		if d.IsHidden && (d.Type == lk.DocumentPage || d.Type == lk.DocumentBlank) {
-			db, err := c.Documents.GetBlocks(ctx, lk.DocRef{ResourceID: r.ID, DocumentID: d.ID})
+			content, err := documentContent(ctx, c, r, d)
 			if err != nil {
 				return zero, err
 			}
-			visible["blocks"] = db.Blocks
+			content["name"] = out.Name
+			visible = content
 		}
 		if err := s.check(visible); err != nil {
 			return zero, err

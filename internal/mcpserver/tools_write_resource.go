@@ -68,16 +68,9 @@ func visibleResource(ctx context.Context, c *lk.Client, r *lk.Resource) (map[str
 		if d.IsHidden {
 			continue
 		}
-		if err := uncheckable(r, &d); err != nil {
+		doc, err := documentContent(ctx, c, r, &d)
+		if err != nil {
 			return nil, err
-		}
-		doc := map[string]any{"name": d.Name}
-		if d.Type == lk.DocumentPage || d.Type == lk.DocumentBlank {
-			db, err := c.Documents.GetBlocks(ctx, lk.DocRef{ResourceID: r.ID, DocumentID: d.ID})
-			if err != nil {
-				return nil, err
-			}
-			doc["blocks"] = db.Blocks
 		}
 		docs = append(docs, doc)
 	}
@@ -95,12 +88,89 @@ func visibleResource(ctx context.Context, c *lk.Client, r *lk.Resource) (map[str
 	return v, nil
 }
 
-// uncheckable refuses to show document d of r when the guard can't read
-// its content: only page and blank documents have blocks lk can read.
-func uncheckable(r *lk.Resource, d *lk.Document) error {
-	if d.Type == lk.DocumentPage || d.Type == lk.DocumentBlank {
-		return nil
+// hiddenFeaturesConfirmed makes hidden map features and timeline events
+// DM-only. It stays false until the owner confirms in LegendKeeper's player
+// view that hidden pins and events are invisible (DECISIONS.md D-014,
+// X-GUARD-11); until then they are checked like public content.
+const hiddenFeaturesConfirmed = false
+
+// documentContent is what players see of document d of r, for the guard:
+// its name, and a page's blocks, a map's image and features, or a
+// timeline's lanes and events (its sources' too, which it shows). A board
+// can't be read yet, so showing one is refused.
+func documentContent(ctx context.Context, c *lk.Client, r *lk.Resource, d *lk.Document) (map[string]any, error) {
+	ref := lk.DocRef{ResourceID: r.ID, DocumentID: d.ID}
+	doc := map[string]any{"name": d.Name}
+	switch d.Type {
+	case lk.DocumentPage, lk.DocumentBlank:
+		db, err := c.Documents.GetBlocks(ctx, ref)
+		if err != nil {
+			return nil, err
+		}
+		doc["blocks"] = db.Blocks
+	case lk.DocumentMap:
+		full, err := c.Documents.Get(ctx, ref)
+		if err != nil {
+			return nil, err
+		}
+		if full.MapImage != nil {
+			doc["mapImage"] = full.MapImage.URL
+		}
+		fs, err := c.Features.List(ctx, ref, lk.FeatureListParams{})
+		if err != nil {
+			return nil, err
+		}
+		doc["features"] = shownFeatures(fs.Items)
+	case lk.DocumentTime:
+		lanes, err := c.Timelines.Lanes(ctx, ref)
+		if err != nil {
+			return nil, err
+		}
+		var events []lk.Event
+		for e, err := range c.Timelines.AllEvents(ctx, ref, lk.EventListParams{Limit: 100}) {
+			if err != nil {
+				return nil, err
+			}
+			events = append(events, e)
+		}
+		doc["lanes"], doc["events"] = lanes.Items, shownEvents(events)
+	default:
+		return nil, uncheckable(r, d)
 	}
+	return doc, nil
+}
+
+// shownFeatures and shownEvents are the features and events players can
+// see: all of them until hidden ones are confirmed DM-only.
+func shownFeatures(fs []lk.Feature) []lk.Feature {
+	if !hiddenFeaturesConfirmed {
+		return fs
+	}
+	var out []lk.Feature
+	for _, f := range fs {
+		if !f.IsHidden {
+			out = append(out, f)
+		}
+	}
+	return out
+}
+
+func shownEvents(es []lk.Event) []lk.Event {
+	if !hiddenFeaturesConfirmed {
+		return es
+	}
+	var out []lk.Event
+	for _, e := range es {
+		if !e.IsHidden {
+			out = append(out, e)
+		}
+	}
+	return out
+}
+
+// uncheckable refuses to show document d of r: a board's content can't be
+// read yet (Phase 5), so the guard can't check it.
+func uncheckable(r *lk.Resource, d *lk.Document) error {
 	return fmt.Errorf("document %q (%s) of %q (%s) is a %s document, whose content the spoiler guard can't read, so lk-mcp won't show it to players. "+
 		"Hint: review it in LegendKeeper and show it there, or hide that document first (update_document is_hidden=true)", d.Name, d.ID, r.Name, r.ID, d.Type)
 }
