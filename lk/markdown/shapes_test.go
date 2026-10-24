@@ -1,6 +1,7 @@
 package markdown
 
 import (
+	"math/rand/v2"
 	"strings"
 	"testing"
 )
@@ -210,6 +211,59 @@ func TestRender_M_OPQ_01_EveryShape(t *testing.T) {
 				t.Errorf("rendersOpaque = %v for %s", s.want == "md", s.want)
 			}
 		})
+	}
+}
+
+// Random trees: every shape, nested in every container, round-trips, and
+// a block that renders in Markdown form alone still does when nested.
+func TestRender_M_OPQ_01_RandomTrees(t *testing.T) {
+	r := rand.New(rand.NewPCG(3, 4))
+	wrap := []func(kids string) string{
+		func(k string) string { return `{"kind":"quote","children":[` + k + `]}` },
+		func(k string) string { return `{"kind":"callout","tone":"note","children":[` + k + `]}` },
+		func(k string) string { return `{"kind":"secret","children":[` + k + `]}` },
+		func(k string) string { return `{"kind":"expand","title":"t","children":[` + k + `]}` },
+		func(k string) string { return `{"kind":"textField","children":[` + k + `]}` },
+		func(k string) string {
+			return `{"kind":"bulletList","children":[{"kind":"listItem","children":[` + P + `,` + k + `]}]}`
+		},
+		func(k string) string {
+			return `{"kind":"orderedList","children":[{"kind":"listItem","children":[` + k + `]}]}`
+		},
+		func(k string) string {
+			return `{"kind":"layout","children":[{"kind":"layoutColumn","children":[` + k + `]},{"kind":"layoutColumn","children":[]}]}`
+		},
+		func(k string) string {
+			return `{"kind":"table","children":[{"kind":"tableRow","children":[{"kind":"tableCell","children":[` + k + `]}]}]}`
+		},
+		func(k string) string {
+			return `{"kind":"infobox","rows":[{"kind":"textField","children":[` + k + `]}]}`
+		},
+	}
+	var tree func(depth int) (string, bool)
+	tree = func(depth int) (string, bool) {
+		if depth == 0 || r.IntN(3) == 0 {
+			s := shapes[r.IntN(len(shapes))]
+			for s.want == "unsupported" || strings.Contains(s.json, `"id"`) {
+				s = shapes[r.IntN(len(shapes))]
+			}
+			return s.json, s.want == "md"
+		}
+		var kids []string
+		md := true
+		for range 1 + r.IntN(3) {
+			k, ok := tree(depth - 1)
+			kids = append(kids, k)
+			md = md && ok
+		}
+		return wrap[r.IntN(len(wrap))](strings.Join(kids, ",")), md
+	}
+	for range 400 {
+		s, md := tree(4)
+		out := roundTrip(t, listOf(t, "["+s+"]"))
+		if md && hasRaw(out) && !strings.Contains(s, "hologram") && !strings.Contains(s, `"extra"`) {
+			t.Errorf("nested Markdown-form blocks went lk-raw:\n%s", out)
+		}
 	}
 }
 

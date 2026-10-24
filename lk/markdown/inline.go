@@ -298,10 +298,11 @@ func assemble(ts []tok, x ictx) (string, bool) {
 		case tText:
 			last := i == len(ts)-1
 			ctx := escCtx{
-				lineStart: lineStart,
-				lineEnd:   last, // spaces before a backslash break are kept
-				heading:   x.heading,
-				bang:      !last && ts[i+1].k == tMark && strings.HasPrefix(ts[i+1].s, "["),
+				lineStart:   lineStart,
+				lineEnd:     last, // spaces before a backslash break are kept
+				heading:     x.heading,
+				bang:        !last && ts[i+1].k == tMark && strings.HasPrefix(ts[i+1].s, "["),
+				beforeBreak: !last && ts[i+1].k == tBreak,
 			}
 			b.WriteString(escapeText(t.s, ctx))
 			lineStart = false

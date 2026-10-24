@@ -102,6 +102,9 @@ type escCtx struct {
 	heading   bool // inside a heading: '#' could close it
 	colons    bool // a row key or meter name: "::" separates the value
 	bang      bool // a '[' follows: a trailing '!' would start an image
+	// A line break follows. goldmark misses a break after an escaped
+	// backslash ("\\\" at line end), so a trailing '\' is an entity.
+	beforeBreak bool
 }
 
 func isEdgeSpace(c byte) bool { return c == ' ' || c == '\t' || c == '\v' || c == '\f' }
@@ -136,6 +139,10 @@ func escapeText(s string, ctx escCtx) string {
 	}
 	for i := lead; i < trail; i++ {
 		c := s[i]
+		if c == '\\' && ctx.beforeBreak && i == len(s)-1 {
+			b.WriteString("&#92;")
+			continue
+		}
 		switch {
 		case strings.IndexByte("\\`*_~[]{}<|", c) >= 0,
 			c == '&' && i+1 < len(s) && (s[i+1] == '#' || isNameStart(s[i+1])),
@@ -181,22 +188,23 @@ func codeSpan(s string, cell bool) string {
 }
 
 // linkDest writes a link or image destination. ok is false for one that
-// can't be written (a control character).
+// can't be written (a control character). Brackets, braces and backticks
+// are escaped too, so the span matcher never mistakes them for syntax.
 func linkDest(u string) (string, bool) {
-	if !textOK(u) || strings.ContainsRune(u, '\t') {
+	if !textOK(u) {
 		return "", false
 	}
 	if u == "" {
 		return "<>", true
 	}
-	pointy := strings.ContainsRune(u, ' ')
+	pointy := strings.ContainsAny(u, " \t")
 	var b strings.Builder
 	if pointy {
 		b.WriteByte('<')
 	}
 	for i := 0; i < len(u); i++ {
 		c := u[i]
-		esc := strings.IndexByte(`<>\|`, c) >= 0 ||
+		esc := strings.IndexByte("<>\\|[]{}`", c) >= 0 ||
 			c == '&' && i+1 < len(u) && (u[i+1] == '#' || isNameStart(u[i+1])) ||
 			!pointy && (c == '(' || c == ')')
 		if esc {

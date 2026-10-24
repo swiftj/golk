@@ -23,9 +23,10 @@ var codec = hooks{key: renderKey, opaque: rendersOpaque}
 // is written as an lk-raw fence holding its exact JSON. The check runs for
 // every block that can stand alone, so one odd paragraph inside a secret
 // becomes lk-raw without the rest of the secret. The whole page is checked
-// last; a top-level block that misparses in context (it never has, but the
-// check costs one parse) is written as lk-raw, and if that does not settle
-// it every top-level block is.
+// last, for interactions between siblings the per-block checks can't see:
+// a top-level block that misparses in context is written as lk-raw, and if
+// that does not settle it every top-level block is. The cost is a few
+// parses per nesting level, a few milliseconds for a typical page.
 
 // render renders page (LK_MARKDOWN.md §2).
 func render(page blocks.List, opts ToOptions) (string, error) {

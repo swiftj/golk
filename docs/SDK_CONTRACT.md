@@ -371,7 +371,7 @@ The format is ours, not LegendKeeper's ([`LK_MARKDOWN.md`](LK_MARKDOWN.md), cite
 | M-API-03 | `ToMarkdown` and `FromMarkdown` make no request, don't log, and never panic on any input (fuzzed). | M§1 | 2b |
 | M-API-04 | `markdown.Replace` always sends `If-Match` with the base page's version. | M§6 | 2b |
 | M-API-05 | `ReplaceOptions.DryRun` sends no request and returns the parsed blocks and report. | M§6 | 2b |
-| M-INL-01 | Text is escaped so it round-trips verbatim; leading and trailing spaces inside a mark move outside it. | M§2.2 | 2b |
+| M-INL-01 | Text is escaped so it round-trips verbatim, including whitespace at a line edge and at a mark's edge (kept inside the mark, written as a span flag). | M§2.2 | 2b |
 | M-INL-02 | Marks render in a fixed order: link, bold, italic, strike, span, code. | M§2.2 | 2b |
 | M-INL-03 | An unknown span attribute or inline HTML is an error. | M§2.2 | 2b |
 | M-DIR-01 | Directive attribute names are the spec's JSON field names; values are bare tokens or quoted strings; a bare flag means `true`. | M§2.3 | 2b |

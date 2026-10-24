@@ -68,7 +68,7 @@ type Report struct {
 | table | GFM pipe table | only when representable (§2.5); otherwise `:::table` |
 | image | a paragraph that is exactly one `![alt](url)` | an image anywhere else is an error (M-SAFE-05) |
 
-Only these goldmark extensions are on: tables, strikethrough and task lists. Linkify, typographer, footnotes, definition lists and raw HTML are off. A bare URL stays text, and quotes stay as typed.
+Only these goldmark extensions are on: tables, strikethrough and task lists. Linkify, typographer, footnotes and definition lists are off; raw HTML is recognized only to be rejected (M-SAFE-03). A bare URL stays text, and quotes stay as typed.
 
 ### 2.2 Inline text (runs)
 
@@ -78,11 +78,12 @@ Only these goldmark extensions are on: tables, strikethrough and task lists. Lin
 | link | `[x](url)` |
 | underline, sub, sup | `[x]{underline}`, `[x]{sub}`, `[x]{sup}` (bracketed span) |
 | color, highlight | `[x]{color=#EC4899}`, `[x]{highlight=#F59E0B}`; combinable: `[x]{underline color=#EC4899}` |
+| bold, italic, strike as span flags | `[ x]{bold}`, `[x]{italic strike}`: the form ToMarkdown uses when `**`/`*`/`~~` can't hold the text (§2.7) |
 | line break | backslash at line end (`\` + newline) |
-| mention without a label | `[Princess Bubblegum]{mention=pb1}`. The text is the read-only `name` and is ignored on parse. |
-| mention with a label | `[PB]{mention=pb1 label}`; add `doc=d1` for `documentId` |
+| mention without a label | `[Princess Bubblegum]{mention=pb1}`. The text is the read-only `name`. Parse sets `name` from it when it isn't empty; the server ignores an echoed name ([DECISIONS.md](DECISIONS.md) D-009, A-24), and this keeps the rendering of a parsed mention equal to the base mention's. A mention with no name is `[]{mention=pb1}`, and one with an empty name `[]{mention=pb1 name=""}`. |
+| mention with a label | `[PB]{mention=pb1 label}`; add `doc=d1` for `documentId`. A labelled mention whose `name` is set also writes `name="…"`. |
 
-- **M-INL-01:** ToMarkdown escapes every character that would otherwise start Markdown syntax, `[`, `{` and `\` included, so text round-trips verbatim. Leading and trailing spaces inside a mark are moved outside it, as CommonMark requires.
+- **M-INL-01:** ToMarkdown escapes every character that would otherwise start Markdown syntax, `[`, `{` and `\` included, so text round-trips verbatim. Whitespace that CommonMark would trim (at the start or end of a line) is written as a character reference (`&#32;`). CommonMark emphasis can't start or end with a space, and moving the space outside would change which text is marked, so a bold, italic or strike run with a space at its edge is written as a span flag instead: `Hello[ world]{bold}`.
 - **M-INL-02:** Marks render in a fixed order: link outermost, then bold, italic, strike, span, code innermost. That makes renderings canonical after the server merges adjacent runs.
 - **M-INL-03:** An unknown span attribute (`[x]{glow}`) is an error. Inline HTML is an error.
 
@@ -163,10 +164,10 @@ Rolled in a magic mud puddle.
 :::
 ```
 
-- **M-DIR-01:** Attribute names are the spec's JSON field names (`isTitleHidden`, `displayHeight`, `layout`, `width`, …), so the mapping is mechanical and complete. Values are bare tokens or double-quoted strings with `\"` and `\\` escapes. Booleans are `true`/`false`; a bare flag means `true`.
-- **M-DIR-02:** Every optional field of a kind can be written as an attribute. A field not written is unset, never a default.
-- **M-DIR-03:** Rows (`keyvalue`) are `- key :: value`, where the value is inline LK Markdown. Meter items are `- name :: current/max` plus attributes. Link and collection items are `- @resourceId` plus an optional `doc=`.
-- **M-DIR-04:** Block attributes for kinds that use standard syntax (`align`, `background`, quote `color`, image fields) go in an attribute set right after the block: `{align=center}` at the end of a heading line, or a `{…}` line directly under a paragraph or quote.
+- **M-DIR-01:** Attribute names are the spec's JSON field names (`isTitleHidden`, `displayHeight`, `layout`, `width`, …), so the mapping is mechanical and complete. Values are bare tokens or double-quoted strings, in which a backslash escapes any ASCII punctuation (`\"`, `\\`, `\|`). Booleans are `true`/`false`; a bare flag means `true`.
+- **M-DIR-02:** Every optional field of a kind can be written as an attribute. A field not written is unset, never a default. A required field (`tone`, `title` of `expand`, `provider` and `url` of `embed`, `mode`, a meter item's `icon`) must be written.
+- **M-DIR-03:** Rows (`keyvalue`) are `- key :: value`, where the value is inline LK Markdown, optionally followed by ` {…}` with `#id` and `text`. Meter items are `- name :: current/max` plus attributes. Link and collection items are `- @resourceId` plus an optional `doc=`.
+- **M-DIR-04:** Block attributes for kinds that use standard syntax (`align`, `background`, quote `color`, image fields) go in an attribute set right after the block: `{align=center}` at the end of a heading line, `{fill}` right after an image, or a `{…}` line directly under a paragraph or quote (and, for `#id` only, under a code block, rule, list or GFM table).
 
 ### 2.4 Opaque content
 
@@ -177,7 +178,7 @@ Rolled in a magic mud puddle.
 | known kind with unmodelled fields, or anything §2.1–2.3 can't express exactly | ```` ```lk-raw ```` fence holding that block's JSON |
 | unsupported or raw infobox row | `::unsupported id=…` or `lk-raw`, inside the infobox |
 
-- **M-OPQ-01:** `lk-raw` is a safety valve. Any block whose Markdown form wouldn't parse back to the identical block is rendered as `lk-raw` instead. A test renders every block shape the package can decode and asserts this.
+- **M-OPQ-01:** `lk-raw` is a safety valve. Any block whose Markdown form wouldn't parse back to the identical block is rendered as `lk-raw` instead. ToMarkdown enforces this twice: explicit rules decide what each Markdown form can hold, and every block that can stand alone (and then the whole page) is parsed back and compared before it is written. A test renders every block shape the package can decode and asserts this.
 - **M-OPQ-02:** An `lk-raw` fence must hold one JSON object with a string `kind`. Anything else is an error.
 
 ### 2.5 Tables
@@ -203,6 +204,34 @@ Name
 ### 2.6 Task lists
 
 A taskList holds taskItems and nested taskLists. A nested taskList directly after an item is written indented under that item. One at the start of a taskList, with no item before it, renders as `lk-raw` (M-OPQ-01).
+
+### 2.7 Details the sections above leave open
+
+These are the choices the implementation makes (Phase 2b). Each is the simplest form that round-trips exactly; anything else is `lk-raw`.
+
+**Rendering**
+
+- Sibling blocks are a blank line apart. A list directly after a list of the same family (bullet and task lists are one family, numbered lists another) uses the other marker (`-`/`*`, `.`/`)`), so CommonMark doesn't merge them. Inside a list item, a nested list follows the item's paragraph on the next line when CommonMark lets it interrupt the paragraph, and after a blank line otherwise.
+- Attributes are written in the field order of the block type (`#id` first; an infobox row's envelope fields, then its own). Parsing accepts any order. Numbers are Go's shortest exact form (`50`, `33.333333333333336`, `1e+21`); a map viewport is `viewport=lat,lng,zoom`. A value is bare when it holds only letters, digits and `_.:/#%+,;@!?&=~*'$^-`, and quoted otherwise.
+- An empty paragraph is the leaf directive `::paragraph`, with its attributes (`::paragraph align=center`).
+- `lk-raw` holds the block's JSON indented by two spaces; `lk-filter` holds the filter's JSON on one line. A fence is longer than any run of backticks it holds.
+- Bold, italic and strike are written as `**`, `*` and `~~` when CommonMark parses them back unchanged; otherwise (a space at the edge, delimiters CommonMark won't pair) the block's marks are written as span flags (`[x]{bold italic}`), and only if that fails too does the block become `lk-raw`.
+- A link or image destination escapes `()<>[]{}|\`, backticks and an `&` that could start a reference, and uses `<…>` when it holds a space or tab. A backslash right before a line break is written `&#92;` (goldmark doesn't see a break after `\\`).
+- Key-value row `text`: a bare `text` means "the plain text of the value", which is what the server returns; `text="…"` sets any other value. A row with no `::` has no `content` (`- Only key`); `- key ::` has empty content.
+- A collection whose `items` is an empty list (not absent) renders as `lk-raw`, as does a `secret` with no children (parsing rejects an empty `:::secret`, because `:::secret` then `:::` is likelier a typo than a secret, and what follows it would be visible).
+- `rendersOpaque`/`renderKey` (the base matcher's view) describe a node rendered on its own; an infobox row is rendered inside an infobox.
+- A page whose raw JSON (an unknown kind, an unmodelled field) holds invalid UTF-8 can't be written as text: ToMarkdown returns an error.
+
+**Parsing**
+
+- CRLF line endings are read as LF. A lone CR, a NUL byte or invalid UTF-8 is an error.
+- A soft line break (a plain newline inside a paragraph) is a space. A hard break is `\` + newline or two trailing spaces.
+- An autolink (`<https://…>`, `<me@x.test>`) becomes a link run whose text is the address (`mailto:` for an email). A bare URL stays text.
+- An indented code block is an error (write a fence), so a 4-space indent can't turn a `:::secret` into code or text. A directive fence that ends up inside paragraph text (a lazy or indented line) is an error. A code fence or `lk-raw` fence that is never closed is an error.
+- An unescaped `{` that doesn't start a valid attribute set is an error; write `\{`. An attribute set is allowed only after an image, at the end of a heading or row value, or at the start of a list or task item (`#id`).
+- GFM tables: column alignment (`:---`) and a row with more or fewer cells than the header are errors. A header cell is `header` (true); `header=false` is written only on a `:::cell`.
+- `::unsupported` takes its id as `id=…` (it is content, not a hidden field). An infobox `::unsupported` row also takes the envelope attributes.
+- An info string that starts with `lk-raw` or `lk-filter` must be exactly that.
 
 ---
 
@@ -242,6 +271,8 @@ Details:
 - on a `{…}` line under a paragraph;
 - in a directive's attributes;
 - after a row or list item.
+
+Concretely: `# Title {#h1}`; a `{#p1}` line under a paragraph, quote, code block, rule, list or GFM table; `:::callout #c1 tone=info`; `![a](u){#i1}`; `- key :: value {#r1}` for a key-value row, `- HP :: 3/5 #m1 icon=heart` for a meter item and `- @finn1 #x1` for a resource item; `- {#li1} text` at the start of a list item and `- [ ] {#t1} text` after a task item's checkbox. A table with row or cell ids is written as `:::table`. Two ids have nowhere to go and are left out (they are hidden fields, so the round trip is otherwise unchanged): a nested task list's, and a list item's whose first child isn't a non-empty paragraph.
 
 An explicit id in the Markdown wins over base matching. The same id twice is an error (M-SAFE-06), and so is an id whose base block is of another kind, or a block where the base has an infobox row (`*IDError`). An id not in `Base` is kept as written, and the server decides; for `::unsupported` it is an error (M-SAFE-06). Explicit ids are for tools that need stable handles across separate reads; normal editing doesn't need them.
 

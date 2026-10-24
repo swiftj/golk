@@ -144,12 +144,13 @@ func isASCIIPunct(c byte) bool {
 }
 
 // fmtValue writes v as a bare token when it can and quoted otherwise. ok is
-// false for a value an attribute can't hold (a control character).
+// false for a value an attribute can't hold (a control character other
+// than a tab).
 func fmtValue(v string) (string, bool) {
 	bare := v != ""
 	for i := 0; i < len(v); i++ {
 		c := v[i]
-		if c < 0x20 || c == 0x7f {
+		if c < 0x20 && c != '\t' || c == 0x7f {
 			return "", false
 		}
 		if !isBare(c) {
