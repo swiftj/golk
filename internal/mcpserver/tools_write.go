@@ -146,6 +146,11 @@ func (s *server) updateDocument(ctx context.Context, c *lk.Client, in UpdateDocu
 	// being shown, its whole page.
 	if !r.IsHidden && !out.Hidden {
 		visible := map[string]any{"name": out.Name}
+		if d.IsHidden && !s.cfg.GuardOff {
+			if err := uncheckable(r, d); err != nil {
+				return zero, err
+			}
+		}
 		if d.IsHidden && (d.Type == lk.DocumentPage || d.Type == lk.DocumentBlank) {
 			db, err := c.Documents.GetBlocks(ctx, lk.DocRef{ResourceID: r.ID, DocumentID: d.ID})
 			if err != nil {
