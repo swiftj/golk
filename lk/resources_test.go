@@ -24,6 +24,8 @@ const fullResource = `{
  "isHidden":true,"isLocked":true,"isFullWidth":true,"showPropertyBar":true,"imageUrl":"https://x/i.png",
  "banner":{"enabled":true,"url":"https://x/b.png","yPosition":0.5},"permissions":{"MEMBER":2},
  "documents":[{"id":"d1","name":"Main","type":"page","rank":"a0","isHidden":true,"isFullWidth":true,"calendarId":"cal",
+   "sources":[{"resourceId":"r2","documentId":"d2"}],
+   "mapImage":{"assetId":"a1","url":"https://x/m.png","width":2,"height":1,"bounds":[[-1,0],[0,2]],"tiles":{"urlTemplate":"https://x/{z}/{x}/{y}","maxNativeZoom":1}},
    "createdAt":"2026-01-02T03:04:05Z","updatedAt":"2026-01-02T03:04:05Z","deletedAt":"2026-01-02T03:04:05Z"}],
  "properties":[{"kind":"keyValue","id":"p1","rows":[]}],
  "ancestors":[{"id":"ooo","name":"The Land of Ooo"}],

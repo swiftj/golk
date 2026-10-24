@@ -238,3 +238,9 @@ That is the whole module graph (`go mod graph`). UUIDs (idempotency keys) and cu
 - **A-36:** a calendar's body `version` equals its `ETag` (weak form, `W/"…"`). A stale `If-Match` answers 412 `VERSION_MISMATCH` with "Calendar version is <current>, If-Match was <sent>"; `CurrentVersion` now parses that form too.
 - **A-37:** `PixelToPos`/`PosToPixel` are linear across `bounds`: `lat = north + (y/height)(south − north)`, `lng = west + (x/width)(east − west)`, and the inverse. The spec fixes the frame (north and west 0 at the image's top-left, south negative, east positive); the guide gives no formula, and the server stores `pos` verbatim, so this is our derivation, tested by corners and round trips.
 - **Owner decisions (Phase 4 planning):** SDK plus MCP tools; full calendar editing through MCP; templates are treated as player-visible (copies are checked); hidden features and events become DM-only only after the player-view check.
+- **Spec findings (maps):**
+  - **Conflict:** a feature's `parentId` is typed string-only on create and update, while its description says "null = root". The spec wins on shape, so `ParentID` is `Optional[string]` and the SDK can't move a feature back to the map root.
+  - `visibilityRange` is write-only (in the create/update params, not the `Feature` schema); `isSynced`, named in the `iconColor` description, is not a field and isn't modelled.
+  - `mapImage` comes back on document get, create and update, not on list or `getResource`; `sources` on list, get, create and update, not on `getResource`. A legacy tiled map has `assetId`, `url` and `tiles` null.
+  - Read label sizes are free strings (app-drawn features read `small`/`medium`/`large`); writes are limited to the spec's `xs`–`3xl`.
+  - The spec's `MapImage` description gives the pixel formula itself, identical to A-37's, so the helpers follow the spec. The sandbox confirmed `bounds` `[[-128,0],[0,256]]` for a 512×256 image and exact pixel round trips.
