@@ -7,6 +7,8 @@
 //   - The terms file is UTF-8, one term per line. Lines are trimmed; blank
 //     lines and lines starting with '#' are skipped. It is read on the
 //     first Check and re-read whenever its identity, size or mtime changes.
+//     A file that changes while it is read, or that held terms and now
+//     holds none (a rewrite in progress), fails the Check.
 //   - A term matches case-insensitively (Unicode simple folding) as whole
 //     words inside one string; see match.go.
 //   - Every string value of the checked content is examined, except inside
@@ -93,11 +95,27 @@ func (g *Guard) matcher() (*matcher, error) {
 	if err != nil {
 		return nil, g.fileErr(err)
 	}
+	// A file being rewritten in place (truncated, then written) can be
+	// read half-way. Refuse unless the file is the same before and after
+	// the read; and a file that was holding terms and now reads as none is
+	// taken to be mid-write (an emptied terms file needs a restart). The
+	// error isn't cached, so the next Check tries again.
+	after, err := os.Stat(g.path)
+	if err != nil {
+		return nil, g.fileErr(err)
+	}
+	if !sameFile(fi, after) || int64(len(data)) != fi.Size() {
+		return nil, g.fileErr(errors.New("changed while being read; try again"))
+	}
 	terms, err := parseTerms(data)
 	if err != nil {
 		return nil, g.fileErr(err)
 	}
-	g.info, g.loaded = fi, newMatcher(terms)
+	m := newMatcher(terms)
+	if len(m.terms) == 0 && g.loaded != nil && len(g.loaded.terms) > 0 {
+		return nil, g.fileErr(errors.New("now holds no terms, though it held some; it may be mid-write. Restart lk-mcp if it was emptied on purpose"))
+	}
+	g.info, g.loaded = fi, m
 	return g.loaded, nil
 }
 
