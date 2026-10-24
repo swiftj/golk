@@ -59,6 +59,14 @@ type Client struct {
 	Search *SearchService
 	// Tags lists the project's tags.
 	Tags *TagsService
+	// Features are a map document's pins, labels, regions, paths and folders.
+	Features *FeaturesService
+	// Timelines are a timeline document's lanes and events.
+	Timelines *TimelinesService
+	// Calendars are the project's custom and built-in calendars.
+	Calendars *CalendarsService
+	// Templates are the project's resource templates.
+	Templates *TemplatesService
 }
 
 // New returns a client that authenticates with apiKey. It never reads the
@@ -116,6 +124,10 @@ func New(apiKey string, opts ...Option) (*Client, error) {
 	c.Assets = &AssetsService{c: c}
 	c.Search = &SearchService{c: c}
 	c.Tags = &TagsService{c: c}
+	c.Features = &FeaturesService{c: c}
+	c.Timelines = &TimelinesService{c: c}
+	c.Calendars = &CalendarsService{c: c}
+	c.Templates = &TemplatesService{c: c}
 	return c, nil
 }
 
