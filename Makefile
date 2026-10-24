@@ -45,7 +45,7 @@ test-race: ## Unit tests with the race detector (needs cgo; tests only, never sh
 test-integration: ## Integration tests against the sandbox project
 	@: "$${LK_SANDBOX_API_KEY:?LK_SANDBOX_API_KEY must be set}"
 	@: "$${LK_SANDBOX_PROJECT_NAME:?LK_SANDBOX_PROJECT_NAME must be set}"
-	CGO_ENABLED=0 $(GO) test -tags integration -count=1 -p 1 ./...
+	CGO_ENABLED=0 $(GO) test -tags integration -count=1 -p 1 $(ARGS) ./...
 
 build: ## Cross-compile lk-mcp for every target into dist/
 	@mkdir -p $(DIST)

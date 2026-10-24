@@ -112,3 +112,48 @@ That is the whole module graph (`go mod graph`). UUIDs (idempotency keys) and cu
   - `Projects.Get("")` never falls back to the resolved project.
 - **Escape-hatch headers (`Client.Do`) are passed through as written.** An `Idempotency-Key` header counts as the call's key for retry purposes only on POST, matching the server, which ignores it on other methods.
 - **Delete takes a params struct** (`ResourceDeleteParams{Cascade: true}`) rather than a variadic or boolean flag, so a cascade is always visible at the call site.
+
+## D-008 — Phase 2a contract resolutions (A-16 to A-32)
+
+- **Date:** 2026-10-23
+- **Status:** approved by the owner as proposed in [SDK_CONTRACT.md](SDK_CONTRACT.md#ambiguities-and-conflicts). Rows marked *probe* are confirmed or corrected by D-009.
+
+| ID | Topic | Resolution |
+|---|---|---|
+| A-16 | Omitted fields on replace | The SDK never adds or strips fields. *Probe* records which fields persist. |
+| A-17 | `plainText` | Match the server's `DocumentBlocks.text`, from *probe* golden output. |
+| A-18 | `walk` paths | Pre-order; `blocks[i]`, `.children[j]`, `.rows[k]`. *Probe* against `errors[].path`. |
+| A-19 | Row write `version` | Body if present, else `ETag`. *Probe*. |
+| A-20 | Versioned deletes | 204, no version. |
+| A-21 | `BlockPatch.view` | Not exposed (spec defect). |
+| A-22 | Single-page envelopes | Single page; `hasMore: true` → `ErrPaginationInconsistent`. |
+| A-23 | Upload headers | Send the returned headers exactly; add `Content-Type` only if missing; never API headers. *Probe*. |
+| A-24 | Mention `name` echo | *Probe*; omit on write if rejected. |
+| A-25 | Empty map block | `blocks.EmptyMap`. |
+| A-26 | Row key length | No client check. |
+| A-27 | `contentHash` | `UploadImage` always sends it. |
+| A-28 | Unknown enum values | Decoded verbatim. |
+| A-29 | Key reuse after 412 | Documented; generated keys unaffected. |
+| A-30 | Client body limit | 1,048,576 bytes. |
+| A-31 | Storage upload retries | None; no API rate-limit wait; per-attempt timeout applies. |
+| A-32 | Unmodelled fields on known kinds | Kept from decode and re-encoded. |
+
+## D-009 — Phase 2a probe observations
+
+- **Date:** 2026-10-23
+- **Source:** `lk/probe_integration_test.go` against the sandbox (`make test-integration ARGS='-run TestProbe -v'`). Everything the probes write is made up and deleted.
+
+| ID | Observation | Consequence |
+|---|---|---|
+| A-02 | Inserting a block with a used id → 409 `DUPLICATE_ID` with `errors: [{"path":"block.id", …}]`. | The guide is right; `Errors` is decoded on any status (unchanged). |
+| A-05 | 412 message: `Document version is <current>, If-Match was <sent>`. | `CurrentVersion` is parsed from `Document version is (\S+),`; anything else leaves it empty. |
+| A-06 | Every ETag is **weak**: `W/"666d8c8987139620"`, while the body's `version` is `666d8c8987139620`. The server accepts bare, quoted and `W/`-quoted If-Match values alike. A 204 `deleteRow` sends a strong quoted ETag. | **Changed from D-004 (owner approved):** strip `W/` and quotes, so a version from an ETag equals the body's. |
+| A-16 | `replaceBlocks` / `blocks.replace` without optional fields: image `title`, `isTitleHidden`, `layout`, `width` **are kept**; image `alt`, `fill`, paragraph `align`/`background`, layout column `width`/`background`, callout `icon`/`color` **are removed**. A `custom` callout sent without `icon`/`color` reads back as tone `info`. | The guide's "omitted field keeps its value" applies to the `layout`, `width` and title fields only. The SDK still sends exactly what it was given (read-modify-write is lossless); `Replace` doc comments state the rule. |
+| A-17 | `text` is one line per text-bearing block, joined with `\n`, no trailing newline. Contributing: paragraph, heading, quote/list/table/callout/expand/layout/secret/textField children (recursively), task items, `code` (its `text`, newlines kept). A `break` run is `\n`. A mention is its `text`, else its `name`. Not contributing: empty paragraphs, `rule`, `keyValue` rows, `infobox` (including its `textField` rows), `meter`, `resourceLink`, `expand` titles, block titles. | `PlainText` reproduces this; golden file `lk/blocks/testdata/plaintext_golden.json`. |
+| A-18 | Paths: `blocks[1].children[0].children[0].bogus`; infobox row child `blocks[0].rows[1].children[0].bogus`. A top-level `listItem` → `VALIDATION_ERROR` at `blocks[0].kind` (the top-level discriminator excludes `listItem`, `taskItem`, `tableRow`, `tableCell`, `layoutColumn`), not `INVALID_CONTENT`. | `Walk` paths as proposed. |
+| A-19 | Row write bodies carry no `version`; the version is in the ETag (`W/"…"`), and equals the next `listRows.version`. | Row writes fill `Version` from the ETag (C-VER-04). |
+| A-20 | `deleteRow` → 204 with an ETag. | The guide wins: deletes return no version. `CaptureResponse` exposes the ETag for callers who want it. |
+| A-23 | `createImageUpload` returns `method: PUT`, an S3 URL and headers `content-type` and `x-amz-checksum-sha256`. A PUT with exactly those headers → 200; `createImage` → 201 with `width`/`height`. | As proposed; `Content-Type` is already in `headers`, so nothing is added in practice. |
+| A-24 | Echoing blocks as read, including mention `name`, is accepted and leaves `text` unchanged. | Mentions are echoed as read; nothing is stripped. |
+| — | Inside an infobox, a `textField` row's paragraph has no `id`. Rows of keyValue blocks and properties carry `rank`. | Ids are optional on decode everywhere. |
+| C-CONTENT-03 | A `data:` image URL → 400 `VALIDATION_ERROR` at `blocks[0].url`. | Server-side rule confirmed; covered by the probe. |

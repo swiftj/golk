@@ -1,0 +1,460 @@
+{
+ "source": "Sandbox documents.replaceBlocks response, 2026-10-23 (DECISIONS.md D-009, A-17). Run prefix removed from the mention name.",
+ "text": "Heading\nBold plain \nafter break Label Probe mention target\nQuote1\nQuote2\ncode line 1\ncode line 2\nBullet1\nNested1\nBullet2\nTask1\nH1\nH2\nC1\nC2\nCallout\nExpandBody\nCol1\nCol2\nSecret\nTextField\nLast",
+ "blocks": [
+  {
+   "content": [
+    {
+     "text": "Heading"
+    }
+   ],
+   "id": "x2kfl0h1",
+   "kind": "heading",
+   "level": 1
+  },
+  {
+   "content": [
+    {
+     "bold": true,
+     "text": "Bold"
+    },
+    {
+     "text": " plain "
+    },
+    {
+     "break": true
+    },
+    {
+     "text": "after break "
+    },
+    {
+     "mention": {
+      "name": "Probe mention target",
+      "resourceId": "tjy1yjad",
+      "text": "Label"
+     }
+    },
+    {
+     "text": " "
+    },
+    {
+     "mention": {
+      "name": "Probe mention target",
+      "resourceId": "tjy1yjad"
+     }
+    }
+   ],
+   "id": "kc6591jd",
+   "kind": "paragraph"
+  },
+  {
+   "content": [],
+   "id": "oz8e8u6v",
+   "kind": "paragraph"
+  },
+  {
+   "children": [
+    {
+     "content": [
+      {
+       "text": "Quote1"
+      }
+     ],
+     "id": "xbydvt9z",
+     "kind": "paragraph"
+    },
+    {
+     "content": [
+      {
+       "text": "Quote2"
+      }
+     ],
+     "id": "kzgr2e1v",
+     "kind": "paragraph"
+    }
+   ],
+   "id": "o2hm42g1",
+   "kind": "quote"
+  },
+  {
+   "id": "szz28ntt",
+   "kind": "code",
+   "language": "js",
+   "text": "code line 1\ncode line 2"
+  },
+  {
+   "id": "ypy4nhg0",
+   "kind": "rule"
+  },
+  {
+   "children": [
+    {
+     "children": [
+      {
+       "content": [
+        {
+         "text": "Bullet1"
+        }
+       ],
+       "id": "uln0uhuk",
+       "kind": "paragraph"
+      },
+      {
+       "children": [
+        {
+         "children": [
+          {
+           "content": [
+            {
+             "text": "Nested1"
+            }
+           ],
+           "id": "nsho32uc",
+           "kind": "paragraph"
+          }
+         ],
+         "id": "o1u0qaf6",
+         "kind": "listItem"
+        }
+       ],
+       "id": "roy41917",
+       "kind": "orderedList"
+      }
+     ],
+     "id": "y6kulpme",
+     "kind": "listItem"
+    },
+    {
+     "children": [
+      {
+       "content": [
+        {
+         "text": "Bullet2"
+        }
+       ],
+       "id": "pjdxu2lx",
+       "kind": "paragraph"
+      }
+     ],
+     "id": "c1tudet1",
+     "kind": "listItem"
+    }
+   ],
+   "id": "m55pdu2v",
+   "kind": "bulletList"
+  },
+  {
+   "children": [
+    {
+     "checked": true,
+     "content": [
+      {
+       "text": "Task1"
+      }
+     ],
+     "id": "y358ae4v",
+     "kind": "taskItem"
+    }
+   ],
+   "id": "ak2f0ab4",
+   "kind": "taskList"
+  },
+  {
+   "children": [
+    {
+     "children": [
+      {
+       "children": [
+        {
+         "content": [
+          {
+           "text": "H1"
+          }
+         ],
+         "id": "i75y1liy",
+         "kind": "paragraph"
+        }
+       ],
+       "header": true,
+       "id": "aj9pb11d",
+       "kind": "tableCell"
+      },
+      {
+       "children": [
+        {
+         "content": [
+          {
+           "text": "H2"
+          }
+         ],
+         "id": "ua5pzin4",
+         "kind": "paragraph"
+        }
+       ],
+       "header": true,
+       "id": "vz7omvs3",
+       "kind": "tableCell"
+      }
+     ],
+     "id": "di4bxxzl",
+     "kind": "tableRow"
+    },
+    {
+     "children": [
+      {
+       "children": [
+        {
+         "content": [
+          {
+           "text": "C1"
+          }
+         ],
+         "id": "vlxerl5t",
+         "kind": "paragraph"
+        }
+       ],
+       "id": "mvyfhz3s",
+       "kind": "tableCell"
+      },
+      {
+       "children": [
+        {
+         "content": [
+          {
+           "text": "C2"
+          }
+         ],
+         "id": "olq23xwh",
+         "kind": "paragraph"
+        }
+       ],
+       "id": "d3kdacsw",
+       "kind": "tableCell"
+      }
+     ],
+     "id": "uac3l7cx",
+     "kind": "tableRow"
+    }
+   ],
+   "id": "yvlpl69t",
+   "kind": "table"
+  },
+  {
+   "children": [
+    {
+     "content": [
+      {
+       "text": "Callout"
+      }
+     ],
+     "id": "bbnw6pgx",
+     "kind": "paragraph"
+    }
+   ],
+   "id": "nryjifaa",
+   "kind": "callout",
+   "tone": "info"
+  },
+  {
+   "children": [
+    {
+     "content": [
+      {
+       "text": "ExpandBody"
+      }
+     ],
+     "id": "hphc5eh1",
+     "kind": "paragraph"
+    }
+   ],
+   "id": "gvfunfjs",
+   "kind": "expand",
+   "title": "ExpandTitle"
+  },
+  {
+   "children": [
+    {
+     "children": [
+      {
+       "content": [
+        {
+         "text": "Col1"
+        }
+       ],
+       "id": "d7r3wsft",
+       "kind": "paragraph"
+      }
+     ],
+     "id": "p8oeff07",
+     "kind": "layoutColumn"
+    },
+    {
+     "children": [
+      {
+       "content": [
+        {
+         "text": "Col2"
+        }
+       ],
+       "id": "pkuh4lxk",
+       "kind": "paragraph"
+      }
+     ],
+     "id": "y0adznlq",
+     "kind": "layoutColumn"
+    }
+   ],
+   "id": "dei1euwc",
+   "kind": "layout"
+  },
+  {
+   "id": "yrrqv87m",
+   "isTitleHidden": false,
+   "kind": "keyValue",
+   "rows": [
+    {
+     "content": [
+      {
+       "text": "Value1"
+      }
+     ],
+     "id": "viykfz6q",
+     "key": "Key1",
+     "rank": "C",
+     "text": "Value1"
+    },
+    {
+     "content": [
+      {
+       "text": "V2a"
+      },
+      {
+       "break": true
+      },
+      {
+       "text": "V2b"
+      }
+     ],
+     "id": "ea0s1fek",
+     "key": "Key2",
+     "rank": "F",
+     "text": "V2a\nV2b"
+    }
+   ],
+   "title": "KVTitle"
+  },
+  {
+   "children": [
+    {
+     "content": [
+      {
+       "text": "Secret"
+      }
+     ],
+     "id": "qwa67ld5",
+     "kind": "paragraph"
+    }
+   ],
+   "id": "k49iy050",
+   "kind": "secret"
+  },
+  {
+   "children": [
+    {
+     "content": [
+      {
+       "text": "TextField"
+      }
+     ],
+     "id": "pv8hyfun",
+     "kind": "paragraph"
+    }
+   ],
+   "id": "jntp6npo",
+   "isTitleHidden": false,
+   "kind": "textField",
+   "title": "TFTitle"
+  },
+  {
+   "id": "eeik1tc5",
+   "kind": "infobox",
+   "layout": "wrapRight",
+   "rows": [
+    {
+     "id": "ucqb5pic",
+     "kind": "keyValue",
+     "rank": "c",
+     "rows": [
+      {
+       "content": [
+        {
+         "text": "IBValue"
+        }
+       ],
+       "id": "n2wwtz9i",
+       "key": "IBKey",
+       "rank": "c",
+       "text": "IBValue"
+      }
+     ],
+     "title": "IBTitle"
+    },
+    {
+     "children": [
+      {
+       "content": [
+        {
+         "text": "IBText"
+        }
+       ],
+       "kind": "paragraph"
+      }
+     ],
+     "id": "y5x7btok",
+     "kind": "textField",
+     "rank": "f"
+    }
+   ],
+   "width": 40
+  },
+  {
+   "id": "l6fe2vtz",
+   "isTitleHidden": false,
+   "items": [
+    {
+     "color": "none",
+     "current": 3,
+     "icon": "heart",
+     "id": "pxh4ycdv",
+     "max": 5,
+     "name": "HP"
+    }
+   ],
+   "kind": "meter",
+   "mode": "bar",
+   "title": "MeterTitle"
+  },
+  {
+   "id": "hpmi0qdm",
+   "isTitleHidden": false,
+   "items": [
+    {
+     "id": "sg1iwh2p",
+     "rank": "X",
+     "resourceId": "tjy1yjad"
+    }
+   ],
+   "kind": "resourceLink",
+   "title": "Links"
+  },
+  {
+   "content": [
+    {
+     "text": "Last"
+    }
+   ],
+   "id": "vdcsge47",
+   "kind": "paragraph"
+  }
+ ]
+}

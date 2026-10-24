@@ -76,9 +76,13 @@ func (c *Client) do(ctx context.Context, req *request, cc callConfig) error {
 			return err
 		}
 		if failed == nil {
+			cc.capture(resp.status, resp.header)
 			return decode(req, resp)
 		}
 		final := failed.err(req)
+		if failed.apiErr != nil {
+			cc.capture(failed.apiErr.Status, failed.header)
+		}
 		if n >= c.maxRetries || !retryable(req.method, key != "", *failed) {
 			return final
 		}
@@ -165,7 +169,7 @@ func (c *Client) attempt(ctx context.Context, req *request, target string, body 
 	if hresp.StatusCode >= 200 && hresp.StatusCode <= 299 {
 		return &response{status: hresp.StatusCode, header: hresp.Header, body: data}, nil, nil
 	}
-	return nil, &attempt{apiErr: newAPIError(hresp.StatusCode, hresp.Header, data, c.clock.Now())}, nil
+	return nil, &attempt{apiErr: newAPIError(hresp.StatusCode, hresp.Header, data, c.clock.Now()), header: hresp.Header}, nil
 }
 
 func (c *Client) log(ctx context.Context, msg string, attrs ...slog.Attr) {
@@ -236,13 +240,11 @@ func decode(req *request, resp *response) error {
 	return nil
 }
 
-// etagVersion turns an ETag into a version: surrounding quotes are removed
-// from a strong tag; a weak tag (W/"...") is kept verbatim (DECISIONS.md D-004, A-06).
+// etagVersion turns an ETag into a version: a weak prefix (W/) and the
+// surrounding quotes are removed, so the result equals the body's version
+// (DECISIONS.md D-009, A-06).
 func etagVersion(etag string) string {
-	etag = strings.TrimSpace(etag)
-	if strings.HasPrefix(etag, "W/") {
-		return etag
-	}
+	etag = strings.TrimPrefix(strings.TrimSpace(etag), "W/")
 	if len(etag) >= 2 && etag[0] == '"' && etag[len(etag)-1] == '"' {
 		return etag[1 : len(etag)-1]
 	}
@@ -293,7 +295,7 @@ type Request struct {
 // Do sends a request the SDK does not wrap yet, with the client's key, base
 // URL, timeout, retries and error mapping, and decodes a 2xx JSON body into
 // out (which may be nil, or a *json.RawMessage).
-func (c *Client) Do(ctx context.Context, r Request, out any) error {
+func (c *Client) Do(ctx context.Context, r Request, out any, opts ...CallOption) error {
 	if r.Method == "" || !strings.HasPrefix(r.Path, "/") {
 		return errors.New("lk: Request needs a Method and a Path starting with /")
 	}
@@ -304,16 +306,33 @@ func (c *Client) Do(ctx context.Context, r Request, out any) error {
 		body:   r.Body,
 		out:    out,
 		header: r.Header,
-	}, callConfig{})
+		// The SDK can't know whether an unwrapped endpoint is versioned, so
+		// the escape hatch accepts IfMatch and leaves the check to the server.
+		versioned: true,
+	}, newCallConfig(opts))
+}
+
+func newCallConfig(opts []CallOption) callConfig {
+	var cc callConfig
+	for _, o := range opts {
+		o(&cc)
+	}
+	return cc
+}
+
+// capture records the final response for CaptureResponse. Each attempt
+// overwrites it, so it ends up describing the last one.
+func (cc callConfig) capture(status int, h http.Header) {
+	if cc.meta == nil {
+		return
+	}
+	*cc.meta = ResponseMeta{Status: status, RequestID: h.Get("X-Request-Id"), ETag: h.Get("ETag"), Header: h.Clone()}
 }
 
 // call is the common path for wrapped operations: it applies call options,
 // resolves the project when the path needs it, expands the path and sends.
 func (c *Client) call(ctx context.Context, method, tmpl string, params map[string]string, req request, opts []CallOption) error {
-	var cc callConfig
-	for _, o := range opts {
-		o(&cc)
-	}
+	cc := newCallConfig(opts)
 	// A path that names its own project (Projects.Get) is never filled in, so
 	// an empty ID fails in expandPath instead of reading the default project.
 	if _, own := params["projectId"]; !own && strings.Contains(tmpl, "{projectId}") {

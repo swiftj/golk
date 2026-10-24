@@ -106,6 +106,7 @@ type callConfig struct {
 	idemKeySet bool
 	ifMatch    string
 	ifMatchSet bool
+	meta       *ResponseMeta
 }
 
 // ForProject runs the call against project id instead of the client's project.
@@ -125,4 +126,21 @@ func WithIdempotencyKey(key string) CallOption {
 // operations accept it.
 func IfMatch(version string) CallOption {
 	return func(c *callConfig) { c.ifMatch, c.ifMatchSet = version, true }
+}
+
+// ResponseMeta describes the HTTP response a call ended with.
+type ResponseMeta struct {
+	Status int
+	// RequestID is the X-Request-Id header.
+	RequestID string
+	// ETag is the raw ETag header.
+	ETag   string
+	Header http.Header
+}
+
+// CaptureResponse fills meta from the response the call ended with, whether
+// it succeeded or returned an *APIError. It is left zero when no response
+// arrived (a *ConnectionError) or the call failed before sending.
+func CaptureResponse(meta *ResponseMeta) CallOption {
+	return func(c *callConfig) { c.meta = meta }
 }

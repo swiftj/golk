@@ -67,7 +67,7 @@ func TestVer_C_VER_03_C_VER_04_VersionOpaqueAndFromETag(t *testing.T) {
 	}{
 		{"body wins over ETag", `{"version":"from-body"}`, `"from-etag"`, "from-body"},
 		{"strong ETag unquoted", `{}`, `"Zx9/+=="`, "Zx9/+=="},
-		{"weak ETag verbatim", `{}`, `W/"abc"`, `W/"abc"`},
+		{"weak ETag (the server's form) unwrapped", `{}`, `W/"abc"`, `abc`},
 		{"unquoted ETag kept", `{}`, `abc`, "abc"},
 		{"no ETag, no version", `{}`, ``, ""},
 		{"opaque body version untouched", `{"version":"  0042 "}`, ``, "  0042 "},

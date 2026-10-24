@@ -20,6 +20,8 @@ type attempt struct {
 	// connErr is set when no response arrived.
 	connErr  error
 	timedOut bool
+	// header is the failed response's headers, when one arrived.
+	header http.Header
 }
 
 // retryable reports whether a failed attempt may be retried, per the SDK

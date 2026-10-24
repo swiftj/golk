@@ -250,7 +250,7 @@ The spec's `ErrorCode` enum and the guide's table list the same 29 codes (verifi
 | C-CORE2-03 | Single-page lists that carry a version (`RowList`, `BlockPropertyList`) expose `Items` and `Version`. | S `RowList`, `BlockPropertyList` | 2a |
 | C-CORE2-04 ⚠ | A JSON request body over the host limit fails before sending, with an error matching `ErrPayloadTooLarge` (C-ERR-15). No request is made and no rate-limit token is spent. | G§Error codes (`PAYLOAD_TOO_LARGE`); A-03, A-30 | 2a |
 | C-CORE2-05 | `CaptureResponse(&meta)` fills `ResponseMeta{Status, RequestID, ETag, Header}` from the final attempt's response, on success and on `*APIError`. It is left empty on `*ConnectionError`. | Phase 1 report; CLAUDE.md §MCP Tool output (request id) | 2a |
-| C-CORE2-06 | `IfMatch` is accepted by exactly the operations listed in C-VER-06 that are in scope (documents.replaceBlocks, every `blocks` write including infobox properties and their rows, and `properties` row writes). Every other operation rejects it before sending (`ErrIfMatchNotAllowed`). | G§Versioned writes; S `if-match` parameters | 2a |
+| C-CORE2-06 | `IfMatch` is accepted by exactly the operations listed in C-VER-06 that are in scope (documents.replaceBlocks, every `blocks` write including infobox properties and their rows, and `properties` row writes). Every other wrapped operation rejects it before sending (`ErrIfMatchNotAllowed`). The escape hatch (`Client.Do`) accepts it, since the SDK can't know whether an unwrapped endpoint is versioned. | G§Versioned writes; S `if-match` parameters | 2a |
 
 ## DOC — documents
 
@@ -406,7 +406,9 @@ copied into [`DECISIONS.md`](DECISIONS.md).
 
 - Guide: copy `ETag` into `version` when the body lacks it. The spec doesn't declare response headers at all, and doesn't say whether the ETag is quoted or weak (`W/"…"`).
 
-**Proposed:** copy the ETag value with surrounding double quotes stripped, and a `W/` prefix preserved verbatim (versions are opaque — C-VER-03). Confirm the exact form with a Phase 2 probe on `documents.getBlocks` and record it. In Phase 1, apply the mechanism only to response types that have a `Version` field (none of the resource ops do).
+**Superseded by D-009:** the server's ETags are weak (`W/"…"`) around the body's version, so both `W/` and the quotes are stripped.
+
+**Originally proposed:** copy the ETag value with surrounding double quotes stripped, and a `W/` prefix preserved verbatim (versions are opaque — C-VER-03). Confirm the exact form with a Phase 2 probe on `documents.getBlocks` and record it. In Phase 1, apply the mechanism only to response types that have a `Version` field (none of the resource ops do).
 
 ### A-07 — `Retry-After` format
 
