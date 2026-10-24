@@ -72,10 +72,14 @@ func TestGuard_X_GUARD_01_TermsFile(t *testing.T) {
 	}
 }
 
-func TestGuard_X_GUARD_01_EmptyListAllowsEverything(t *testing.T) {
-	g := Open(writeTerms(t, "# none yet\n"))
-	if vs := mustCheck(t, g, map[string]any{"name": "Zorblax"}); len(vs) != 0 {
-		t.Fatalf("violations = %v", vs)
+// A terms file with no terms fails closed: it is also what a file caught
+// mid-rewrite (truncated, not yet written) reads as.
+func TestGuard_X_GUARD_01_EmptyListRefuses(t *testing.T) {
+	for _, content := range []string{"", "# none yet\n", "\n\n"} {
+		g := Open(writeTerms(t, content))
+		if _, err := g.Check(map[string]any{"name": "Zorblax"}); err == nil || !strings.Contains(err.Error(), "has no terms") {
+			t.Errorf("%q: err = %v", content, err)
+		}
 	}
 }
 

@@ -93,9 +93,23 @@ func (g *Guard) matcher() (*matcher, error) {
 	if err != nil {
 		return nil, g.fileErr(err)
 	}
+	// A file being rewritten (truncated, then written) can be read empty
+	// or half written. Use it only if it didn't change while it was read.
+	after, err := os.Stat(g.path)
+	if err != nil {
+		return nil, g.fileErr(err)
+	}
+	if !sameFile(fi, after) || int64(len(data)) != fi.Size() {
+		return nil, g.fileErr(errors.New("changed while it was read; try again"))
+	}
 	terms, err := parseTerms(data)
 	if err != nil {
 		return nil, g.fileErr(err)
+	}
+	// An empty list would let everything through, and is what a file
+	// caught mid-rewrite looks like, so it is refused (fail closed).
+	if len(terms) == 0 {
+		return nil, g.fileErr(errors.New("has no terms; add at least one, or set LK_MCP_GUARD=off to write without a guard"))
 	}
 	g.info, g.loaded = fi, newMatcher(terms)
 	return g.loaded, nil
@@ -118,8 +132,8 @@ func (g *Guard) fileErr(err error) error {
 // ParseTerms parses a terms file: UTF-8, one term per line, each line
 // trimmed of surrounding white space, blank lines and lines starting with
 // '#' skipped, and a leading byte-order mark ignored. Invalid UTF-8 is an
-// error that names the line number but not its content. An empty result is
-// valid.
+// error that names the line number but not its content. An empty result
+// parses, but a Guard refuses a terms file with no terms.
 func ParseTerms(data []byte) ([]string, error) { return parseTerms(data) }
 
 func parseTerms(data []byte) ([]string, error) {
