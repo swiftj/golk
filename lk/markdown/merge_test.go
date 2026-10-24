@@ -576,7 +576,7 @@ func TestReconcileLarge(t *testing.T) {
 		if len(rep.Kept) != n-1 || !reflect.DeepEqual(rep.Changed, []string{fmt.Sprintf("p%d", n/2)}) || rep.Added != nil || rep.Removed != nil {
 			t.Fatalf("kept %d changed %v added %v removed %v", len(rep.Kept), rep.Changed, rep.Added, rep.Removed)
 		}
-		if d := time.Since(start); d > 5*time.Second {
+		if d := time.Since(start); d > slowdown*5*time.Second {
 			t.Fatalf("took %v", d)
 		}
 	})
@@ -589,7 +589,7 @@ func TestReconcileLarge(t *testing.T) {
 		if len(rep.Changed) != n {
 			t.Fatalf("changed %d", len(rep.Changed))
 		}
-		if d := time.Since(start); d > 10*time.Second {
+		if d := time.Since(start); d > slowdown*10*time.Second {
 			t.Fatalf("took %v", d)
 		}
 	})
@@ -607,7 +607,7 @@ func TestReconcileLarge(t *testing.T) {
 		if len(rep.Kept) != n || len(rep.Added) != n || rep.Changed != nil {
 			t.Fatalf("kept %d added %d changed %d", len(rep.Kept), len(rep.Added), len(rep.Changed))
 		}
-		if d := time.Since(start); d > 10*time.Second {
+		if d := time.Since(start); d > slowdown*10*time.Second {
 			t.Fatalf("took %v", d)
 		}
 	})

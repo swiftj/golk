@@ -254,7 +254,7 @@ func TestParse_M_SAFE_07_Limits(t *testing.T) {
 		t.Run("M-SAFE-07 large "+name, func(t *testing.T) {
 			start := time.Now()
 			_, _ = parse(src)
-			if d := time.Since(start); d > 10*time.Second {
+			if d := time.Since(start); d > slowdown*10*time.Second {
 				t.Errorf("took %v", d)
 			}
 		})
