@@ -54,6 +54,22 @@ func TestRedteam_X_GUARD_05_UncheckableDocumentsStayHidden(t *testing.T) {
 	}
 }
 
+// Without a terms file every write tool refuses before any request, even
+// those that can't show players anything (D-011).
+func TestRedteam_X_GUARD_06_NoGuardRefusesEveryWrite(t *testing.T) {
+	h := newHarness(t, noGuard())
+	for tool, args := range map[string]map[string]any{
+		"delete_resource": {"id": "r1"},
+		"delete_property": {"resource_id": "r1", "title": "T"},
+		"update_resource": {"id": "r1", "is_hidden": true},
+	} {
+		wtMustFail(t, h, tool, args, "LK_MCP_GUARD_FILE")
+	}
+	if n := len(h.lk.Requests()); n != 0 {
+		t.Errorf("%d requests sent", n)
+	}
+}
+
 // Unhiding a resource checks its image and banner URLs too.
 func TestRedteam_X_GUARD_05_UnhideChecksImageAndBanner(t *testing.T) {
 	for name, field := range map[string]string{
