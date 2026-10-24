@@ -21,7 +21,6 @@ func (s *server) addReadTools(ms *mcp.Server) {
 		Description: "Read a page document as LK Markdown, with the version to pass to edit_page. Omit document_id for the resource's first page.",
 		Annotations: readOnly("Read page"),
 	}, func(in ReadPageIn) string { return in.Project }, s.readPage)
-	pages := newPageCache()
 	addTool(s, ms, &mcp.Tool{
 		Name: "search",
 		Description: "Search the wiki by resource name, alias and page content. Returns the best matches first, one line per hit: " +
@@ -35,7 +34,7 @@ func (s *server) addReadTools(ms *mcp.Server) {
 			"When next_cursor is returned, call again with it (and the same filters) for the next page.",
 		Annotations: readOnly("List resources"),
 	}, func(in ListResourcesIn) string { return in.Project }, func(ctx context.Context, c *lk.Client, in ListResourcesIn) (toolResult[ListResourcesOut], error) {
-		return s.listResources(ctx, c, pages, in)
+		return s.listResources(ctx, c, in)
 	})
 	addTool(s, ms, &mcp.Tool{
 		Name: "get_resource",
@@ -55,7 +54,7 @@ func (s *server) addReadTools(ms *mcp.Server) {
 			"When next_cursor is returned, call again with it (and the same filters) for the next page.",
 		Annotations: readOnly("List assets"),
 	}, func(in ListAssetsIn) string { return in.Project }, func(ctx context.Context, c *lk.Client, in ListAssetsIn) (toolResult[ListAssetsOut], error) {
-		return s.listAssets(ctx, c, pages, in)
+		return s.listAssets(ctx, c, in)
 	})
 }
 
@@ -296,7 +295,7 @@ type ListResourcesOut struct {
 	NextCursor string            `json:"next_cursor,omitempty"`
 }
 
-func (s *server) listResources(ctx context.Context, c *lk.Client, pc *pageCache, in ListResourcesIn) (toolResult[ListResourcesOut], error) {
+func (s *server) listResources(ctx context.Context, c *lk.Client, in ListResourcesIn) (toolResult[ListResourcesOut], error) {
 	var zero toolResult[ListResourcesOut]
 	if in.Root && in.ParentID != "" {
 		return zero, fmt.Errorf("pass parent_id or root, not both")
@@ -304,14 +303,11 @@ func (s *server) listResources(ctx context.Context, c *lk.Client, pc *pageCache,
 	if err := checkPageLimit(in.Limit); err != nil {
 		return zero, err
 	}
-	params := lk.ResourceListParams{ParentID: in.ParentID, Limit: in.Limit}
+	params := lk.ResourceListParams{ParentID: in.ParentID, Limit: in.Limit, Cursor: in.Cursor}
 	if in.Root {
 		params.ParentID = lk.ParentRoot
 	}
-	scope := fmt.Sprintf("list_resources\x00%s\x00%s\x00%d", in.Project, params.ParentID, params.Limit)
-	p, err := fetchPage(ctx, pc, "list_resources", scope, in.Cursor, func(ctx context.Context) (*lk.Page[lk.ResourceListItem], error) {
-		return c.Resources.List(ctx, params)
-	})
+	p, err := c.Resources.List(ctx, params)
 	if err != nil {
 		return zero, err
 	}
@@ -524,16 +520,13 @@ type ListAssetsOut struct {
 	NextCursor string         `json:"next_cursor,omitempty"`
 }
 
-func (s *server) listAssets(ctx context.Context, c *lk.Client, pc *pageCache, in ListAssetsIn) (toolResult[ListAssetsOut], error) {
+func (s *server) listAssets(ctx context.Context, c *lk.Client, in ListAssetsIn) (toolResult[ListAssetsOut], error) {
 	var zero toolResult[ListAssetsOut]
 	if err := checkPageLimit(in.Limit); err != nil {
 		return zero, err
 	}
-	params := lk.AssetListParams{FolderID: in.FolderID, Limit: in.Limit}
-	scope := fmt.Sprintf("list_assets\x00%s\x00%s\x00%d", in.Project, params.FolderID, params.Limit)
-	p, err := fetchPage(ctx, pc, "list_assets", scope, in.Cursor, func(ctx context.Context) (*lk.Page[lk.Asset], error) {
-		return c.Assets.List(ctx, params)
-	})
+	params := lk.AssetListParams{FolderID: in.FolderID, Limit: in.Limit, Cursor: in.Cursor}
+	p, err := c.Assets.List(ctx, params)
 	if err != nil {
 		return zero, err
 	}

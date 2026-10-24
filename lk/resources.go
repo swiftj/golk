@@ -178,11 +178,14 @@ type ResourceListParams struct {
 	ParentID string
 	// Limit is the page size (1–100). Zero uses the server default (50).
 	Limit int
+	// Cursor starts at the page a previous Page.NextCursor names, with the
+	// same ParentID and Limit. Empty starts at the first page.
+	Cursor string
 }
 
-// List returns the first page of resources.
+// List returns one page of resources: the first, or the one Cursor names.
 func (s *ResourcesService) List(ctx context.Context, p ResourceListParams, opts ...CallOption) (*Page[ResourceListItem], error) {
-	return s.pager(p, opts).page(ctx, "")
+	return s.pager(p, opts).page(ctx, p.Cursor)
 }
 
 // All iterates over every resource that p selects, fetching pages as it goes.

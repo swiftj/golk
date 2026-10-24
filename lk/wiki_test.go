@@ -432,6 +432,16 @@ func TestWiki_Assets(t *testing.T) {
 					t.Errorf("page = %+v", p)
 				}
 			}},
+		{name: "C-ASSET-01 list starts at a cursor", reply: testutil.JSON(200, `{"data":[],"hasMore":false}`),
+			call: func(ctx context.Context, c *Client) (any, error) {
+				return c.Assets.List(ctx, AssetListParams{FolderID: "f1", Cursor: "n1"})
+			},
+			method: "GET", path: pP + "/assets", query: "cursor=n1&folderId=f1"},
+		{name: "C-PAGE-01 resources list starts at a cursor", reply: testutil.JSON(200, `{"data":[],"hasMore":false}`),
+			call: func(ctx context.Context, c *Client) (any, error) {
+				return c.Resources.List(ctx, ResourceListParams{ParentID: ParentRoot, Limit: 5, Cursor: "c9"})
+			},
+			method: "GET", path: pP + "/resources", query: "cursor=c9&limit=5&parentId=root"},
 		{name: "C-ASSET-02 get maps fields", reply: testutil.JSON(200, assetJSON),
 			call:   func(ctx context.Context, c *Client) (any, error) { return c.Assets.Get(ctx, "a1") },
 			method: "GET", path: pP + "/assets/a1",

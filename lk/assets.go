@@ -59,9 +59,13 @@ type AssetListParams struct {
 	FolderID string
 	// Limit is the page size (1–100). Zero uses the server default (50).
 	Limit int
+	// Cursor starts at the page a previous Page.NextCursor names, with the
+	// same FolderID and Limit. Empty starts at the first page.
+	Cursor string
 }
 
-// List returns the first page of a folder's contents.
+// List returns one page of a folder's contents: the first, or the one
+// Cursor names.
 func (s *AssetsService) List(ctx context.Context, p AssetListParams, opts ...CallOption) (*Page[Asset], error) {
 	q := url.Values{}
 	if p.FolderID != "" {
@@ -80,7 +84,7 @@ func (s *AssetsService) List(ctx context.Context, p AssetListParams, opts ...Cal
 			return out, w.HasMore, w.NextCursor
 		},
 	}
-	return pg.page(ctx, "")
+	return pg.page(ctx, p.Cursor)
 }
 
 // All iterates over a folder's contents, fetching pages as it goes.

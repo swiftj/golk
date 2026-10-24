@@ -272,8 +272,6 @@ func TestReadTools_X_TOOL_01_InvalidInputSendsNothing(t *testing.T) {
 		{"search", map[string]any{"query": "x", "limit": 101}, "limit must be between 1 and 100"},
 		{"list_resources", map[string]any{"root": true, "parent_id": "r1"}, "not both"},
 		{"list_resources", map[string]any{"limit": -1}, "limit must be between 1 and 100"},
-		{"list_resources", map[string]any{"cursor": "made-up"}, "unknown cursor"},
-		{"list_assets", map[string]any{"cursor": "made-up"}, "unknown cursor"},
 		{"list_assets", map[string]any{"limit": 500}, "limit must be between 1 and 100"},
 		{"get_resource", map[string]any{"resource_id": ""}, "resource_id is empty"},
 	}
@@ -299,8 +297,7 @@ func TestSearch_X_TOOL_01_QueryAtLimitIsSent(t *testing.T) {
 	rtAssertRequests(t, h, rtGet("/search", "q", q))
 }
 
-// A cursor fetches the next page with the same filters, and works once
-// per page it names.
+// A cursor is sent as is with the call's filters.
 func TestListResources_X_TOOL_01_Cursor(t *testing.T) {
 	h := newHarness(t)
 	h.lk.Enqueue(testutil.JSON(http.StatusOK, rtListJSON), testutil.JSON(http.StatusOK, rtList2JSON))
@@ -309,10 +306,6 @@ func TestListResources_X_TOOL_01_Cursor(t *testing.T) {
 	structured(t, r1, &out)
 	if out.NextCursor != "c2" {
 		t.Fatalf("next_cursor = %q", out.NextCursor)
-	}
-	// Other filters with that cursor are refused without a request.
-	if r := h.call("list_resources", map[string]any{"parent_id": "r1", "cursor": "c2"}); !r.IsError || !strings.Contains(text(r), "unknown cursor") {
-		t.Errorf("cursor with other filters: %v %s", r.IsError, text(r))
 	}
 	r2 := h.call("list_resources", map[string]any{"root": true, "limit": 2, "cursor": "c2"})
 	if r2.IsError {
@@ -336,19 +329,6 @@ func TestListAssets_X_TOOL_01_Cursor(t *testing.T) {
 		t.Fatal(text(r))
 	}
 	rtAssertRequests(t, h, rtGet("/assets", "folderId", "f0"), rtGet("/assets", "folderId", "f0", "cursor", "ac2"))
-}
-
-func TestPageCache_X_TOOL_01_Bounded(t *testing.T) {
-	pc := newPageCache()
-	for i := range pageCacheSize + 10 {
-		pc.put(strings.Repeat("k", i+1), i)
-	}
-	if len(pc.pages) != pageCacheSize || len(pc.order) != pageCacheSize {
-		t.Errorf("cache holds %d/%d entries", len(pc.pages), len(pc.order))
-	}
-	if _, ok := pc.get("k"); ok {
-		t.Error("the oldest entry was kept")
-	}
 }
 
 // API errors of the new tools carry code, request ID and hint (X-ERR-01).
