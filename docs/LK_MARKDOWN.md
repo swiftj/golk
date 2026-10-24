@@ -213,14 +213,23 @@ A taskList holds taskItems and nested taskLists. A nested taskList directly afte
 Ids, ranks, row ids, unmodelled fields and legacy values aren't written in the Markdown. `FromMarkdown` gets them back from `Base`:
 
 1. Parse the Markdown into blocks.
-2. Match the parsed siblings against the base siblings with a longest-common-subsequence diff over their canonical renderings (M-API-02).
-3. A parsed block whose rendering equals its matched base block **is replaced by the base block, verbatim**, keeping its id and every field.
-4. Inside a diff hunk, an unmatched parsed block and an unmatched base block at the same position with the same kind are **changed**:
+2. Pair every parsed block that has an explicit id (§3.2) with the base block of that id, wherever it is in `Base` (a move). The rest of each sibling list is matched against the base siblings left over with a longest-common-subsequence diff over their canonical renderings (M-API-02).
+3. A parsed block whose rendering equals its matched base block **is replaced by the base block, verbatim**, keeping its id and every field. A parsed block left unmatched whose rendering equals a still-unmatched base sibling anywhere in the same list (a reorder) is matched to it the same way.
+4. Inside a diff hunk, the *i*-th remaining parsed block of a kind and the *i*-th remaining base block of that kind are **changed**:
    - The parsed block keeps the base block's id.
-   - It also keeps the base fields Markdown can't show, which are the id, row ids and ranks. Rows match by key.
-   - Its children are matched recursively by the same rules.
+   - It also keeps the base fields Markdown can't show: the id, a row's rank, and the ids and ranks of key-value rows (matched by key), resource items (by resource and document id) and meter items (by name).
+   - Its children and infobox rows are matched recursively by the same rules.
+   - A changed block that comes out byte-identical to its base block counts as kept.
 5. Any other parsed block is **added**, with no id; the server assigns one.
 6. Any unmatched base block is **removed** (see M-SAFE-04).
+
+Details:
+
+- Blocks and infobox rows are never matched with each other, even when their kinds are the same.
+- A base block that renders opaque (`::unsupported`, `lk-raw`) is never paired as changed: it is either matched verbatim or by its id, or it is removed. An `unsupported` block matched by id always comes back as the base block; for an infobox row only its envelope (title, visibility) comes from the Markdown. A parsed `lk-raw` block can't take an id, so it is never paired as changed either.
+- A verbatim match also needs the explicit ids inside the parsed block to sit on the same nodes in the base block; otherwise the pair is changed and matched recursively.
+- The diff matches the common prefix and suffix first, then runs Myers' algorithm with a bounded edit distance (about 2²⁴ steps and 4 MiB per list). Past the bound the rest of the list is one hunk, and reorder matching (step 3) still keeps every unchanged block.
+- `Report` lists, in document order: `Kept`, the ids of verbatim base blocks (the top of each verbatim subtree); `Changed`, the ids of base blocks edited in place, including containers whose descendants changed; `Added`, the paths (as `blocks.Walk` writes them, in the result) of the tops of new subtrees; and `Removed`, the tops of removed base subtrees.
 
 - **M-ID-01:** An unchanged block comes back byte-identical to the base block.
 - **M-ID-02:** Editing one paragraph changes only that paragraph. Its siblings and its container keep their ids.
@@ -234,7 +243,7 @@ Ids, ranks, row ids, unmodelled fields and legacy values aren't written in the M
 - in a directive's attributes;
 - after a row or list item.
 
-An explicit id in the Markdown wins over base matching. The same id twice is an error (M-SAFE-06). Explicit ids are for tools that need stable handles across separate reads; normal editing doesn't need them.
+An explicit id in the Markdown wins over base matching. The same id twice is an error (M-SAFE-06), and so is an id whose base block is of another kind, or a block where the base has an infobox row (`*IDError`). An id not in `Base` is kept as written, and the server decides; for `::unsupported` it is an error (M-SAFE-06). Explicit ids are for tools that need stable handles across separate reads; normal editing doesn't need them.
 
 ### 3.3 Without Base
 
@@ -255,9 +264,9 @@ Every parsed block is new. The server assigns ids, so a full-page replace of an 
 - **M-SAFE-01:** An unknown directive name, an unknown attribute, a duplicate attribute, or a value the field can't hold (wrong type, enum value outside the spec). Enum values the SDK doesn't know are accepted only inside `lk-raw`.
 - **M-SAFE-02:** An unclosed container directive, or a stray closing fence. In particular, a `:::secret` that is never closed doesn't let its text run into the rest of the page.
 - **M-SAFE-03:** Raw HTML (block or inline), a link reference definition, or a footnote.
-- **M-SAFE-04:** An edit that removes an `unsupported` or `lk-raw` block found in `Base`, unless `AllowRemoveOpaque` is set. Removing that content deletes something the editor couldn't see. Removed `secret` blocks are allowed, but `Report.Removed` lists them so the caller can confirm.
+- **M-SAFE-04:** An edit that removes an `unsupported` or `lk-raw` block found in `Base`, at any depth (inside a removed or changed container, or as an infobox row), unless `AllowRemoveOpaque` is set. The error is a `*RemoveError` listing every such block; it matches `ErrRemovesOpaque` with `errors.Is`. Removing that content deletes something the editor couldn't see. Removed `secret` blocks are allowed, but `Report.Removed` lists them so the caller can confirm.
 - **M-SAFE-05:** An image that isn't alone in its paragraph, or an image inside a heading or table cell. The block model has no inline images.
-- **M-SAFE-06:** An `::unsupported` id that isn't in `Base` (the server would answer `UNSUPPORTED_KIND`), or the same block id twice.
+- **M-SAFE-06:** An `::unsupported` id that isn't in `Base` (the server would answer `UNSUPPORTED_KIND`), or the same block id twice. Also an `::unsupported` with no id. These come from base matching, so the error is an `*IDError` with the block's path rather than a line number.
 - **M-SAFE-07:** Input over 1 MiB or nested deeper than 64 levels (the server's own limit), rejected before parsing.
 
 The converter never checks what the server checks: colours, widths, callout icon and tone pairing, image URL ownership. The server's 400 is the authority, as with the builders (C-BUILD-06).
