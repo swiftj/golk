@@ -82,3 +82,33 @@ approved.
   - The three-state types live in a leaf package, `lk/internal/opt`, which both `gen` and `lk` import, so there's no cycle.
   - `lk` re-exports them as generic type aliases (`type Optional[T any] = opt.Optional[T]`, Go ≥ 1.24), plus constructor funcs.
   - Public `lk` types are hand-written where the shape matters (request structs) and type aliases of generated types elsewhere.
+
+## D-006 — Dependencies
+
+- **Date:** 2026-10-23
+
+| Module | Why | cgo |
+|---|---|---|
+| `golang.org/x/time` v0.16.0 (`rate`) | Client-side pacing, which CLAUDE.md mandates. Its `ReserveN(t, n)` takes an explicit time, so the limiter runs on the injected clock and tests never sleep. | None (pure Go) |
+
+That is the whole module graph (`go mod graph`). UUIDs (idempotency keys) and cuid2-format IDs use `crypto/rand` instead of a dependency. The generator (`internal/cmd/lkgen`) uses only the standard library.
+
+## D-007 — Core implementation choices
+
+- **Date:** 2026-10-23
+- **Public types are hand-written. Generated types stay internal.**
+  - Responses map wire `Optional`/`Nullable` fields to plain Go values: `""` means absent and `time.Time{}` means unset. Times are converted to UTC.
+  - Requests use `lk.Optional`/`lk.Nullable` for every optional field, so nothing is sent unless the caller set it.
+  - `TestRes_C_WIRE_07_SpecDriftDetected` lists every wire field. A regenerated schema with a new field fails until the public type maps it, or the test names it as deferred:
+    - `Document.MapImage` and `Document.Sources` are deferred to phase 4.
+    - `ResourceDocumentParams.Blocks` is deferred to phase 2.
+- **`Optional` never encodes `null`.** A set nil slice encodes as `[]` and a set nil map as `{}`, because only `Nullable` carries null. `Some[[]string](nil)` would otherwise send `"aliases":null` to a field the spec doesn't allow to be null.
+- **Sentinels are the `ErrorCode` values.** `ErrorCode` implements `error`, and each `ErrX` is a constant alias of `CodeX`. `errors.Is(err, lk.ErrNotFound)` goes through `APIError.Is`, which compares codes, so there are no hand-maintained sentinel vars.
+- **The per-attempt timeout runs on the injected clock.** `clock.AfterFunc` cancels the attempt with cause `ErrTimeout`. That's how A-12 tells a timeout from caller cancellation, and it lets tests fire a timeout without waiting.
+- **Misuse fails before any request is sent, instead of being silently ignored:**
+  - `WithIdempotencyKey` on a non-POST call returns `ErrIdempotencyKeyNotAllowed`.
+  - `IfMatch` on an unversioned operation returns `ErrIfMatchNotAllowed`.
+  - An empty path parameter is an error, so `Delete(ctx, "")` can never turn into a request on a different endpoint.
+  - `Projects.Get("")` never falls back to the resolved project.
+- **Escape-hatch headers (`Client.Do`) are passed through as written.** An `Idempotency-Key` header counts as the call's key for retry purposes only on POST, matching the server, which ignores it on other methods.
+- **Delete takes a params struct** (`ResourceDeleteParams{Cascade: true}`) rather than a variadic or boolean flag, so a cascade is always visible at the call site.
