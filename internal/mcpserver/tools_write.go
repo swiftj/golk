@@ -16,6 +16,51 @@ func (s *server) addWriteTools(ms *mcp.Server) {
 		Description: "Rename a document (a tab of a resource), or hide it from players or show it to them. Showing a page checks its whole content with the spoiler guard first.",
 		Annotations: write("Update document", true, true),
 	}, func(in UpdateDocumentIn) string { return in.Project }, s.updateDocument)
+	addTool(s, ms, &mcp.Tool{
+		Name:        "create_resource",
+		Description: "Create a resource (wiki entry), optionally with its first page as LK Markdown. Its name, aliases, tags and page are checked by the spoiler guard unless it is created hidden.",
+		Annotations: write("Create resource", false, false),
+	}, func(in CreateResourceIn) string { return in.Project }, s.createResource)
+	addTool(s, ms, &mcp.Tool{
+		Name:        "update_resource",
+		Description: "Rename a resource, set its tags or aliases, hide or show it, or move it (parent_id or move_to_root). Only the fields given change. Showing a hidden resource checks everything it would show with the spoiler guard first.",
+		Annotations: write("Update resource", true, true),
+	}, func(in UpdateResourceIn) string { return in.Project }, s.updateResource)
+	addTool(s, ms, &mcp.Tool{
+		Name:        "edit_page",
+		Description: "Replace a page with edited LK Markdown. Call read_page first and pass its version as base_version and the whole edited page as markdown; blocks left out are deleted. Use dry_run to see what would be kept, changed, added and removed.",
+		Annotations: write("Edit page", true, false),
+	}, func(in EditPageIn) string { return in.Project }, s.editPage)
+	addTool(s, ms, &mcp.Tool{
+		Name:        "set_property",
+		Description: "Create or update a resource's sidebar property by exact title: a text field from markdown, or key-value rows from rows (replacing all rows). Can also hide or show it.",
+		Annotations: write("Set property", true, true),
+	}, func(in SetPropertyIn) string { return in.Project }, s.setProperty)
+	addTool(s, ms, &mcp.Tool{
+		Name:        "delete_property",
+		Description: "Delete a resource's sidebar property by exact title or by property_id.",
+		Annotations: write("Delete property", true, false),
+	}, func(in DeletePropertyIn) string { return in.Project }, s.deleteProperty)
+	addTool(s, ms, &mcp.Tool{
+		Name:        "create_document",
+		Description: "Add a page or blank document (a tab) to a resource, optionally with the page's content as LK Markdown.",
+		Annotations: write("Create document", false, false),
+	}, func(in CreateDocumentIn) string { return in.Project }, s.createDocument)
+	addTool(s, ms, &mcp.Tool{
+		Name:        "upload_image",
+		Description: "Upload a local JPEG, PNG, GIF or WebP file to the project's asset library and return its URL, for image blocks and properties.",
+		Annotations: write("Upload image", false, false),
+	}, func(in UploadImageIn) string { return in.Project }, s.uploadImage)
+	addTool(s, ms, &mcp.Tool{
+		Name:        "delete_resource",
+		Description: "Delete a resource with its documents and properties. A resource with children needs cascade, which deletes them too. Use dry_run to see what would go; restore_resource undoes it.",
+		Annotations: write("Delete resource", true, false),
+	}, func(in DeleteResourceIn) string { return in.Project }, s.deleteResource)
+	addTool(s, ms, &mcp.Tool{
+		Name:        "restore_resource",
+		Description: "Restore a deleted resource and the descendants deleted with it. Its content is checked by the spoiler guard right after; anything flagged is hidden from players at once.",
+		Annotations: write("Restore resource", false, true),
+	}, func(in RestoreResourceIn) string { return in.Project }, s.restoreResource)
 }
 
 // DryRunArg is the dry_run parameter every write tool takes.
