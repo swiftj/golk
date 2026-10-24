@@ -57,6 +57,12 @@ func New(cfg Config, d Deps) *mcp.Server {
 	if !cfg.ReadOnly {
 		s.addWriteTools(ms)
 	}
+	// Phase 4 tool groups register their read tools always and their
+	// write tools only when writes are enabled.
+	s.addMapTools(ms, !cfg.ReadOnly)
+	s.addTemplateTools(ms, !cfg.ReadOnly)
+	s.addTimelineTools(ms, !cfg.ReadOnly)
+	s.addCalendarTools(ms, !cfg.ReadOnly)
 	return ms
 }
 
