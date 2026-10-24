@@ -158,3 +158,57 @@ func TestRedteamP4_X_GUARD_09_SpecRootCantExemptItself(t *testing.T) {
 		})
 	}
 }
+
+// Attacks that held, kept as regressions.
+
+// X-GUARD-08: every player-visible field set_map_feature takes is checked,
+// style fields and the pin image URL included.
+func TestRedteamP4_X_GUARD_08_EveryFeatureFieldIsChecked(t *testing.T) {
+	for name, args := range map[string]map[string]any{
+		"pin image url":     {"style": map[string]any{"pin_image": map[string]any{"url": "https://assets.example/zorblax.png", "width": 1, "height": 1}}},
+		"text effect color": {"style": map[string]any{"text_effect_color": "Zorblax"}},
+		"icon glyph":        {"style": map[string]any{"icon_glyph": "zorblax"}},
+		"uri":               {"uri": "lk://resources/zorblax"},
+		"label text":        {"name": "the zorblax"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			h := rgHarness(t, "Zorblax")
+			h.lk.Enqueue(wtOK(mtRes))
+			a := map[string]any{"resource_id": "r1", "type": "pin", "pos": []float64{1, 2}}
+			for k, v := range args {
+				a[k] = v
+			}
+			wtRefused(t, h, text(h.call("set_map_feature", a)))
+		})
+	}
+}
+
+// X-GUARD-08, X-GUARD-11: showing a map shows its hidden features too
+// (until confirmed DM-only), whether the document or its resource is
+// unhidden; and showing a timeline reads every page of its events.
+func TestRedteamP4_X_GUARD_08_ShowingChecksEverything(t *testing.T) {
+	if hiddenFeaturesConfirmed {
+		t.Skip("hidden features are DM-only")
+	}
+	hiddenTerm := `{"data":[{"id":"f2","type":"pin","name":"Zorblax Cave","pos":[-1,2],"isHidden":true}],"hasMore":false}`
+	t.Run("unhide map document", func(t *testing.T) {
+		h := rgHarness(t, "Zorblax")
+		h.lk.Enqueue(wtOK(mtRes), wtOK(strings.Replace(mtDoc, `"m1"`, `"m2"`, 1)), wtOK(hiddenTerm))
+		wtRefused(t, h, text(h.call("update_document", map[string]any{"resource_id": "r1", "document_id": "m2", "is_hidden": false})))
+	})
+	t.Run("unhide resource holding a map", func(t *testing.T) {
+		h := rgHarness(t, "Zorblax")
+		h.lk.Enqueue(wtOK(mtResHidden), wtOK(mtDoc), wtOK(hiddenTerm), wtOK(`{"data":[]}`))
+		wtRefused(t, h, text(h.call("update_resource", map[string]any{"id": "r1", "is_hidden": false})))
+	})
+	t.Run("unhide timeline, term on the second events page", func(t *testing.T) {
+		h := rgHarness(t, "Zorblax")
+		h.lk.Enqueue(wtOK(tlRes), wtOK(`{"data":[]}`),
+			wtOK(`{"data":[`+tlEvent+`],"hasMore":true,"nextCursor":"c2"}`),
+			wtOK(`{"data":[{"id":"e5","laneId":"l1","type":"event","name":"Zorblax wakes","start":900,"isHidden":true,"startDate":{"era":{}}}],"hasMore":false,"nextCursor":null}`))
+		wtRefused(t, h, text(h.call("update_document", map[string]any{"resource_id": "r1", "document_id": "t9", "is_hidden": false})))
+		if reqs := h.lk.Requests(); len(reqs) != 4 || !strings.Contains(reqs[3].RawQuery, "cursor=c2") {
+			t.Errorf("second page not read: %+v", reqs)
+		}
+	})
+}
