@@ -41,12 +41,14 @@ type LaneStyle struct {
 type Lane struct {
 	ID   string
 	Name string
-	// Rank orders lanes; compare ranks as plain strings.
+	// Rank orders lanes; compare ranks as plain strings (SortByRank).
 	Rank string
 	Size LaneSize
 	// Style is nil when the lane has none.
 	Style *LaneStyle
 }
+
+func (l Lane) rank() string { return l.Rank }
 
 // LaneCreate is the body of Timelines.CreateLane. Name, Rank and Size are
 // required.

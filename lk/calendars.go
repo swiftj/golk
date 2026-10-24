@@ -423,7 +423,7 @@ func (s *CalendarsService) Create(ctx context.Context, spec CalendarSpec, opts .
 // Update replaces the whole spec of a custom calendar and returns it with
 // its new version. It takes IfMatch: a calendar changed since that version
 // fails with ErrVersionMismatch, and APIError.CurrentVersion holds the
-// current one. A built-in calendar cannot be changed (ErrValidation); an
+// current one. A built-in calendar cannot be changed (ErrKindMismatch); an
 // unknown ID fails with ErrNotFound.
 func (s *CalendarsService) Update(ctx context.Context, id string, spec CalendarSpec, opts ...CallOption) (*Calendar, error) {
 	var w calendarWire
@@ -434,7 +434,8 @@ func (s *CalendarsService) Update(ctx context.Context, id string, spec CalendarS
 	return w.calendar()
 }
 
-// Delete deletes a custom calendar. It takes IfMatch.
+// Delete deletes a custom calendar. It takes IfMatch. A built-in calendar
+// cannot be deleted (ErrKindMismatch).
 func (s *CalendarsService) Delete(ctx context.Context, id string, opts ...CallOption) error {
 	return s.c.call(ctx, gen.OpDeleteCalendar.Method, gen.OpDeleteCalendar.Path, map[string]string{"calendarId": id},
 		request{versioned: true}, opts)
