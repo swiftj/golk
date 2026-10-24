@@ -5,7 +5,6 @@ package lk_test
 import (
 	"context"
 	"errors"
-	"net/http"
 	"slices"
 	"testing"
 	"time"
@@ -47,17 +46,18 @@ func lanesOf(t *testing.T, c *lk.Client, doc lk.DocRef) []lk.Lane {
 	return p.Items
 }
 
-// setSources chains timelines through the escape hatch until
-// DocumentUpdate.Sources exists.
+// setSources replaces the timelines doc chains; none clears them.
 func setSources(t *testing.T, c *lk.Client, doc lk.DocRef, sources ...lk.DocRef) {
 	t.Helper()
-	list := []map[string]string{}
-	for _, s := range sources {
-		list = append(list, map[string]string{"resourceId": s.ResourceID, "documentId": s.DocumentID})
+	if sources == nil {
+		sources = []lk.DocRef{}
 	}
-	path := "/api/v3/projects/" + sandbox.ProjectID(t) + "/resources/" + doc.ResourceID + "/docs/" + doc.DocumentID
-	if err := c.Do(sandbox.Ctx(t), lk.Request{Method: http.MethodPatch, Path: path, Body: map[string]any{"sources": list}}, nil); err != nil {
+	d, err := c.Documents.Update(sandbox.Ctx(t), doc, lk.DocumentUpdate{Sources: lk.Some(sources)})
+	if err != nil {
 		t.Fatalf("setting sources: %v", err)
+	}
+	if !slices.Equal(d.Sources, sources) {
+		t.Errorf("Sources = %+v, want %+v", d.Sources, sources)
 	}
 }
 
@@ -176,9 +176,7 @@ func TestIntegration_Timeline(t *testing.T) {
 	}
 }
 
-// TestIntegration_TimelineChaining ports "Chaining timelines". Sources are
-// set through the escape hatch (Client.Do) until DocumentUpdate.Sources
-// exists.
+// TestIntegration_TimelineChaining ports "Chaining timelines".
 func TestIntegration_TimelineChaining(t *testing.T) {
 	c, ctx := sandbox.Client(t), sandbox.Ctx(t)
 	ooo := create(t, c, lk.ResourceCreate{Name: "The Land of Ooo"})

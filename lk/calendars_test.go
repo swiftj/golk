@@ -24,7 +24,7 @@ const oooSpec = `{"name":"The Calendar of Ooo","description":"Four kingdom month
 	`"moons":[{"id":"the-moon","name":"The Moon","phase":40320,"shift":0,"color":"#E8E4D8"}],` +
 	`"format":{"id":"ooo","year":"YYYY E","month":"MMMM YYYY E","day":"MMMM D^, YYYY E","time":"MMMM D^, YYYY E, HH:mm"},"halfClock":false}`
 
-func ooo() CalendarSpec {
+func oooCalendarSpec() CalendarSpec {
 	month := func(id, name string, n float64) CalendarMonth {
 		return CalendarMonth{ID: id, Name: name, Length: n, Interval: 1}
 	}
@@ -70,7 +70,7 @@ func TestCalendars(t *testing.T) {
 				assertJSON(t, mustMarshal(t, p.Items[0].Spec), `{"id":"cal1",`+oooSpec[1:])
 			}},
 		{name: "C-CAL-02 create sends the spec", reply: etag(testutil.JSON(201, calJSON), "cv1"),
-			call:   func(ctx context.Context, c *Client) (any, error) { return c.Calendars.Create(ctx, ooo()) },
+			call:   func(ctx context.Context, c *Client) (any, error) { return c.Calendars.Create(ctx, oooCalendarSpec()) },
 			method: "POST", path: pP + "/calendars", keyed: true, body: oooSpec,
 			check: func(t *testing.T, v any) {
 				cal := v.(*Calendar)
@@ -91,7 +91,7 @@ func TestCalendars(t *testing.T) {
 			}},
 		{name: "C-CAL-02 update replaces with If-Match", reply: etag(testutil.JSON(200, withIDVersion("cal1", "cv2", oooSpec)), "cv2"),
 			call: func(ctx context.Context, c *Client) (any, error) {
-				return c.Calendars.Update(ctx, "cal1", ooo(), IfMatch("cv1"))
+				return c.Calendars.Update(ctx, "cal1", oooCalendarSpec(), IfMatch("cv1"))
 			},
 			method: "PUT", path: pP + "/calendars/cal1", ifMatch: "cv1", body: oooSpec,
 			check: func(t *testing.T, v any) {
@@ -100,7 +100,9 @@ func TestCalendars(t *testing.T) {
 				}
 			}},
 		{name: "C-CAL-02 update without If-Match", reply: testutil.JSON(200, calJSON),
-			call:   func(ctx context.Context, c *Client) (any, error) { return c.Calendars.Update(ctx, "cal1", ooo()) },
+			call: func(ctx context.Context, c *Client) (any, error) {
+				return c.Calendars.Update(ctx, "cal1", oooCalendarSpec())
+			},
 			method: "PUT", path: pP + "/calendars/cal1", body: oooSpec},
 		{name: "C-CAL-02 delete with If-Match", reply: noContent(),
 			call: func(ctx context.Context, c *Client) (any, error) {
@@ -114,7 +116,7 @@ func TestCalendars_C_CAL_02_StaleVersion(t *testing.T) {
 	r := testutil.JSON(412, `{"message":"Calendar version is cv2, If-Match was cv1","code":"VERSION_MISMATCH","requestId":"rq1"}`)
 	srv := testutil.NewFakeServer(t, r)
 	c, _ := newTestClient(t, srv)
-	_, err := c.Calendars.Update(context.Background(), "cal1", ooo(), IfMatch("cv1"))
+	_, err := c.Calendars.Update(context.Background(), "cal1", oooCalendarSpec(), IfMatch("cv1"))
 	var ae *APIError
 	if !errors.Is(err, ErrVersionMismatch) || !errors.As(err, &ae) || ae.CurrentVersion != "cv2" {
 		t.Fatalf("err = %v (%+v), want ErrVersionMismatch with CurrentVersion cv2", err, ae)
@@ -124,7 +126,7 @@ func TestCalendars_C_CAL_02_StaleVersion(t *testing.T) {
 func TestCalendars_C_CAL_02_CreateRefusesIfMatch(t *testing.T) {
 	srv := testutil.NewFakeServer(t)
 	c, _ := newTestClient(t, srv)
-	if _, err := c.Calendars.Create(context.Background(), ooo(), IfMatch("v1")); !errors.Is(err, ErrIfMatchNotAllowed) {
+	if _, err := c.Calendars.Create(context.Background(), oooCalendarSpec(), IfMatch("v1")); !errors.Is(err, ErrIfMatchNotAllowed) {
 		t.Errorf("err = %v, want ErrIfMatchNotAllowed", err)
 	}
 	if len(srv.Requests()) != 0 {
