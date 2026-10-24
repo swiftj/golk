@@ -392,6 +392,37 @@ The format is ours, not LegendKeeper's ([`LK_MARKDOWN.md`](LK_MARKDOWN.md), cite
 | M-SAFE-06 | An `::unsupported` id not in `Base`, the same id twice, or an `::unsupported` moved out of the secret that holds it in `Base`, is an error. | M§5 | 2b |
 | M-SAFE-07 | Input over 1 MiB, nested deeper than 64 levels, or with more than 2000 link and emphasis markers in one paragraph or heading is rejected before (inline) parsing. | M§5 | 2b |
 
+## MCP — lk-mcp server (`internal/mcpserver`, `cmd/lk-mcp`)
+
+From CLAUDE.md §MCP server rules and the approved Phase 3 plan (DECISIONS.md D-011, D-012). IDs are `X-<AREA>-NN` and follow the same rules as `C-` IDs.
+
+| ID | Requirement | Source | Phase |
+|---|---|---|---|
+| X-CFG-01 | Config comes from the environment only: `LEGENDKEEPER_API_KEY` is project `default`; `LEGENDKEEPER_API_KEY_<NAME>` is project `<name>` in lower case (letters, digits, `_`; `default` is reserved); empty values are ignored; `LEGENDKEEPER_BASE_URL`, `LK_MCP_READ_ONLY`, `LK_MCP_GUARD_FILE`, `LK_MCP_GUARD=off`, `LK_MCP_LOG_LEVEL`. A malformed value is a startup error. | CLAUDE.md §MCP Modes | 3 |
+| X-CFG-02 | No API key appears in the config's `String()`, in logs, in tool output or in tool errors. | CLAUDE.md §MCP Logging | 3 |
+| X-PROJ-01 | Every tool takes an optional `project` name. Omitted means `default`, or the only project when one is configured; with several and no default, or an unknown name, the call fails naming the configured projects. | CLAUDE.md §MCP Modes | 3 |
+| X-PROJ-02 | Each project has one `lk.Client`, made on first use and reused, with its own rate limiter. | CLAUDE.md §Rate limits | 3 |
+| X-TOOL-01 | Read tools (`list_projects`, `search`, `list_resources`, `get_resource`, `read_page`, `list_tags`, `list_assets`) send exactly the documented reads and nothing else. `read_page` returns the page as LK Markdown with its version, the first page document when none is given. | Plan §Tools | 3 |
+| X-TOOL-02 | Every tool has annotations with a title and `openWorldHint: false`; read tools are `readOnlyHint`; every write tool states `destructiveHint` and `idempotentHint` and takes `dry_run`. | CLAUDE.md §MCP Tools | 3 |
+| X-TOOL-03 | Write tools send exactly the documented requests (method, path, body; `If-Match` on versioned writes; one `Idempotency-Key` per POST). Fields the caller didn't give are not sent. | Plan §Tools; C-VER, C-IDEM | 3 |
+| X-TOOL-04 | With `dry_run`, a write tool sends no write request (only the reads it needs) and reports what it would do. | CLAUDE.md §MCP Tools | 3 |
+| X-TOOL-05 | `edit_page` re-reads the page and refuses when its version isn't `base_version`; otherwise it writes through `markdown.Replace` (If-Match) and reports kept, changed, added and removed blocks, calling out removed secrets. | Plan §edit_page; M-API-04 | 3 |
+| X-TOOL-06 | `set_property` updates the sidebar property whose title equals `title` exactly, or creates it when none does; two with that title is an error. It writes a text field from `markdown` or key-value rows from `rows`. `delete_property` deletes by title or id. | Plan §Tools | 3 |
+| X-TOOL-07 | `upload_image` reads a local file, refuses types the API doesn't accept before any request, and returns the asset id and URL. A dry run reads and checks the file but sends nothing. | Plan §Tools; C-ASSET-08 | 3 |
+| X-TOOL-08 | `delete_resource`'s dry run reports the resource, its documents and its children; with live children it needs `cascade`. `restore_resource` undoes a delete. Document tools create, rename, hide and unhide documents. | Plan §Tools | 3 |
+| X-RO-01 | With `LK_MCP_READ_ONLY=true` no write tool is registered: `tools/list` shows only read tools and calling a write tool fails. | CLAUDE.md §MCP Modes | 3 |
+| X-GUARD-01 | Terms load from `LK_MCP_GUARD_FILE`: UTF-8, one term per line, `#` comments and blank lines skipped, lines trimmed. The file is re-read when it changes. A missing, unreadable or invalid file makes every write fail; nothing is sent. | CLAUDE.md §Spoiler guard; D-011 | 3 |
+| X-GUARD-02 | A term matches case-insensitively (Unicode simple folding) as whole words within one string; the words of a multi-word term match across any run of whitespace. | D-012 | 3 |
+| X-GUARD-03 | Every string of the outgoing content is checked, including lk-raw JSON, unmodelled fields, titles, alt text, URLs, rows and mention labels and names, except inside an object with `"kind":"secret"` or `"isHidden":true`. | D-011 | 3 |
+| X-GUARD-04 | A write whose target resource or document is hidden is not checked; `create_resource` and `create_document` with `is_hidden` aren't either. Hidden means the entity's own flag; it isn't inherited. | D-011, D-012 | 3 |
+| X-GUARD-05 | Unhiding a resource, document or property first checks everything it would show (names, tags, every page, every property); a violation refuses the unhide. | D-011 | 3 |
+| X-GUARD-06 | Without a terms file and without `LK_MCP_GUARD=off`, write tools refuse with a hint; reads work. `list_projects` reports the guard state. | D-011 | 3 |
+| X-GUARD-07 | The guard runs before the first write request; a refused write sends nothing, and the error lists each term and where it is. | CLAUDE.md §Spoiler guard | 3 |
+| X-OUT-01 | Tool output is concise text naming ids, names and versions, plus structured metadata; page content appears only in the text. | CLAUDE.md §Tool output | 3 |
+| X-ERR-01 | A failed call is a tool error (not a protocol error) with the error code, the request ID and an actionable hint. | CLAUDE.md §Tool output | 3 |
+| X-LOG-01 | stdout carries only MCP protocol frames; logs go to stderr as slog. | CLAUDE.md §MCP Logging | 3 |
+| X-LOG-02 | Logs hold one line per tool call (tool, project, duration, outcome) and never page content, Markdown or protected terms. | CLAUDE.md §MCP Logging | 3 |
+
 ---
 
 ## Ambiguities and conflicts

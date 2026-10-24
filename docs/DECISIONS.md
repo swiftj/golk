@@ -93,6 +93,9 @@ approved.
 
 | `github.com/yuin/goldmark` v1.8.6 (added 2026-10-24, Phase 2b) | CommonMark + GFM parser for `lk/markdown` (LK_MARKDOWN.md §7). Writing a CommonMark-correct parser by hand would be large and error-prone, and the converter guards player-visible content. Only `lk/markdown` imports it, so `lk` callers who don't use Markdown don't link it. | None (pure Go, no dependencies of its own; `CGO_ENABLED=0 go build` checked) |
 
+| `github.com/modelcontextprotocol/go-sdk` v1.8.0 (added 2026-10-24, Phase 3) | The official MCP Go SDK, which CLAUDE.md mandates for lk-mcp: stdio transport, typed tools with JSON Schema input validation and structured output, in-memory transports for tests. It brings `google/jsonschema-go`, `segmentio/encoding` + `segmentio/asm` (assembly, not cgo), `yosida95/uritemplate`, `golang-jwt/jwt`, `golang.org/x/oauth2`, `x/sync`, `x/sys` and `x/tools`; jwt and oauth2 serve its HTTP auth, which lk-mcp doesn't use. Only `cmd/lk-mcp` and `internal/mcpserver` import it. | None: `CGO_ENABLED=0` builds pass for every target |
+| `golang.org/x/sys` v0.44.0 (indirect) | Raised from the SDK's v0.41.0 so govulncheck reports no required-module vulnerability (GO-2026-5024, Windows-only, never called). | None |
+
 That is the whole module graph (`go mod graph`). UUIDs (idempotency keys) and cuid2-format IDs use `crypto/rand` instead of a dependency. The generator (`internal/cmd/lkgen`) uses only the standard library.
 
 ## D-007 — Core implementation choices
@@ -199,3 +202,22 @@ That is the whole module graph (`go mod graph`). UUIDs (idempotency keys) and cu
 - **Date:** 2026-10-24
 - **Decision (owner):** lk-mcp is built and supported for `darwin/arm64`, `darwin/amd64`, `linux/amd64` and `linux/arm64` only. Linux covers server deployments such as AWS Lightsail. Windows is not a target: no Windows builds, no Windows-specific code paths, now or later.
 - `make build` builds those four targets, and `make verify-static` fails on any other binary in `dist/`. CLAUDE.md's build section says the same.
+
+## D-011 — lk-mcp tools and spoiler guard semantics (Phase 3)
+
+- **Date:** 2026-10-24
+- **Owner decisions (Phase 3 planning):**
+  - The guard checks **all outgoing content** of a write, not only what the edit changed. A page that already holds a protected term outside DM-only content can't be written until that is fixed; the error names each term and where it is.
+  - **DM-only content** is a `secret` block, a hidden document, a hidden resource (all of it), a hidden sidebar property and a hidden infobox row.
+  - v1 tools are the read tools; create/update resource; edit page; sidebar properties; image upload; delete/restore resource; and document create/rename/hide.
+  - Without a terms file, writes are **refused** unless `LK_MCP_GUARD=off` is set.
+- **Tools are task-shaped.** Pages are read and written as LK Markdown (`read_page` gives the version; `edit_page` takes the whole page and that version and writes with `markdown.Replace`). Structured output carries ids, names and versions; page text is only in the text content, so a page isn't sent twice.
+- **Read-only mode registers no write tools** rather than registering tools that refuse.
+
+## D-012 — Guard details not covered by the docs
+
+- **Date:** 2026-10-24
+- **Hidden is not inherited.** The docs say a hidden entity is invisible to lower roles, but not that a hidden resource hides its children. The guard treats only an entity's own flag as hidden.
+- **Generic visible-string walk.** Content is encoded to JSON and every string is checked, skipping objects with `"kind":"secret"` or `"isHidden":true`. This needs no per-kind list, covers lk-raw blocks and unmodelled fields, and fails toward checking more.
+- **Per-string, whole-word matching** with case folding; multi-word terms match across whitespace runs. A term split across two strings (two runs with different marks) isn't matched; players see them joined, so this is a known limitation recorded for review (see Phase 3 review).
+- **The terms file is re-read when it changes** (mtime and size), so a DM can add a term without restarting the server. It is never logged; logs give only the number of violations.
