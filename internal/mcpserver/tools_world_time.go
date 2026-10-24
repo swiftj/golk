@@ -482,12 +482,6 @@ type EventWriteOut struct {
 	DryRun     bool     `json:"dry_run,omitempty"`
 }
 
-func setOpt[T any](dst *lk.Optional[T], src *T) {
-	if src != nil {
-		*dst = lk.Some(*src)
-	}
-}
-
 func (s *server) setEvent(ctx context.Context, c *lk.Client, in SetEventIn) (toolResult[EventWriteOut], error) {
 	var zero toolResult[EventWriteOut]
 	formatted, minutes := in.FormattedStart != nil || in.FormattedEnd != nil, in.Start != nil || in.End != nil
