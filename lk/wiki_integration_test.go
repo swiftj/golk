@@ -17,6 +17,7 @@ import (
 	"github.com/swiftj/golk/internal/sandbox"
 	"github.com/swiftj/golk/lk"
 	"github.com/swiftj/golk/lk/blocks"
+	"github.com/swiftj/golk/lk/markdown"
 )
 
 func firstDoc(r *lk.Resource) lk.DocRef {
@@ -179,6 +180,23 @@ func TestIntegration_EveryKindRoundTrips(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	// Every kind the server returns renders as Markdown (not lk-raw) and
+	// parses back to the same page (M-API-01, M-OPQ-01).
+	md, err := markdown.ToMarkdown(read.Blocks, markdown.ToOptions{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(md, "lk-raw") {
+		t.Errorf("server blocks rendered an lk-raw fence:\n%s", md)
+	}
+	back, _, err := markdown.FromMarkdown(md, markdown.FromOptions{Base: read.Blocks})
+	if err != nil {
+		t.Fatalf("%v\n%s", err, md)
+	}
+	if a, b := canonical(t, read.Blocks), canonical(t, back); a != b {
+		t.Errorf("Markdown round trip changed the page:\nread %s\nback %s", a, b)
+	}
+
 	again, err := c.Documents.ReplaceBlocks(ctx, doc, read.Blocks, lk.IfMatch(read.Version))
 	if err != nil {
 		t.Fatal(err)
