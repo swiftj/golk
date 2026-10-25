@@ -75,7 +75,7 @@ func TestSetProperty_X_TOOL_04_DryRunAndX_TOOL_03_HideOnly(t *testing.T) {
 	h := newHarness(t)
 	h.lk.Enqueue(wtOK(wtRes), wtOK(wtProps))
 	got := wtMustOK(t, h, "set_property", map[string]any{"resource_id": "r1", "title": "Facts", "is_hidden": true, "dry_run": true})
-	if got != `Dry run: would update keyValue property "Facts" (q2): hide it from players on "Ooo" (r1). Nothing was written.` {
+	if got != `Dry run: would update keyValue property "Facts" (q2): hide it from players in the sidebar of resource r1. Nothing was written.` {
 		t.Errorf("text %q", got)
 	}
 	h.lk.Enqueue(wtOK(wtRes), wtOK(wtProps), wtOK(wtPropKV))
@@ -101,7 +101,7 @@ func TestDeleteProperty_X_TOOL_06_ByTitleAndID(t *testing.T) {
 	h := newHarness(t)
 	h.lk.Enqueue(wtOK(wtProps))
 	got := wtMustOK(t, h, "delete_property", map[string]any{"resource_id": "r1", "title": "Facts", "dry_run": true})
-	if got != `Dry run: would delete keyValue property "Facts" (q2) of resource r1. Nothing was written.` {
+	if got != `Dry run: would delete keyValue property "Facts" (q2) in the sidebar of resource r1. Nothing was written.` {
 		t.Errorf("text %q", got)
 	}
 	if len(h.writes()) != 0 {

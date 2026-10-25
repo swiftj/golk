@@ -501,6 +501,12 @@ From CLAUDE.md §MCP server rules and the approved Phase 3 plan (DECISIONS.md D-
 | X-DOC-03 | `delete_document` and `restore_document` call `deleteDocument` and `restoreDocument`; the delete's dry run names the document. | D-021 | 7 |
 | X-DOC-04 | `assign_block_ids` calls `assignBlockIds` and reports how many blocks got ids. | D-021 | 7 |
 | X-GUARD-14 | With the guard on, `restore_document` hides a restored visible document of a visible resource at once, checks it, and shows it again only if it passes; a refusal leaves it hidden. | D-021 | 7 |
+| X-PROP-01 | `set_property` creates a property of any kind from `property_markdown` (one property directive, as `get_resource` renders it), placed with `after`/`before`. | D-021 | 7 |
+| X-PROP-02 | `property_markdown` on an existing property patches its whole content; `rank` moves it; a different kind, or `after`/`before` on an existing property, is refused. Only one of `markdown`, `rows`, `property_markdown` may be given. | D-021 | 7 |
+| X-PROP-03 | With `document_id` and `block_id`, `set_property` and `delete_property` use the infobox property operations, sending the page version read with the list as `If-Match`; content on a hidden page or resource isn't checked. | D-021 | 7 |
+| X-ROW-01 | `set_row` adds a row (key, inline-Markdown value, optional text, after/before) to a sidebar keyValue property, a keyValue block or an infobox keyValue property, with the rows' version as `If-Match`. | D-021 | 7 |
+| X-ROW-02 | `set_row` matches an existing row by `row_id` or exact key and patches only `new_key`, `value` and `text` as given. | D-021 | 7 |
+| X-ROW-03 | `delete_row` deletes one row by id or key with `If-Match`. A row is checked by the guard unless its resource, page or property is hidden. | D-021 | 7 |
 
 ---
 

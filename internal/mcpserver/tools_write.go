@@ -59,15 +59,29 @@ func (s *server) addWriteTools(ms *mcp.Server) {
 		Annotations: write("Edit page", true, false),
 	}, func(in EditPageIn) string { return in.Project }, serial(s, s.editPage))
 	addTool(s, ms, &mcp.Tool{
-		Name:        "set_property",
-		Description: "Create or update a resource's sidebar property by exact title: a text field from markdown, or key-value rows from rows (replacing all rows). Can also hide or show it.",
+		Name: "set_property",
+		Description: "Create or update a property by exact title (or property_id): in a resource's sidebar, or with document_id and block_id in an infobox on a page. " +
+			"Give markdown (a text field), rows (key-value, replacing all rows), or property_markdown for any kind (meter, links, collection, image, embed, map, ...) as get_resource shows it. " +
+			"Can hide or show it, hide its title, move it (rank) or place a new one (after or before).",
 		Annotations: write("Set property", true, true),
 	}, func(in SetPropertyIn) string { return in.Project }, serial(s, s.setProperty))
 	addTool(s, ms, &mcp.Tool{
 		Name:        "delete_property",
-		Description: "Delete a resource's sidebar property by exact title or by property_id.",
+		Description: "Delete a property by exact title or by property_id, from a resource's sidebar or (with document_id and block_id) an infobox on a page.",
 		Annotations: write("Delete property", true, false),
 	}, func(in DeletePropertyIn) string { return in.Project }, serial(s, s.deleteProperty))
+	addTool(s, ms, &mcp.Tool{
+		Name: "set_row",
+		Description: "Add or change one key-value row: in a sidebar keyValue property (resource_id, property_id), a keyValue block on a page (document_id, block_id), " +
+			"or a keyValue property of an infobox (document_id, block_id, property_id). Matches an existing row by row_id or key; otherwise adds one (placed with after or before). " +
+			"The value is inline LK Markdown. Other rows are untouched.",
+		Annotations: write("Set row", false, true),
+	}, func(in SetRowIn) string { return in.Project }, serial(s, s.setRow))
+	addTool(s, ms, &mcp.Tool{
+		Name:        "delete_row",
+		Description: "Delete one key-value row, by row_id or exact key, from a sidebar keyValue property, a keyValue block, or an infobox's keyValue property (targeted as for set_row).",
+		Annotations: write("Delete row", true, false),
+	}, func(in DeleteRowIn) string { return in.Project }, serial(s, s.deleteRow))
 	addTool(s, ms, &mcp.Tool{
 		Name:        "create_document",
 		Description: "Add a page or blank document (a tab) to a resource, optionally with the page's content as LK Markdown.",
