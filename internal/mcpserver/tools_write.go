@@ -14,10 +14,26 @@ import (
 func (s *server) addWriteTools(ms *mcp.Server) {
 	addTool(s, ms, &mcp.Tool{
 		Name: "update_document",
-		Description: "Rename a document (a tab of a resource), or hide it from players or show it to them. Showing a page checks its whole content with the spoiler guard first. " +
+		Description: "Rename a document (a tab of a resource), hide it from players or show it to them, reorder the tabs (rank) or set full width. Showing a document checks its whole content with the spoiler guard first. " +
 			"For a timeline document, calendar_id sets its calendar and sources sets the timelines it chains ([] clears them); the chained lanes and events are checked by the spoiler guard first.",
 		Annotations: write("Update document", true, true),
 	}, func(in UpdateDocumentIn) string { return in.Project }, serial(s, s.updateDocument))
+	addTool(s, ms, &mcp.Tool{
+		Name:        "delete_document",
+		Description: "Delete a document (a tab of a resource) with its content. It waits in the project's trash; restore_document brings it back. Use dry_run to see what would go.",
+		Annotations: write("Delete document", true, false),
+	}, func(in DeleteDocumentIn) string { return in.Project }, serial(s, s.deleteDocument))
+	addTool(s, ms, &mcp.Tool{
+		Name: "restore_document",
+		Description: "Restore a deleted document (tab) in its old place, with its content. With the spoiler guard on, a restored visible document is hidden at once, " +
+			"checked, and shown again only if it passes. To restore a deleted resource, use restore_resource.",
+		Annotations: write("Restore document", false, false),
+	}, func(in RestoreDocumentIn) string { return in.Project }, serial(s, s.restoreDocument))
+	addTool(s, ms, &mcp.Tool{
+		Name:        "assign_block_ids",
+		Description: "Give an id to every block of a page that lacks one (pages written in the app before block ids existed). Content doesn't change. Run it once before read_block, update_block and the other block tools on such a page.",
+		Annotations: write("Assign block ids", false, true),
+	}, func(in AssignBlockIDsIn) string { return in.Project }, serial(s, s.assignBlockIDs))
 	addTool(s, ms, &mcp.Tool{
 		Name: "create_resource",
 		Description: "Create a resource (wiki entry), optionally with its first page as LK Markdown, or with 1-5 documents of any type (page, map, time, board, blank). " +
@@ -112,7 +128,9 @@ type UpdateDocumentIn struct {
 	CalendarID *string `json:"calendar_id,omitempty" jsonschema:"a timeline document's calendar (list_calendars); its dates and names show on the timeline"`
 	// Sources is a pointer so that [] (clear the chain) differs from
 	// omitted.
-	Sources *[]SourceOut `json:"sources,omitempty" jsonschema:"the timelines a timeline document chains, in order, replacing the list; [] clears it. Their lanes and events are checked by the spoiler guard unless this timeline is hidden"`
+	Sources     *[]SourceOut `json:"sources,omitempty" jsonschema:"the timelines a timeline document chains, in order, replacing the list; [] clears it. Their lanes and events are checked by the spoiler guard unless this timeline is hidden"`
+	Rank        *string      `json:"rank,omitempty" jsonschema:"the tab order: a rank string; tabs sort by rank as plain strings (get_resource shows each tab's rank)"`
+	IsFullWidth *bool        `json:"is_full_width,omitempty" jsonschema:"true lays the document out full width"`
 }
 
 // DocumentOut describes a document after a write (or, with dry_run, as it
@@ -137,8 +155,8 @@ func findDoc(r *lk.Resource, id string) (*lk.Document, error) {
 
 func (s *server) updateDocument(ctx context.Context, c *lk.Client, in UpdateDocumentIn) (toolResult[DocumentOut], error) {
 	var zero toolResult[DocumentOut]
-	if in.Name == nil && in.IsHidden == nil && in.CalendarID == nil && in.Sources == nil {
-		return zero, errors.New("nothing to change: give name, is_hidden, calendar_id or sources")
+	if in.Name == nil && in.IsHidden == nil && in.CalendarID == nil && in.Sources == nil && in.Rank == nil && in.IsFullWidth == nil {
+		return zero, errors.New("nothing to change: give name, is_hidden, calendar_id, sources, rank or is_full_width")
 	}
 	r, err := c.Resources.Get(ctx, in.ResourceID)
 	if err != nil {
@@ -158,6 +176,17 @@ func (s *server) updateDocument(ctx context.Context, c *lk.Client, in UpdateDocu
 	if in.IsHidden != nil && *in.IsHidden != d.IsHidden {
 		u.IsHidden, out.Hidden = lk.Some(*in.IsHidden), *in.IsHidden
 		did = append(did, map[bool]string{true: "hide it from players", false: "show it to players"}[*in.IsHidden])
+	}
+	if in.Rank != nil && *in.Rank != d.Rank {
+		if *in.Rank == "" {
+			return zero, errors.New("rank is empty: give a rank string")
+		}
+		u.Rank = lk.Some(*in.Rank)
+		did = append(did, fmt.Sprintf("set its tab rank to %q", *in.Rank))
+	}
+	if in.IsFullWidth != nil && *in.IsFullWidth != d.IsFullWidth {
+		u.IsFullWidth = lk.Some(*in.IsFullWidth)
+		did = append(did, map[bool]string{true: "make it full width", false: "make it normal width"}[*in.IsFullWidth])
 	}
 	// Calendar and chain belong to timeline documents. Resources.Get
 	// leaves out a document's sources, so read the document itself.

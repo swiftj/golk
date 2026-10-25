@@ -123,11 +123,13 @@ func reportText(rep *markdown.Report) string {
 type CreateDocumentIn struct {
 	ProjectArg
 	DryRunArg
-	ResourceID string  `json:"resource_id" jsonschema:"the resource to add the document (tab) to"`
-	Name       string  `json:"name" jsonschema:"the document's name"`
-	Type       string  `json:"type,omitempty" jsonschema:"page (default) or blank"`
-	IsHidden   *bool   `json:"is_hidden,omitempty" jsonschema:"true creates it hidden from players (DM-only)"`
-	Markdown   *string `json:"markdown,omitempty" jsonschema:"the page's content as LK Markdown; page documents only"`
+	ResourceID  string  `json:"resource_id" jsonschema:"the resource to add the document (tab) to"`
+	Name        string  `json:"name" jsonschema:"the document's name"`
+	Type        string  `json:"type,omitempty" jsonschema:"page (default), map, time (a timeline), board or blank"`
+	IsHidden    *bool   `json:"is_hidden,omitempty" jsonschema:"true creates it hidden from players (DM-only)"`
+	Markdown    *string `json:"markdown,omitempty" jsonschema:"the page's content as LK Markdown; page documents only"`
+	IsFullWidth *bool   `json:"is_full_width,omitempty" jsonschema:"true lays the document out full width"`
+	CalendarID  string  `json:"calendar_id,omitempty" jsonschema:"a time document's calendar (list_calendars)"`
 }
 
 func (s *server) createDocument(ctx context.Context, c *lk.Client, in CreateDocumentIn) (toolResult[DocumentOut], error) {
@@ -138,10 +140,13 @@ func (s *server) createDocument(ctx context.Context, c *lk.Client, in CreateDocu
 	typ := lk.DocumentPage
 	switch in.Type {
 	case "", "page":
-	case "blank":
-		typ = lk.DocumentBlank
+	case "blank", "map", "time", "board":
+		typ = lk.DocumentType(in.Type)
 	default:
-		return zero, fmt.Errorf("type %q is not supported here: use page or blank", in.Type)
+		return zero, fmt.Errorf("type %q is not a document type: use page, map, time, board or blank", in.Type)
+	}
+	if in.CalendarID != "" && typ != lk.DocumentTime {
+		return zero, errors.New("calendar_id is only for a time document")
 	}
 	if in.Markdown != nil && typ != lk.DocumentPage {
 		return zero, errors.New("markdown is only for a page document; omit it or use type page")
@@ -169,7 +174,7 @@ func (s *server) createDocument(ctx context.Context, c *lk.Client, in CreateDocu
 			return zero, err
 		}
 	}
-	dc := lk.DocumentCreate{Name: in.Name, Type: typ}
+	dc := lk.DocumentCreate{Name: in.Name, Type: typ, IsFullWidth: optPtr(in.IsFullWidth), CalendarID: optStr(in.CalendarID)}
 	if in.IsHidden != nil {
 		dc.IsHidden = lk.Some(*in.IsHidden)
 	}
