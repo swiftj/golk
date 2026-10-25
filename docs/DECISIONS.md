@@ -319,3 +319,17 @@ That is the whole module graph (`go mod graph`). UUIDs (idempotency keys) and cu
 - **Minimum Desktop version:** `compatibility.claude_desktop` is a semver range ("Minimum Claude Desktop version required"). No source names the first Desktop version that supports manifest 0.3, and what Desktop does on a mismatch isn't documented. The floor is `>=3.6556.2`, the owner's installed version and the one the extension is tested with. Lower it only when an older version is shown to work.
 - **MCP prompts:** lk-mcp offers `summarize_topic` (read) and `edit_page_safely`, `add_map_location` and `session_notes` (write, registered only when the write tools are). Each is one user message that names the tools in order. Whether Claude Desktop shows MCP prompts isn't documented; Claude Code lists them. The skills cover the same workflows, so nothing depends on Desktop showing prompts. X-PROMPT-03 checks every tool a prompt names exists.
 - The extension and plugin are now version 0.3.0.
+
+## D-020 — Deleting assets (`delete_asset`)
+
+- **Date:** 2026-10-25. **Owner request:** after Claude Desktop replaced an image, it couldn't remove the old one ("the connector has no way to delete assets").
+- **A-41, from the sandbox probe (`lk/probe6_integration_test.go`):**
+  - After `assets.delete`, `assets.get` answers 404, and deleting again answers 404.
+  - A page that already showed the image keeps the image block and its URL. The file URL still served (HTTP 200) right after the delete. The page can be rewritten unchanged with the URL in it.
+  - Writing that URL to *another* page fails with 400 VALIDATION_ERROR ("Images must be LegendKeeper assets of this project").
+  - How long the file stays served after a delete isn't documented. So the tool says pages keep the image, but doesn't promise for how long, and suggests replacing it on those pages first.
+- **The tool:** `delete_asset {asset_id, dry_run}`, destructive and idempotent.
+  - It reads the asset first, to name it. For a folder it counts the contents at any depth, capped at 1000, because deleting a folder deletes everything inside it.
+  - The guard doesn't run, since a delete shows players nothing.
+  - A key without the ADMIN role gets the API's 403 with the existing "an admin key may be needed" hint.
+- The wiki skill now spells out how to replace an image: upload the new one, swap the URL with `edit_page`, then `delete_asset` the old one.

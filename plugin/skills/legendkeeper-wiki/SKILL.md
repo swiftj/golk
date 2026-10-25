@@ -75,6 +75,6 @@ When a write is refused:
 - **Resources:** `create_resource` (optionally with `page_markdown`), `update_resource` (rename, tags, aliases, move, hide or show), `delete_resource` (`cascade` for children; dry run first) and `restore_resource`.
 - **Documents:** `create_document` and `update_document` (rename, hide or show).
 - **Sidebar properties:** `set_property` (by title; Markdown or rows) and `delete_property`.
-- **Images:** `upload_image` (from a local file path), then use the returned URL in `![alt](url)`. Only this project's asset URLs are accepted.
+- **Images:** `upload_image` (from a local file path), then use the returned URL in `![alt](url)`. Only this project's asset URLs are accepted. To replace an image, upload the new one, swap its URL into the page with `edit_page`, then remove the old one with `delete_asset` (use `list_assets` to find it, and dry run first). A deleted image stays on pages that already show it, but can't be added anywhere new.
 
 For maps, timelines, calendars, templates and boards, see the legendkeeper-worldbuilding skill.

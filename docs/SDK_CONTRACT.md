@@ -479,6 +479,7 @@ From CLAUDE.md §MCP server rules and the approved Phase 3 plan (DECISIONS.md D-
 | X-PROMPT-01 | lk-mcp offers MCP prompts: `summarize_topic` always; `edit_page_safely`, `add_map_location` and `session_notes` only when the write tools exist. Each has a title and description. | D-019 | 6 |
 | X-PROMPT-02 | Getting a prompt returns one user message with its arguments filled in. A missing required argument is an error; optional arguments may be left out. | D-019 | 6 |
 | X-PROMPT-03 | Every tool a prompt names exists in lk-mcp. | D-019 | 6 |
+| X-ASSET-01 | `delete_asset` reads the asset, then sends `DELETE …/assets/{id}`. Its text names the asset and, for an image, says pages that show it keep it but its URL can't be added anywhere new. For a folder it counts the contents (at any depth, capped) that go with it. A dry run only reads. The guard doesn't run (a delete shows players nothing). | D-020 | 6 |
 
 ---
 
@@ -726,3 +727,8 @@ copied into [`DECISIONS.md`](DECISIONS.md).
 
 - `BoardShapeList` has `version` with no description.
 - **Proposal:** treat it as the board version (the guide: "`boards.getContent`, `boards.listShapes` and every board write return" it); *probe* it equals `getContent`'s.
+
+### A-41 — Deleting an asset a page still shows
+
+- The guide says `assets.delete` "deletes the asset" (folders with their contents, ADMIN role). It doesn't say what happens to image blocks and properties that hold the asset's URL.
+- **Proposal:** *probe* it: upload, put the image on a page, delete, then read and rewrite the page, and put the URL on another page.

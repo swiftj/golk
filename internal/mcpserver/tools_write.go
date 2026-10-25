@@ -54,6 +54,12 @@ func (s *server) addWriteTools(ms *mcp.Server) {
 		Annotations: write("Upload image", false, false),
 	}, func(in UploadImageIn) string { return in.Project }, serial(s, s.uploadImage))
 	addTool(s, ms, &mcp.Tool{
+		Name: "delete_asset",
+		Description: "Delete an asset (an image, map image, audio file or folder) from the project's asset library, for example the old version after uploading a replacement image. " +
+			"Deleting a folder deletes everything inside it. Pages that already show a deleted image keep it, but its URL can't be added anywhere new. Needs an ADMIN key. Use dry_run to see what would go.",
+		Annotations: write("Delete asset", true, true),
+	}, func(in DeleteAssetIn) string { return in.Project }, serial(s, s.deleteAsset))
+	addTool(s, ms, &mcp.Tool{
 		Name:        "delete_resource",
 		Description: "Delete a resource with its documents and properties. A resource with children needs cascade, which deletes them too. Use dry_run to see what would go; restore_resource undoes it.",
 		Annotations: write("Delete resource", true, false),

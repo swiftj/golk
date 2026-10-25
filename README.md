@@ -5,7 +5,7 @@
 | Part | What it is | For |
 |---|---|---|
 | [`lk`](#the-lk-go-sdk) | A Go SDK for the LegendKeeper v3 REST API: retries, idempotency, versioned writes, pagination, rate limiting, typed blocks, and a lossless Markdown converter | Go developers |
-| [`lk-mcp`](#lk-mcp-the-mcp-server) | An MCP server with 39 task-shaped tools, built on `lk` | Claude Desktop (chat and Cowork), Claude Code and any MCP client |
+| [`lk-mcp`](#lk-mcp-the-mcp-server) | An MCP server with 40 task-shaped tools and 4 prompts, built on `lk` | Claude Desktop (chat and Cowork), Claude Code and any MCP client |
 | [Claude Desktop extension and plugin](#install-in-claude-desktop) | A one-click Claude Desktop extension (`.mcpb`), plus a plugin with two skills | People who want Claude to read and write their wiki |
 
 It was built for a DM who publishes a D&D world wiki that **players read**. So it puts correctness, data safety, and keeping DM-only content away from players ahead of speed:
@@ -150,18 +150,18 @@ Every tool carries MCP annotations (read-only, destructive, idempotent), and eve
 
 | Area | Read tools | Write tools |
 |---|---|---|
-| Projects and search | `list_projects`, `search`, `list_resources`, `get_resource`, `list_tags`, `list_assets` | |
+| Projects and search | `list_projects`, `search`, `list_resources`, `get_resource`, `list_tags` | |
 | Resources (wiki entries) | | `create_resource`, `update_resource` (rename, tags, aliases, move, hide or show), `delete_resource`, `restore_resource` |
 | Documents (tabs) and pages | `read_page` (as LK Markdown, with its version) | `create_document`, `update_document` (rename, hide or show, timeline calendar and chained sources), `edit_page` |
 | Sidebar properties | | `set_property`, `delete_property` |
-| Images | | `upload_image` (from a local file) |
+| Images and the asset library | `list_assets` | `upload_image` (from a local file), `delete_asset` (an image, map image, audio file or folder; e.g. the old version after a replacement) |
 | Maps | `read_map` | `set_map_feature` (pins, labels, regions, paths, folders; place by lat/lng or by image pixel), `delete_map_feature`, `set_map_image` |
 | Timelines | `read_timeline` | `set_timeline_lane`, `delete_timeline_lane`, `set_timeline_event`, `delete_timeline_event` |
 | Calendars | `list_calendars`, `get_calendar` | `create_calendar`, `replace_calendar`, `delete_calendar` |
 | Templates | `list_templates` | `save_as_template`, `create_from_template` |
 | Boards (tldraw canvases) | `read_board` | `add_board_shapes`, `update_board_shapes`, `delete_board_shapes`, `replace_board` |
 
-That's 13 read tools and 26 write tools. In read-only mode the write tools aren't registered at all.
+That's 13 read tools and 27 write tools. In read-only mode the write tools aren't registered at all.
 
 ### Prompts
 

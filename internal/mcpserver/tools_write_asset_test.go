@@ -85,3 +85,59 @@ func TestUploadImage_X_TOOL_04_X_GUARD_07(t *testing.T) {
 		t.Errorf("requests %+v", h.lk.Requests())
 	}
 }
+
+const (
+	daImage  = `{"id":"a1","name":"Ascore - Factions","type":"IMAGE","url":"https://assets.example/old.png","width":1124,"height":1999,"isHidden":false}`
+	daFolder = `{"id":"f1","name":"Old art","type":"FOLDER","isHidden":false}`
+	daPath   = "/api/v3/projects/p1/assets"
+)
+
+// X-ASSET-01: delete_asset reads the asset, then deletes it; the text names
+// it and says what happens to pages that show it.
+func TestDeleteAsset_X_ASSET_01(t *testing.T) {
+	h := newHarness(t)
+	h.lk.Enqueue(wtOK(daImage), testutil.Reply{Status: http.StatusNoContent})
+	got := wtMustOK(t, h, "delete_asset", map[string]any{"asset_id": "a1"})
+	if !strings.HasPrefix(got, `Deleted image "Ascore - Factions" (a1) from the asset library. Pages that already show it keep it`) {
+		t.Errorf("text %q", got)
+	}
+	reqs := h.lk.Requests()
+	wtReq(t, reqs[0], http.MethodGet, daPath+"/a1", "", "")
+	wtReq(t, reqs[1], http.MethodDelete, daPath+"/a1", "", "")
+	if len(h.guard.checked) != 0 {
+		t.Errorf("guard checked %v; deleting shows players nothing", h.guard.checked)
+	}
+
+	// A dry run reads only.
+	h = newHarness(t)
+	h.lk.Enqueue(wtOK(daImage))
+	if got := wtMustOK(t, h, "delete_asset", map[string]any{"asset_id": "a1", "dry_run": true}); !strings.HasPrefix(got, `Dry run: would delete image "Ascore - Factions" (a1)`) ||
+		!strings.HasSuffix(got, "Nothing was written.") || len(h.writes()) != 0 {
+		t.Errorf("text %q, writes %+v", got, h.writes())
+	}
+}
+
+// X-ASSET-01: a folder's dry run counts what is inside it at any depth.
+func TestDeleteAsset_X_ASSET_01_Folder(t *testing.T) {
+	h := newHarness(t)
+	h.lk.Enqueue(wtOK(daFolder),
+		wtOK(`{"data":[`+daImage+`,{"id":"f2","name":"Sub","type":"FOLDER"}],"hasMore":false}`),
+		wtOK(`{"data":[{"id":"a3","name":"Deep","type":"IMAGE","url":"https://assets.example/d.png"}],"hasMore":false}`))
+	got := wtMustOK(t, h, "delete_asset", map[string]any{"asset_id": "f1", "dry_run": true})
+	if !strings.Contains(got, `would delete folder "Old art" (f1) from the asset library. Everything inside it goes too: 3 asset(s).`) {
+		t.Errorf("text %q", got)
+	}
+	reqs := h.lk.Requests()
+	wtReq(t, reqs[1], http.MethodGet, daPath, "folderId=f1&limit=100", "")
+	wtReq(t, reqs[2], http.MethodGet, daPath, "folderId=f2&limit=100", "")
+}
+
+// X-ASSET-01: a key without the ADMIN role gets the API's error with a hint.
+func TestDeleteAsset_X_ASSET_01_Forbidden(t *testing.T) {
+	h := newHarness(t)
+	h.lk.Enqueue(wtOK(daImage), testutil.JSON(http.StatusForbidden, `{"message":"Admin role required","code":"FORBIDDEN","requestId":"rq9"}`))
+	got := wtMustFail(t, h, "delete_asset", map[string]any{"asset_id": "a1"}, "an admin key may be needed")
+	if !strings.Contains(got, "rq9") {
+		t.Errorf("text %q lacks the request id", got)
+	}
+}
