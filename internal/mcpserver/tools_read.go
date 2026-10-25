@@ -71,16 +71,16 @@ type ProjectInfo struct {
 type ListProjectsOut struct {
 	Projects []ProjectInfo `json:"projects"`
 	ReadOnly bool          `json:"read_only"`
-	// Guard is "on", "off" or "unset" (writes refused).
+	// Guard is "on", "off", or "off (no terms file)".
 	Guard string `json:"guard"`
 }
 
 func (s *server) guardState() string {
 	switch {
+	case s.noTerms:
+		return "off (no terms file)"
 	case s.cfg.GuardOff:
 		return "off"
-	case s.guard == nil:
-		return "unset"
 	}
 	return "on"
 }

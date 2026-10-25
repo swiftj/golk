@@ -14,8 +14,7 @@ Build both with `make mcpb plugin` in the repository root; they land in `dist/`.
 1. Double-click `dist/lk-mcp-darwin-arm64.mcpb` (or drag it into Claude Desktop, or use Settings › Extensions › Advanced settings › Install Extension).
 2. Fill in the settings:
    - **LegendKeeper API key:** the key of the one project Claude should work in. Start with a **sandbox** project, not the wiki your players read.
-   - **Spoiler terms file:** a text file with one protected term per line. Keep it outside the wiki and out of any repository. A write that would show one of these terms to players is refused. Secret blocks and hidden pages, documents and properties may hold them.
-   - **Spoiler guard:** on by default. With the guard on and no terms file, Claude can read but not write.
+   - **Spoiler terms file** (optional): leave it empty and Claude has full DM access, so every write is allowed. To protect spoilers, choose a text file with one term per line, kept outside the wiki and out of any repository. A write that would show one of those terms to players is then refused. Secret blocks and hidden pages, documents and properties may still hold them.
    - **Read-only:** offers Claude only the read tools.
 3. In a new chat, ask "List my LegendKeeper projects". The answer names the project and says whether the guard is on.
 

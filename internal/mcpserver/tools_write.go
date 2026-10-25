@@ -75,12 +75,6 @@ func (s *server) addWriteTools(ms *mcp.Server) {
 // atomic with respect to every other write tool of this server.
 func serial[In, Out any](s *server, h func(context.Context, *lk.Client, In) (toolResult[Out], error)) func(context.Context, *lk.Client, In) (toolResult[Out], error) {
 	return func(ctx context.Context, c *lk.Client, in In) (toolResult[Out], error) {
-		// Without a guard every write tool refuses (D-011), also those
-		// that can't show anything (delete, hide, move).
-		if err := s.guardReady(); err != nil {
-			var zero toolResult[Out]
-			return zero, err
-		}
 		s.writeMu.Lock()
 		defer s.writeMu.Unlock()
 		return h(ctx, c, in)

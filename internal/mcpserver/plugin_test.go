@@ -112,7 +112,7 @@ func TestPlugin_X_PLUG_01_Manifest(t *testing.T) {
 	if k := m.UserConfig["api_key"]; k.Type != "string" || !k.Required || !k.Sensitive {
 		t.Errorf("api_key = %+v, want a required, sensitive string", k)
 	}
-	read := map[string]bool{"LEGENDKEEPER_API_KEY": true, "LK_MCP_GUARD_FILE": true, "LK_MCP_GUARD": true, "LK_MCP_READ_ONLY": true}
+	read := map[string]bool{"LEGENDKEEPER_API_KEY": true, "LK_MCP_GUARD_FILE": true, "LK_MCP_READ_ONLY": true}
 	for k, v := range m.Server.MCPConfig.Env {
 		if !read[k] {
 			t.Errorf("env %s is not one lk-mcp reads", k)
@@ -138,24 +138,25 @@ func TestPlugin_X_PLUG_01_Manifest(t *testing.T) {
 func TestPlugin_X_PLUG_02_SettingsToConfig(t *testing.T) {
 	m := readManifest(t)
 	for name, tc := range map[string]struct {
-		user               map[string]any
-		guardOff, readOnly bool
-		guardFile          string
+		user      map[string]any
+		readOnly  bool
+		guardFile string
 	}{
-		"defaults":       {user: map[string]any{"api_key": "made-up-key"}},
-		"terms file":     {user: map[string]any{"api_key": "made-up-key", "guard_file": "/elsewhere/terms.txt"}, guardFile: "/elsewhere/terms.txt"},
-		"guard off":      {user: map[string]any{"api_key": "made-up-key", "spoiler_guard": false}, guardOff: true},
-		"read-only":      {user: map[string]any{"api_key": "made-up-key", "read_only": true}, readOnly: true},
-		"read-only, off": {user: map[string]any{"api_key": "made-up-key", "read_only": false, "spoiler_guard": true}},
+		"defaults":   {user: map[string]any{"api_key": "made-up-key"}},
+		"terms file": {user: map[string]any{"api_key": "made-up-key", "guard_file": "/elsewhere/terms.txt"}, guardFile: "/elsewhere/terms.txt"},
+		"read-only":  {user: map[string]any{"api_key": "made-up-key", "read_only": true}, readOnly: true},
+		"writable":   {user: map[string]any{"api_key": "made-up-key", "read_only": false, "guard_file": ""}},
 	} {
 		t.Run(name, func(t *testing.T) {
 			c, err := ConfigFromEnv(substitute(t, m, tc.user))
 			if err != nil {
 				t.Fatal(err)
 			}
-			if c.GuardOff != tc.guardOff || c.ReadOnly != tc.readOnly || c.GuardFile != tc.guardFile ||
+			// The guard runs exactly when a terms file is given; without
+			// one every write is allowed (D-017).
+			if c.GuardOff || c.ReadOnly != tc.readOnly || c.GuardFile != tc.guardFile ||
 				!slices.Equal(c.Projects(), []string{DefaultProject}) {
-				t.Errorf("config = %v, want guardOff=%t readOnly=%t file=%q", c, tc.guardOff, tc.readOnly, tc.guardFile)
+				t.Errorf("config = %v, want readOnly=%t file=%q", c, tc.readOnly, tc.guardFile)
 			}
 		})
 	}

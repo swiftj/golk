@@ -2,9 +2,9 @@
   "manifest_version": "0.3",
   "name": "lk-mcp",
   "display_name": "LegendKeeper",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Read and edit a LegendKeeper world wiki: pages, maps, timelines, calendars, templates and boards, with a spoiler guard for DM-only content.",
-  "long_description": "lk-mcp lets Claude create, read, update and delete content in one LegendKeeper project through the LegendKeeper API. Every write supports a dry run, and versioned writes never overwrite a change made in the app since Claude's last read. The optional spoiler guard refuses any write that would show a protected term (one per line in a text file you keep outside the wiki) on content players can see; secret blocks, hidden pages and hidden documents may hold them.",
+  "long_description": "lk-mcp lets Claude create, read, update and delete content in one LegendKeeper project through the LegendKeeper API. Every write supports a dry run, and versioned writes never overwrite a change made in the app since Claude's last read. An optional spoiler guard refuses any write that would show a protected term (one per line in a text file you keep outside the wiki) on content players can see; without a terms file Claude has full DM access.",
   "author": {
     "name": "John Swift",
     "url": "https://github.com/swiftj"
@@ -23,7 +23,6 @@
       "env": {
         "LEGENDKEEPER_API_KEY": "${user_config.api_key}",
         "LK_MCP_GUARD_FILE": "${user_config.guard_file}",
-        "LK_MCP_GUARD": "${user_config.spoiler_guard}",
         "LK_MCP_READ_ONLY": "${user_config.read_only}"
       }
     }
@@ -44,15 +43,8 @@
     "guard_file": {
       "type": "file",
       "title": "Spoiler terms file",
-      "description": "A text file with one protected term per line, kept outside the wiki. A write that would show one of them to players is refused. Without it (and with the guard on), Claude can read but not write.",
+      "description": "Optional. A text file with one protected term per line, kept outside the wiki. When set, a write that would show one of them to players is refused (secret blocks and hidden pages, documents and properties may hold them). Leave it empty for full DM access: every write is allowed.",
       "default": "",
-      "required": false
-    },
-    "spoiler_guard": {
-      "type": "boolean",
-      "title": "Spoiler guard",
-      "description": "Check every write against the spoiler terms file. Turn off only for a project players never see.",
-      "default": true,
       "required": false
     },
     "read_only": {

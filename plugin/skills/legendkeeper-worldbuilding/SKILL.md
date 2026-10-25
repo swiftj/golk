@@ -5,7 +5,7 @@ description: Work with LegendKeeper maps, timelines, calendars, templates and bo
 
 # LegendKeeper worldbuilding
 
-Each of these lives in a document (tab) of a resource. Read before you write, keep ids from the read, and use `dry_run: true` before deleting or replacing. The spoiler guard and hidden-content rules from the legendkeeper-wiki skill apply to everything here. In addition, **hidden pins and hidden timeline events are still checked like public content**, so a protected term can't go on one.
+Each of these lives in a document (tab) of a resource. Read before you write, keep ids from the read, and use `dry_run: true` before deleting or replacing. The spoiler guard and hidden-content rules from the legendkeeper-wiki skill apply to everything here. When the guard is on, **hidden pins and hidden timeline events are still checked like public content**, so a protected term can't go on one.
 
 ## Maps
 

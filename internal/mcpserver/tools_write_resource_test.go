@@ -293,9 +293,13 @@ func TestRestoreResource_X_TOOL_04_DryRunAndNoGuard(t *testing.T) {
 	if !strings.HasPrefix(got, "Dry run: would restore resource r1") || !strings.HasSuffix(got, "Nothing was written.") {
 		t.Errorf("text %q", got)
 	}
-	ng := newHarness(t, noGuard())
-	wtMustFail(t, ng, "restore_resource", map[string]any{"id": "r1"}, "LK_MCP_GUARD_FILE")
-	if len(h.lk.Requests())+len(ng.lk.Requests()) != 0 {
+	if len(h.lk.Requests()) != 0 {
 		t.Errorf("requests sent")
+	}
+	// Without a terms file a restore is not hidden and checked (D-017).
+	ng := newHarness(t, noGuard())
+	ng.lk.Enqueue(wtOK(`{"id":"r1","name":"Ooo","isHidden":false,"documents":[]}`))
+	if got := wtMustOK(t, ng, "restore_resource", map[string]any{"id": "r1"}); !strings.Contains(got, `Restored resource "Ooo" (r1)`) || len(ng.writes()) != 1 {
+		t.Errorf("text %q, writes %+v", got, ng.writes())
 	}
 }

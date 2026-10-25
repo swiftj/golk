@@ -25,9 +25,6 @@ func (e *GuardError) Error() string {
 	return b.String()
 }
 
-// errNoGuard refuses a write when no guard is configured.
-var errNoGuard = errors.New("spoiler guard: no terms file is configured, so writes are refused. Hint: set LK_MCP_GUARD_FILE to the protected-terms file, or LK_MCP_GUARD=off to write without a guard")
-
 // explain turns err into a tool error a model can act on: the code, the
 // request ID and a hint. It never includes an API key; lk errors don't
 // carry one.
@@ -37,7 +34,7 @@ func explain(err error) error {
 	var ide *markdown.IDError
 	var ge *GuardError
 	switch {
-	case errors.As(err, &ge), errors.Is(err, errNoGuard):
+	case errors.As(err, &ge):
 		return err
 	case errors.As(err, &ae):
 		var b strings.Builder

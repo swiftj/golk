@@ -64,12 +64,11 @@ Body Markdown.
 
 ## The spoiler guard
 
-When it is on, every write is checked against the DM's list of protected terms. A write that would put one on content players can see is refused, and the error lists each term and where it is.
+`list_projects` says whether it is on. Without a terms file it is off, and every write is allowed (full DM access). When it is on, every write is checked against the DM's list of protected terms. A write that would put one on content players can see is refused, and the error lists each term and where it is.
 
 When a write is refused:
 - **Don't** rephrase, misspell, split or abbreviate the term to get past the check. That defeats the DM's protection.
 - **Do** tell the DM which term was found where, and offer to put that part in a `:::secret` block or a hidden document or resource.
-- If the guard reports that no terms file is configured, writes are off until the DM sets one in the extension settings (or turns the guard off). Reads still work.
 
 ## Other tools
 

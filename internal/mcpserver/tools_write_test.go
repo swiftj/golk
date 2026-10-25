@@ -55,18 +55,20 @@ func TestUpdateDocument_X_TOOL_04_DryRunSendsNothing(t *testing.T) {
 	}
 }
 
-func TestWrites_X_GUARD_06_NoGuardRefuses(t *testing.T) {
+// Without a terms file nothing is protected: writes go through unchecked
+// (D-017), and list_projects says so.
+func TestWrites_X_GUARD_06_NoTermsFileWrites(t *testing.T) {
 	h := newHarness(t, noGuard())
-	h.lk.Enqueue(testutil.JSON(http.StatusOK, resourceJSON), testutil.JSON(http.StatusOK, blocksJSON))
+	h.lk.Enqueue(testutil.JSON(http.StatusOK, resourceJSON), testutil.JSON(http.StatusOK, `{"id":"d1","name":"Main","type":"page","rank":"a","isHidden":false}`))
 	r := h.call("update_document", map[string]any{"resource_id": "r1", "document_id": "d1", "is_hidden": false})
-	if !r.IsError || !strings.Contains(text(r), "LK_MCP_GUARD_FILE") || len(h.writes()) != 0 {
+	if r.IsError || len(h.writes()) != 1 {
 		t.Fatalf("%v: %s; writes %+v", r.IsError, text(r), h.writes())
 	}
 	h.lk.Enqueue(testutil.JSON(http.StatusOK, `{"id":"p1","name":"Ooo"}`))
 	lp := h.call("list_projects", map[string]any{})
 	var out ListProjectsOut
 	structured(t, lp, &out)
-	if out.Guard != "unset" {
+	if out.Guard != "off (no terms file)" || !strings.Contains(text(lp), "spoiler guard: off (no terms file)") {
 		t.Errorf("guard state = %q", out.Guard)
 	}
 }

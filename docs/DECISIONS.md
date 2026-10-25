@@ -295,3 +295,10 @@ That is the whole module graph (`go mod graph`). UUIDs (idempotency keys) and cu
 - **Substitution, from the mcpb package source** (`dist/shared/config.js`, `getMcpConfigForManifest`): defaults are applied, then the user's values; booleans become `"true"`/`"false"`; a reference to a setting with neither is left in the string literally. So the optional terms file has `default: ""`, which lk-mcp ignores as unset. X-PLUG-01 checks that every referenced setting is required or defaulted, and X-PLUG-02 re-implements the substitution to check the resulting config.
 - **Tooling:** `@anthropic-ai/mcpb` 2.1.2 (released 2025-12-04), run with `npx -y` from `make mcpb` to validate and pack. It is a build-only dev tool and not part of the Go module or the binary. The packed binary is the usual `CGO_ENABLED=0` darwin/arm64 build, and `verify-static` checks it inside the `.mcpb`.
 - **Version:** `plugin/mcpb/manifest.json` holds the release version (semver, `0.1.0`). The plugin manifest must match it (X-PLUG-03). The binary's `--version` remains `git describe`.
+
+## D-017 — No terms file means full DM access
+
+- **Date:** 2026-10-25.
+- **Owner decision:** "writing is a big part of the purpose of this MCP server and skill." Without a terms file, lk-mcp now allows every write, unchecked, as `LK_MCP_GUARD=off` does. This replaces D-011's "with no guard file, refuse writes". The guard is opt-in: set `LK_MCP_GUARD_FILE`, or pick a file in the Desktop extension.
+- With a terms file, nothing changes: an empty file, or one that changes while it is being read, still fails closed. An empty file is something the owner set up, so it fails loudly rather than silently switching protection off.
+- `list_projects` reports the guard as `on`, `off`, or `off (no terms file)`. The Desktop extension drops its separate "Spoiler guard" toggle, since leaving the terms file empty now does the same thing. `LK_MCP_GUARD` stays for environment-variable users. The extension and plugin version moves to 0.2.0.

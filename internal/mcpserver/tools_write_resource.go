@@ -44,15 +44,6 @@ func hiddenWord(h bool) string {
 	return "visible to players"
 }
 
-// guardReady refuses up front when no guard is configured, for a write
-// whose content can only be checked after it is sent (restore_resource).
-func (s *server) guardReady() error {
-	if s.cfg.GuardOff || s.guard != nil {
-		return nil
-	}
-	return errNoGuard
-}
-
 // visibleResource is everything players would see of r if it were
 // visible: its name, aliases and tags, its image and banner URLs, the names and blocks of its
 // documents that are not hidden, and its sidebar properties (hidden ones
@@ -474,9 +465,6 @@ type RestoreResourceOut struct {
 func (s *server) restoreResource(ctx context.Context, c *lk.Client, in RestoreResourceIn) (toolResult[RestoreResourceOut], error) {
 	var zero toolResult[RestoreResourceOut]
 	out := RestoreResourceOut{ResourceID: in.ID, DryRun: in.DryRun}
-	if err := s.guardReady(); err != nil {
-		return zero, err
-	}
 	if in.DryRun {
 		return toolResult[RestoreResourceOut]{out: out, text: fmt.Sprintf("Dry run: would restore resource %s and the descendants deleted with it. "+
 			"A deleted resource can't be read, so after the restore every visible resource of the restored tree is hidden at once, checked by the spoiler guard, and shown again only if it passes. Nothing was written.", in.ID)}, nil

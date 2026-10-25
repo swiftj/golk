@@ -54,19 +54,17 @@ func TestRedteam_X_GUARD_05_UncheckableDocumentsStayHidden(t *testing.T) {
 	}
 }
 
-// Without a terms file every write tool refuses before any request, even
-// those that can't show players anything (D-011).
-func TestRedteam_X_GUARD_06_NoGuardRefusesEveryWrite(t *testing.T) {
+// Without a terms file no write is refused for the guard's sake (D-017).
+func TestRedteam_X_GUARD_06_NoTermsFileNeverRefuses(t *testing.T) {
 	h := newHarness(t, noGuard())
 	for tool, args := range map[string]map[string]any{
-		"delete_resource": {"id": "r1"},
-		"delete_property": {"resource_id": "r1", "title": "T"},
-		"update_resource": {"id": "r1", "is_hidden": true},
+		"delete_resource": {"id": "r1", "dry_run": true},
+		"update_resource": {"id": "r1", "is_hidden": true, "dry_run": true},
 	} {
-		wtMustFail(t, h, tool, args, "LK_MCP_GUARD_FILE")
-	}
-	if n := len(h.lk.Requests()); n != 0 {
-		t.Errorf("%d requests sent", n)
+		h.lk.Enqueue(wtOK(`{"id":"r1","name":"Ooo","isHidden":false,"documents":[]}`), wtOK(`{"data":[],"hasMore":false}`))
+		if r := h.call(tool, args); r.IsError && strings.Contains(text(r), "spoiler guard") {
+			t.Errorf("%s: %s", tool, text(r))
+		}
 	}
 }
 

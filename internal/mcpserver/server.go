@@ -25,8 +25,8 @@ type Deps struct {
 	// ClientOptions are added to every lk client (tests point them at a
 	// fake server).
 	ClientOptions []lk.Option
-	// Guard is the spoiler guard. Nil with Config.GuardOff unset refuses
-	// every write (errNoGuard).
+	// Guard is the spoiler guard. Nil means there are no protected terms:
+	// writes are not checked, as with Config.GuardOff (D-017).
 	Guard Checker
 	// Version is the server version reported to clients.
 	Version string
@@ -38,6 +38,8 @@ type server struct {
 	log      *slog.Logger
 	projects *projects
 	guard    Checker
+	// noTerms is set when no terms file is configured, so the guard is off.
+	noTerms bool
 	// writeMu serializes the write tools (see serial).
 	writeMu sync.Mutex
 }
@@ -50,6 +52,11 @@ func New(cfg Config, d Deps) *mcp.Server {
 		log = slog.New(slog.DiscardHandler)
 	}
 	s := &server{cfg: cfg, log: log, projects: newProjects(cfg, d.ClientOptions), guard: d.Guard}
+	if d.Guard == nil {
+		// No terms file: nothing is protected, so writes are not checked
+		// (D-017, owner decision replacing D-011's refusal).
+		s.noTerms, s.cfg.GuardOff = !cfg.GuardOff, true
+	}
 	ms := mcp.NewServer(&mcp.Implementation{Name: "lk-mcp", Title: "LegendKeeper", Version: d.Version}, &mcp.ServerOptions{
 		Instructions: instructions,
 	})
@@ -70,7 +77,7 @@ func New(cfg Config, d Deps) *mcp.Server {
 const instructions = `Tools for a LegendKeeper wiki that players read.
 Pages are LK Markdown: read_page returns it with a version; edit_page takes the whole edited page and that version.
 Keep :::secret blocks for DM-only text, and keep ::unsupported and lk-raw lines as returned.
-Every write tool has dry_run; use it to preview. A spoiler guard refuses writes that put protected terms in player-visible content.`
+Every write tool has dry_run; use it to preview. When the DM has configured protected terms, a spoiler guard refuses writes that put them in player-visible content (list_projects says whether it is on).`
 
 // ProjectArg is the project parameter every tool takes.
 type ProjectArg struct {
@@ -127,8 +134,6 @@ func errorKind(err error) string {
 		return string(ae.Code)
 	case errors.As(err, &ge):
 		return "GUARD"
-	case errors.Is(err, errNoGuard):
-		return "NO_GUARD"
 	}
 	return "error"
 }
@@ -138,9 +143,6 @@ func errorKind(err error) string {
 func (s *server) check(v any) error {
 	if s.cfg.GuardOff {
 		return nil
-	}
-	if s.guard == nil {
-		return errNoGuard
 	}
 	vs, err := s.guard.Check(v)
 	if err != nil {

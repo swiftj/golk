@@ -295,8 +295,8 @@ func TestTimelineGuard_X_GUARD_11_HiddenEventChecked(t *testing.T) {
 	wtRefused(t, h, text(r))
 }
 
-// Without a guard, every timeline write tool refuses before any request.
-func TestTimelineWrites_NoGuard(t *testing.T) {
+// Without a terms file, timeline writes are not refused (D-017).
+func TestTimelineWrites_NoTermsFile(t *testing.T) {
 	h := newHarness(t, noGuard())
 	for tool, args := range map[string]map[string]any{
 		"set_timeline_lane":     {"resource_id": "r1", "name": "Jake", "rank": "a1", "size": "sm"},
@@ -304,12 +304,11 @@ func TestTimelineWrites_NoGuard(t *testing.T) {
 		"set_timeline_event":    {"resource_id": "r1", "lane_id": "l1", "type": "event", "start": 1},
 		"delete_timeline_event": {"resource_id": "r1", "event_id": "e1"},
 	} {
-		if r := h.call(tool, args); !r.IsError || !strings.Contains(text(r), "no terms file") {
+		args["dry_run"] = true
+		h.lk.Enqueue(wtOK(tlRes), wtOK(tlLanes), wtOK(tlEvents), wtOK(tlEvent))
+		if r := h.call(tool, args); r.IsError && strings.Contains(text(r), "spoiler guard") {
 			t.Errorf("%s: %s", tool, text(r))
 		}
-	}
-	if len(h.lk.Requests()) != 0 {
-		t.Errorf("requests %+v", h.lk.Requests())
 	}
 }
 

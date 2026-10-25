@@ -40,7 +40,7 @@ func run() error {
 	if cfg.GuardFile != "" && !cfg.GuardOff {
 		d.Guard = guard.Open(cfg.GuardFile)
 	} else if !cfg.GuardOff && !cfg.ReadOnly {
-		log.Warn("no spoiler guard terms file (LK_MCP_GUARD_FILE); write tools will refuse to write")
+		log.Info("no spoiler guard terms file (LK_MCP_GUARD_FILE); writes are not checked")
 	}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
