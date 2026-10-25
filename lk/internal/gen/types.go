@@ -63,6 +63,7 @@ var (
 	OpGetProperty                = Op{ID: "getProperty", Method: "GET", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/properties/{propertyId}"}
 	OpGetResource                = Op{ID: "getResource", Method: "GET", Path: "/api/v3/projects/{projectId}/resources/{resourceId}"}
 	OpInsertBlock                = Op{ID: "insertBlock", Method: "POST", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/blocks"}
+	OpInviteMember               = Op{ID: "inviteMember", Method: "POST", Path: "/api/v3/projects/{projectId}/members"}
 	OpListAssets                 = Op{ID: "listAssets", Method: "GET", Path: "/api/v3/projects/{projectId}/assets"}
 	OpListBlockProperties        = Op{ID: "listBlockProperties", Method: "GET", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/blocks/{blockId}/properties"}
 	OpListBlockPropertyRows      = Op{ID: "listBlockPropertyRows", Method: "GET", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/blocks/{blockId}/properties/{propertyId}/rows"}
@@ -72,7 +73,9 @@ var (
 	OpListDocuments              = Op{ID: "listDocuments", Method: "GET", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs"}
 	OpListEvents                 = Op{ID: "listEvents", Method: "GET", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/events"}
 	OpListFeatures               = Op{ID: "listFeatures", Method: "GET", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/features"}
+	OpListInvites                = Op{ID: "listInvites", Method: "GET", Path: "/api/v3/projects/{projectId}/invites"}
 	OpListLanes                  = Op{ID: "listLanes", Method: "GET", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/lanes"}
+	OpListMembers                = Op{ID: "listMembers", Method: "GET", Path: "/api/v3/projects/{projectId}/members"}
 	OpListProjects               = Op{ID: "listProjects", Method: "GET", Path: "/api/v3/projects"}
 	OpListProperties             = Op{ID: "listProperties", Method: "GET", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/properties"}
 	OpListPropertyRows           = Op{ID: "listPropertyRows", Method: "GET", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/properties/{propertyId}/rows"}
@@ -81,11 +84,13 @@ var (
 	OpListTemplates              = Op{ID: "listTemplates", Method: "GET", Path: "/api/v3/projects/{projectId}/templates"}
 	OpMoveBlock                  = Op{ID: "moveBlock", Method: "POST", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/blocks/{blockId}/move"}
 	OpMoveResource               = Op{ID: "moveResource", Method: "POST", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/move"}
+	OpRemoveMember               = Op{ID: "removeMember", Method: "DELETE", Path: "/api/v3/projects/{projectId}/members/{userId}"}
 	OpReplaceBlock               = Op{ID: "replaceBlock", Method: "PUT", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/blocks/{blockId}"}
 	OpReplaceBoardContent        = Op{ID: "replaceBoardContent", Method: "PUT", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/board"}
 	OpReplaceDocumentBlocks      = Op{ID: "replaceDocumentBlocks", Method: "PUT", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/blocks"}
 	OpRestoreDocument            = Op{ID: "restoreDocument", Method: "POST", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/restore"}
 	OpRestoreResource            = Op{ID: "restoreResource", Method: "POST", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/restore"}
+	OpRevokeInvite               = Op{ID: "revokeInvite", Method: "DELETE", Path: "/api/v3/projects/{projectId}/invites/{inviteId}"}
 	OpSaveResourceAsTemplate     = Op{ID: "saveResourceAsTemplate", Method: "POST", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/save-as-template"}
 	OpSearch                     = Op{ID: "search", Method: "GET", Path: "/api/v3/projects/{projectId}/search"}
 	OpUpdateAsset                = Op{ID: "updateAsset", Method: "PATCH", Path: "/api/v3/projects/{projectId}/assets/{assetId}"}
@@ -2061,6 +2066,39 @@ const (
 	InfoboxBlockKindInfobox InfoboxBlockKind = "infobox"
 )
 
+type Invite struct {
+	// CreatedAt ISO 8601 date-time in UTC, ending in `Z`.
+	CreatedAt opt.Optional[time.Time] `json:"createdAt,omitzero"`
+	Email     opt.Nullable[string]    `json:"email,omitzero"`
+	// ExpiresAt ISO 8601 date-time in UTC, ending in `Z`.
+	ExpiresAt opt.Nullable[time.Time]  `json:"expiresAt,omitzero"`
+	ID        string                   `json:"id"`
+	Role      opt.Optional[InviteRole] `json:"role,omitzero"`
+}
+
+type InviteList struct {
+	Data []Invite `json:"data"`
+	// HasMore True when more items exist beyond this page.
+	HasMore opt.Optional[bool] `json:"hasMore,omitzero"`
+	// NextCursor Cursor for the next page, or null.
+	NextCursor opt.Nullable[string] `json:"nextCursor,omitzero"`
+}
+
+type InviteResult struct {
+	// AlreadyInvited `true` when the address has a pending invite.
+	AlreadyInvited opt.Optional[bool] `json:"alreadyInvited,omitzero"`
+	// AlreadyMember `true` when the address belongs to a member of the project.
+	AlreadyMember opt.Optional[bool] `json:"alreadyMember,omitzero"`
+	Success       bool               `json:"success"`
+}
+
+type InviteRole string
+
+const (
+	InviteRoleADMIN  InviteRole = "ADMIN"
+	InviteRoleMEMBER InviteRole = "MEMBER"
+)
+
 // JSONValue Any JSON value: a string of up to 100,000 characters, a number, a boolean, null, an
 // array of up to 256 values, or an object of up to 256 keys of up to 256 characters. Arrays and
 // objects nest at most 8 levels.
@@ -2424,6 +2462,37 @@ type MapViewport struct {
 	Center []json.RawMessage `json:"center"`
 	Zoom   float64           `json:"zoom"`
 }
+
+type Member struct {
+	// Email The member's email address. null unless the caller has the ADMIN role.
+	Email opt.Nullable[string] `json:"email,omitzero"`
+	// ID User ID
+	ID    string                   `json:"id"`
+	Image opt.Nullable[string]     `json:"image,omitzero"`
+	Name  opt.Nullable[string]     `json:"name,omitzero"`
+	Role  opt.Optional[MemberRole] `json:"role,omitzero"`
+}
+
+type MemberInviteParams struct {
+	// Email Email address to invite.
+	Email string `json:"email"`
+}
+
+type MemberList struct {
+	Data []Member `json:"data"`
+	// HasMore True when more items exist beyond this page.
+	HasMore opt.Optional[bool] `json:"hasMore,omitzero"`
+	// NextCursor Cursor for the next page, or null.
+	NextCursor opt.Nullable[string] `json:"nextCursor,omitzero"`
+}
+
+type MemberRole string
+
+const (
+	MemberRoleADMIN  MemberRole = "ADMIN"
+	MemberRoleMEMBER MemberRole = "MEMBER"
+	MemberRoleOWNER  MemberRole = "OWNER"
+)
 
 // MeterBlock Tracked values drawn in `mode`. Carries `title`, the label above the block, and
 // `isTitleHidden`, which hides that label and the frame around the block. A new one written without

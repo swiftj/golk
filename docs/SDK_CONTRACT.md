@@ -429,6 +429,16 @@ Paths are under `…/docs/{d}` as above. Every board write takes `IfMatch`, is a
 | C-BOARD-06 | Records keep `props` and `meta` values exactly as read, and each record's `Input()` sends it back with every field, so reading a board and replacing it with its own records changes nothing. Input fields not set are not sent. | CLAUDE.md §Three-state fields; A-32 | 5 |
 | C-BOARD-07 | More than 500 shapes, bindings, assets or ids in one call fails with `ErrBoardBatchTooLarge` before any request. A stale `IfMatch` fails with `ErrVersionMismatch` and `CurrentVersion`. | S `maxItems`; G§Versions | 5 |
 
+
+## MEMBERS — members and invites (Phase 7)
+
+| ID | Requirement | Source | Phase |
+|---|---|---|---|
+| C-MEM-01 | `Members.List`: `GET …/members`, the whole list on one page; each member has `id` (user id), `name`, `email` (null without ADMIN), `role` (unknown roles kept) and `image`. | G§members and invites; S `listMembers` | 7 |
+| C-MEM-02 | `Members.Invite`: `POST …/members` with `{email}` and an `Idempotency-Key`; returns `success`, `alreadyMember`, `alreadyInvited`. Too many pending invites is `ErrTooManyPendingInvites`. | G§members and invites; S `inviteMember` | 7 |
+| C-MEM-03 | `Members.Remove`: `DELETE …/members/{userId}`. | S `removeMember` | 7 |
+| C-INV-01 | `Invites.List`: `GET …/invites`, one page, with `email`, `role`, `createdAt`, `expiresAt` (UTC). | S `listInvites` | 7 |
+| C-INV-02 | `Invites.Revoke`: `DELETE …/invites/{inviteId}`. | S `revokeInvite` | 7 |
 ## MCP — lk-mcp server (`internal/mcpserver`, `cmd/lk-mcp`)
 
 From CLAUDE.md §MCP server rules and the approved Phase 3 plan (DECISIONS.md D-011, D-012). IDs are `X-<AREA>-NN` and follow the same rules as `C-` IDs.
