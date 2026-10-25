@@ -415,6 +415,20 @@ Paths are under `/api/v3/projects/{projectId}`; `…/docs/{d}` is `resources/{re
 | C-DOC-10 | `DocumentUpdate` sends `sources` (a timeline's chained `{resourceId, documentId}` list; `[]` clears) and `mapImage {assetId}` only when set. Documents read back `sources` and `mapImage {assetId, url, width, height, bounds, tiles}`. | G§Chaining timelines; G§Map images | 4 |
 | C-MAP-01 | `PixelToPos` and `PosToPixel` map a pixel counted from the image's top-left corner to `[lat, lng]` and back, linearly across `bounds` (`[[south, west], [north, east]]`, north and west 0 at the top-left). | G§Map images; S `MapImage.bounds`; D-014 | 4 |
 
+## BOARD — boards (Phase 5)
+
+Paths are under `…/docs/{d}` as above. Every board write takes `IfMatch`, is atomic and returns the board's new `version`.
+
+| ID | Requirement | Source | Phase |
+|---|---|---|---|
+| C-BOARD-01 | `Boards.GetContent`: `GET …/docs/{d}/board` returns every page, shape, binding and asset record with `schema` and `version`. `Boards.ListShapes`: `GET …/board/shapes`, with `pageId` only when set, returns every shape on one page with `version`. Both fill a missing version from the `ETag`. A `blank` document reads as an empty board. | G§boards; S `getBoardContent`, `listBoardShapes`; A-39 | 5 |
+| C-BOARD-02 | `Boards.CreateShapes`: `POST …/board/shapes` sends `shapes` and, only when given, `bindings` and `assets`, with an `Idempotency-Key`. Returns the created records and `version`. The first create converts a `blank` document to a board. | G§boards; S `createBoardShapes` | 5 |
+| C-BOARD-03 | `Boards.UpdateShapes`: `PATCH …/board/shapes` sends each shape's `id` and only the fields set. `props` and `meta` merge one level deep on the server. Returns the updated shapes and `version`. | G§boards; S `BoardShapePatch` | 5 |
+| C-BOARD-04 | `Boards.DeleteShapes`: `POST …/board/shapes/delete` sends `ids`, with an `Idempotency-Key`. Returns `shapeIds` (including contained shapes), `bindingIds` (bindings that lost an end) and `version`. | G§boards; S `BoardShapesDeleted` | 5 |
+| C-BOARD-05 | `Boards.ReplaceContent`: `PUT …/board` sends `shapes` (always, `[]` when none) and `bindings` and `assets` only when given. Pages are kept. Returns the whole board. | G§boards; S `replaceBoardContent` | 5 |
+| C-BOARD-06 | Records keep `props` and `meta` values exactly as read, and each record's `Input()` sends it back with every field, so reading a board and replacing it with its own records changes nothing. Input fields not set are not sent. | CLAUDE.md §Three-state fields; A-32 | 5 |
+| C-BOARD-07 | More than 500 shapes, bindings, assets or ids in one call fails with `ErrBoardBatchTooLarge` before any request. A stale `IfMatch` fails with `ErrVersionMismatch` and `CurrentVersion`. | S `maxItems`; G§Versions | 5 |
+
 ## MCP — lk-mcp server (`internal/mcpserver`, `cmd/lk-mcp`)
 
 From CLAUDE.md §MCP server rules and the approved Phase 3 plan (DECISIONS.md D-011, D-012). IDs are `X-<AREA>-NN` and follow the same rules as `C-` IDs.
@@ -451,7 +465,7 @@ From CLAUDE.md §MCP server rules and the approved Phase 3 plan (DECISIONS.md D-
 | X-TL-02 | `set_timeline_lane`, `delete_timeline_lane`, `set_timeline_event` and `delete_timeline_event` send only the fields given; `update_document` sets a timeline's `calendar_id` and `sources`. | Plan §Phase 4 | 4 |
 | X-CAL-01 | Calendar tools list, read, create, replace (with `If-Match` from `version`) and delete custom calendars; a built-in calendar id is refused before any request. | Plan §Phase 4 | 4 |
 | X-TPL-01 | `list_templates`, `save_as_template` and `create_from_template` call the template operations with only the fields given. | Plan §Phase 4 | 4 |
-| X-GUARD-08 | Map features, timeline lanes and events are guarded content: writing one checks it unless its document or resource is hidden; showing a map or timeline document, unhiding or restoring a resource holding one, or setting a timeline's `sources` checks what it would show. Board documents are still refused. | Plan §Phase 4 | 4 |
+| X-GUARD-08 | Map features, timeline lanes and events are guarded content: writing one checks it unless its document or resource is hidden; showing a map or timeline document, unhiding or restoring a resource holding one, or setting a timeline's `sources` checks what it would show. Board documents were refused until Phase 5 (X-GUARD-12). | Plan §Phase 4 | 4 |
 | X-GUARD-09 | `create_calendar` and `replace_calendar` check every string of the spec. | Plan §Phase 4 | 4 |
 | X-GUARD-10 | `save_as_template` and `create_from_template` check every resource they copy, each by its own hidden flag, before the write. | Plan §Phase 4 (templates treated as visible) | 4 |
 | X-GUARD-11 | Hidden features and events are checked like public content until the owner confirms in the player view that hidden pins are invisible (`hiddenFeaturesConfirmed`). | Plan §Phase 4 | 4 |
@@ -687,3 +701,18 @@ copied into [`DECISIONS.md`](DECISIONS.md).
 
 - The guide names `pixelToPos`/`posToPixel` but gives no formula; the spec says `bounds` is `[[south, west], [north, east]]` with north and west 0 at the image's top-left, south negative and east positive.
 - **Proposal:** linear: `lat = north + (y / height) × (south − north)`, `lng = west + (x / width) × (east − west)`, and the inverse. The server stores `pos` verbatim, so the sandbox can confirm only the `bounds` shape; recorded as our derivation (D-014).
+
+### A-38 — Board version: body vs `ETag`
+
+- Every board read and write returns `version` in the body, "also sent as `ETag`".
+- **Proposal:** read it from the body, with the ETag as fallback (D-009); *probe* that they agree.
+
+### A-39 — Reading and writing a `blank` document as a board
+
+- The guide says reads never convert a `blank` document and `boards.getContent` returns an empty board, and the first board write converts it.
+- **Proposal:** *probe* that the empty board's `version` is accepted as `If-Match` on the first create.
+
+### A-40 — `listShapes` version
+
+- `BoardShapeList` has `version` with no description.
+- **Proposal:** treat it as the board version (the guide: "`boards.getContent`, `boards.listShapes` and every board write return" it); *probe* it equals `getContent`'s.

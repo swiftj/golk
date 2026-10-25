@@ -67,6 +67,8 @@ type Client struct {
 	Calendars *CalendarsService
 	// Templates are the project's resource templates.
 	Templates *TemplatesService
+	// Boards reads and writes board documents.
+	Boards *BoardsService
 }
 
 // New returns a client that authenticates with apiKey. It never reads the
@@ -128,6 +130,7 @@ func New(apiKey string, opts ...Option) (*Client, error) {
 	c.Timelines = &TimelinesService{c: c}
 	c.Calendars = &CalendarsService{c: c}
 	c.Templates = &TemplatesService{c: c}
+	c.Boards = &BoardsService{c: c}
 	return c, nil
 }
 

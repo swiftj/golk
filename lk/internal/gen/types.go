@@ -23,6 +23,7 @@ var (
 	OpCreateBlockProperty        = Op{ID: "createBlockProperty", Method: "POST", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/blocks/{blockId}/properties"}
 	OpCreateBlockPropertyRow     = Op{ID: "createBlockPropertyRow", Method: "POST", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/blocks/{blockId}/properties/{propertyId}/rows"}
 	OpCreateBlockRow             = Op{ID: "createBlockRow", Method: "POST", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/blocks/{blockId}/rows"}
+	OpCreateBoardShapes          = Op{ID: "createBoardShapes", Method: "POST", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/board/shapes"}
 	OpCreateCalendar             = Op{ID: "createCalendar", Method: "POST", Path: "/api/v3/projects/{projectId}/calendars"}
 	OpCreateDocument             = Op{ID: "createDocument", Method: "POST", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs"}
 	OpCreateEvent                = Op{ID: "createEvent", Method: "POST", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/events"}
@@ -40,6 +41,7 @@ var (
 	OpDeleteBlockProperty        = Op{ID: "deleteBlockProperty", Method: "DELETE", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/blocks/{blockId}/properties/{propertyId}"}
 	OpDeleteBlockPropertyRow     = Op{ID: "deleteBlockPropertyRow", Method: "DELETE", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/blocks/{blockId}/properties/{propertyId}/rows/{rowId}"}
 	OpDeleteBlockRow             = Op{ID: "deleteBlockRow", Method: "DELETE", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/blocks/{blockId}/rows/{rowId}"}
+	OpDeleteBoardShapes          = Op{ID: "deleteBoardShapes", Method: "POST", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/board/shapes/delete"}
 	OpDeleteCalendar             = Op{ID: "deleteCalendar", Method: "DELETE", Path: "/api/v3/projects/{projectId}/calendars/{calendarId}"}
 	OpDeleteDocument             = Op{ID: "deleteDocument", Method: "DELETE", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}"}
 	OpDeleteEvent                = Op{ID: "deleteEvent", Method: "DELETE", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/events/{eventId}"}
@@ -51,6 +53,7 @@ var (
 	OpGetAsset                   = Op{ID: "getAsset", Method: "GET", Path: "/api/v3/projects/{projectId}/assets/{assetId}"}
 	OpGetBlock                   = Op{ID: "getBlock", Method: "GET", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/blocks/{blockId}"}
 	OpGetBlockProperty           = Op{ID: "getBlockProperty", Method: "GET", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/blocks/{blockId}/properties/{propertyId}"}
+	OpGetBoardContent            = Op{ID: "getBoardContent", Method: "GET", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/board"}
 	OpGetDocument                = Op{ID: "getDocument", Method: "GET", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}"}
 	OpGetDocumentBlocks          = Op{ID: "getDocumentBlocks", Method: "GET", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/blocks"}
 	OpGetEvent                   = Op{ID: "getEvent", Method: "GET", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/events/{eventId}"}
@@ -64,6 +67,7 @@ var (
 	OpListBlockProperties        = Op{ID: "listBlockProperties", Method: "GET", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/blocks/{blockId}/properties"}
 	OpListBlockPropertyRows      = Op{ID: "listBlockPropertyRows", Method: "GET", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/blocks/{blockId}/properties/{propertyId}/rows"}
 	OpListBlockRows              = Op{ID: "listBlockRows", Method: "GET", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/blocks/{blockId}/rows"}
+	OpListBoardShapes            = Op{ID: "listBoardShapes", Method: "GET", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/board/shapes"}
 	OpListCalendars              = Op{ID: "listCalendars", Method: "GET", Path: "/api/v3/projects/{projectId}/calendars"}
 	OpListDocuments              = Op{ID: "listDocuments", Method: "GET", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs"}
 	OpListEvents                 = Op{ID: "listEvents", Method: "GET", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/events"}
@@ -78,6 +82,7 @@ var (
 	OpMoveBlock                  = Op{ID: "moveBlock", Method: "POST", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/blocks/{blockId}/move"}
 	OpMoveResource               = Op{ID: "moveResource", Method: "POST", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/move"}
 	OpReplaceBlock               = Op{ID: "replaceBlock", Method: "PUT", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/blocks/{blockId}"}
+	OpReplaceBoardContent        = Op{ID: "replaceBoardContent", Method: "PUT", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/board"}
 	OpReplaceDocumentBlocks      = Op{ID: "replaceDocumentBlocks", Method: "PUT", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/blocks"}
 	OpRestoreDocument            = Op{ID: "restoreDocument", Method: "POST", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/restore"}
 	OpRestoreResource            = Op{ID: "restoreResource", Method: "POST", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/restore"}
@@ -88,6 +93,7 @@ var (
 	OpUpdateBlockProperty        = Op{ID: "updateBlockProperty", Method: "PATCH", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/blocks/{blockId}/properties/{propertyId}"}
 	OpUpdateBlockPropertyRow     = Op{ID: "updateBlockPropertyRow", Method: "PATCH", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/blocks/{blockId}/properties/{propertyId}/rows/{rowId}"}
 	OpUpdateBlockRow             = Op{ID: "updateBlockRow", Method: "PATCH", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/blocks/{blockId}/rows/{rowId}"}
+	OpUpdateBoardShapes          = Op{ID: "updateBoardShapes", Method: "PATCH", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/board/shapes"}
 	OpUpdateCalendar             = Op{ID: "updateCalendar", Method: "PUT", Path: "/api/v3/projects/{projectId}/calendars/{calendarId}"}
 	OpUpdateDocument             = Op{ID: "updateDocument", Method: "PATCH", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}"}
 	OpUpdateEvent                = Op{ID: "updateEvent", Method: "PATCH", Path: "/api/v3/projects/{projectId}/resources/{resourceId}/docs/{documentId}/events/{eventId}"}
@@ -352,6 +358,300 @@ const (
 type BlockPropertyList struct {
 	Data    []PropertyBlock `json:"data"`
 	Version string          `json:"version"`
+}
+
+// BoardAsset A tldraw asset record, typed by tldraw's `TLAsset`. Image and video shapes reference
+// one by `props.assetId`.
+type BoardAsset struct {
+	// ID A tldraw asset id, `asset:…`.
+	ID   string                     `json:"id"`
+	Meta map[string]json.RawMessage `json:"meta"`
+	// Props The props of the asset type (`TLImageAsset`, `TLVideoAsset`, `TLBookmarkAsset`). An image
+	// `src` is the `url` of an image asset of this project; a video `src` is a LegendKeeper asset URL.
+	Props    map[string]json.RawMessage `json:"props"`
+	Type     BoardAssetType             `json:"type"`
+	TypeName BoardAssetTypeName         `json:"typeName"`
+}
+
+type BoardAssetInput struct {
+	// ID Optional `asset:…` id; one is minted when omitted.
+	ID opt.Optional[string] `json:"id,omitzero"`
+	// Meta Free-form meta of the record.
+	Meta opt.Optional[map[string]JSONValue] `json:"meta,omitzero"`
+	// Props Every prop of the asset type. An image `src` must be the `url` of an image asset of this
+	// project and a video `src` a LegendKeeper asset URL; a `data:` or `blob:` URI, or any other URL,
+	// answers 400 VALIDATION_ERROR unless the board already holds that `src`. A bookmark `src` is an
+	// http or https URL.
+	Props    map[string]BoardJSONValue             `json:"props"`
+	Type     BoardAssetInputType                   `json:"type"`
+	TypeName opt.Optional[BoardAssetInputTypeName] `json:"typeName,omitzero"`
+}
+
+type BoardAssetInputType string
+
+const (
+	BoardAssetInputTypeImage    BoardAssetInputType = "image"
+	BoardAssetInputTypeVideo    BoardAssetInputType = "video"
+	BoardAssetInputTypeBookmark BoardAssetInputType = "bookmark"
+)
+
+type BoardAssetInputTypeName string
+
+const (
+	BoardAssetInputTypeNameAsset BoardAssetInputTypeName = "asset"
+)
+
+type BoardAssetType string
+
+const (
+	BoardAssetTypeImage    BoardAssetType = "image"
+	BoardAssetTypeVideo    BoardAssetType = "video"
+	BoardAssetTypeBookmark BoardAssetType = "bookmark"
+)
+
+type BoardAssetTypeName string
+
+const (
+	BoardAssetTypeNameAsset BoardAssetTypeName = "asset"
+)
+
+// BoardBinding A tldraw binding record, typed by tldraw's `TLBinding`. An arrow end attached to a
+// shape is a binding from the arrow to that shape.
+type BoardBinding struct {
+	// FromID The arrow shape the binding starts at.
+	FromID string `json:"fromId"`
+	// ID A tldraw binding id, `binding:…`.
+	ID   string                     `json:"id"`
+	Meta map[string]json.RawMessage `json:"meta"`
+	// Props `TLArrowBindingProps`: `terminal` (`start` or `end`), `normalizedAnchor`, `isExact`,
+	// `isPrecise`.
+	Props map[string]json.RawMessage `json:"props"`
+	// ToID The shape the arrow end is attached to.
+	ToID string `json:"toId"`
+	// Type The binding type: `arrow`.
+	Type     string               `json:"type"`
+	TypeName BoardBindingTypeName `json:"typeName"`
+}
+
+// BoardBindingInput A binding to create. `fromId` names an arrow shape and `toId` the shape its
+// terminal attaches to; either may be a shape created in the same request.
+type BoardBindingInput struct {
+	FromID string `json:"fromId"`
+	// ID Optional `binding:…` id; one is minted when omitted.
+	ID opt.Optional[string] `json:"id,omitzero"`
+	// Meta Free-form meta of the record.
+	Meta opt.Optional[map[string]JSONValue] `json:"meta,omitzero"`
+	// Props For an `arrow` binding, `terminal` (`start` or `end`) is required; `normalizedAnchor`
+	// defaults to the centre of the target, `isExact` and `isPrecise` to false.
+	Props    opt.Optional[map[string]BoardJSONValue] `json:"props,omitzero"`
+	ToID     string                                  `json:"toId"`
+	Type     string                                  `json:"type"`
+	TypeName opt.Optional[BoardBindingInputTypeName] `json:"typeName,omitzero"`
+}
+
+type BoardBindingInputTypeName string
+
+const (
+	BoardBindingInputTypeNameBinding BoardBindingInputTypeName = "binding"
+)
+
+type BoardBindingTypeName string
+
+const (
+	BoardBindingTypeNameBinding BoardBindingTypeName = "binding"
+)
+
+// BoardContent Every page, shape, binding and asset record of a board. Records are returned as
+// stored.
+type BoardContent struct {
+	Assets   []BoardAsset       `json:"assets"`
+	Bindings []BoardBinding     `json:"bindings"`
+	Pages    []BoardPage        `json:"pages"`
+	Schema   BoardSchemaVersion `json:"schema"`
+	Shapes   []BoardShape       `json:"shapes"`
+	// Version The board `version`, also sent as `ETag`. Send it back as `If-Match` to fail with 412
+	// instead of overwriting a change made since.
+	Version string `json:"version"`
+}
+
+// BoardContentReplaceParams Records are validated with tldraw's own validators for the schema in
+// `BoardContent.schema`, the schema the app's board view uses. A failure answers 400
+// VALIDATION_ERROR with one `errors[]` entry per failing field, such as `shapes[2].props.w`. A
+// `data:` or `blob:` URI in an image, video or bookmark asset or in a shape `url` answers 400
+// VALIDATION_ERROR naming the field: boards hold no inline image data.
+type BoardContentReplaceParams struct {
+	Assets   opt.Optional[[]BoardAssetInput]   `json:"assets,omitzero"`
+	Bindings opt.Optional[[]BoardBindingInput] `json:"bindings,omitzero"`
+	Shapes   []BoardShapeInput                 `json:"shapes"`
+}
+
+// BoardJSONValue Any JSON value: a string of up to 100,000 characters, a number, a boolean, null,
+// an array of up to 10,000 values, or an object of up to 10,000 keys of up to 256 characters.
+// Arrays and objects nest at most 32 levels.
+type BoardJSONValue = json.RawMessage
+
+// BoardPage A tldraw page record. The app shows one page per board.
+type BoardPage struct {
+	// ID A tldraw page id, `page:…`.
+	ID string `json:"id"`
+	// Index Fractional index ordering the pages.
+	Index    string                     `json:"index"`
+	Meta     map[string]json.RawMessage `json:"meta"`
+	Name     string                     `json:"name"`
+	TypeName BoardPageTypeName          `json:"typeName"`
+}
+
+type BoardPageTypeName string
+
+const (
+	BoardPageTypeNamePage BoardPageTypeName = "page"
+)
+
+// BoardSchemaVersion The serialized tldraw schema (`SerializedSchema`) that writes are validated
+// against.
+type BoardSchemaVersion struct {
+	SchemaVersion float64            `json:"schemaVersion"`
+	Sequences     map[string]float64 `json:"sequences"`
+}
+
+// BoardShape A tldraw shape record, typed by tldraw's `TLShape`.
+type BoardShape struct {
+	// ID A tldraw shape id, `shape:…`.
+	ID string `json:"id"`
+	// Index Fractional index ordering the shape among the children of its parent; a higher index draws
+	// above.
+	Index    string                     `json:"index"`
+	IsLocked bool                       `json:"isLocked"`
+	Meta     map[string]json.RawMessage `json:"meta"`
+	Opacity  float64                    `json:"opacity"`
+	// ParentID The page (`page:…`) or the frame or group shape (`shape:…`) that contains the
+	// shape.
+	ParentID string `json:"parentId"`
+	// Props The props of the shape type, exactly as tldraw 3.9 defines them (`TLGeoShapeProps`,
+	// `TLTextShapeProps` and so on).
+	Props map[string]json.RawMessage `json:"props"`
+	// Rotation Radians.
+	Rotation float64 `json:"rotation"`
+	// Type The shape type: `arrow`, `bookmark`, `content-block`, `draw`, `element`, `embed`, `frame`,
+	// `geo`, `group`, `highlight`, `image`, `line`, `note`, `text`, `video`.
+	Type     string             `json:"type"`
+	TypeName BoardShapeTypeName `json:"typeName"`
+	X        float64            `json:"x"`
+	Y        float64            `json:"y"`
+}
+
+// BoardShapeInput A shape to create. `x`, `y` and `rotation` default to 0, `isLocked` to false,
+// `opacity` to 1 and `meta` to `{}`.
+type BoardShapeInput struct {
+	// ID Optional `shape:…` id; one is minted when omitted.
+	ID opt.Optional[string] `json:"id,omitzero"`
+	// Index Fractional index among the children of the parent. Omitted, the shape is placed above its
+	// siblings.
+	Index    opt.Optional[string] `json:"index,omitzero"`
+	IsLocked opt.Optional[bool]   `json:"isLocked,omitzero"`
+	// Meta Free-form meta of the record.
+	Meta    opt.Optional[map[string]JSONValue] `json:"meta,omitzero"`
+	Opacity opt.Optional[float64]              `json:"opacity,omitzero"`
+	// ParentID A page or a shape on this board. Defaults to the first page.
+	ParentID opt.Optional[string] `json:"parentId,omitzero"`
+	// Props Props of the shape type. Missing props take the app's defaults for the type; tldraw
+	// validates the result.
+	Props    opt.Optional[map[string]BoardJSONValue] `json:"props,omitzero"`
+	Rotation opt.Optional[float64]                   `json:"rotation,omitzero"`
+	// Type The shape type: `arrow`, `bookmark`, `content-block`, `draw`, `element`, `embed`, `frame`,
+	// `geo`, `group`, `highlight`, `image`, `line`, `note`, `text`, `video`.
+	Type     string                                `json:"type"`
+	TypeName opt.Optional[BoardShapeInputTypeName] `json:"typeName,omitzero"`
+	X        opt.Optional[float64]                 `json:"x,omitzero"`
+	Y        opt.Optional[float64]                 `json:"y,omitzero"`
+}
+
+type BoardShapeInputTypeName string
+
+const (
+	BoardShapeInputTypeNameShape BoardShapeInputTypeName = "shape"
+)
+
+type BoardShapeList struct {
+	Data    []BoardShape `json:"data"`
+	Version string       `json:"version"`
+}
+
+// BoardShapePatch A partial shape. Top-level fields sent replace the stored ones; `props` and
+// `meta` merge one level deep, as tldraw's `updateShapes` does.
+type BoardShapePatch struct {
+	// ID The shape to update.
+	ID       string               `json:"id"`
+	Index    opt.Optional[string] `json:"index,omitzero"`
+	IsLocked opt.Optional[bool]   `json:"isLocked,omitzero"`
+	// Meta Meta keys to change; the others keep their values.
+	Meta     opt.Optional[map[string]JSONValue] `json:"meta,omitzero"`
+	Opacity  opt.Optional[float64]              `json:"opacity,omitzero"`
+	ParentID opt.Optional[string]               `json:"parentId,omitzero"`
+	// Props Props to change; the others keep their values.
+	Props    opt.Optional[map[string]BoardJSONValue] `json:"props,omitzero"`
+	Rotation opt.Optional[float64]                   `json:"rotation,omitzero"`
+	// Type Optional; when sent it must equal the shape's type.
+	Type opt.Optional[string]  `json:"type,omitzero"`
+	X    opt.Optional[float64] `json:"x,omitzero"`
+	Y    opt.Optional[float64] `json:"y,omitzero"`
+}
+
+type BoardShapeTypeName string
+
+const (
+	BoardShapeTypeNameShape BoardShapeTypeName = "shape"
+)
+
+// BoardShapesCreateParams Records are validated with tldraw's own validators for the schema in
+// `BoardContent.schema`, the schema the app's board view uses. A failure answers 400
+// VALIDATION_ERROR with one `errors[]` entry per failing field, such as `shapes[2].props.w`. A
+// `data:` or `blob:` URI in an image, video or bookmark asset or in a shape `url` answers 400
+// VALIDATION_ERROR naming the field: boards hold no inline image data.
+type BoardShapesCreateParams struct {
+	Assets   opt.Optional[[]BoardAssetInput]   `json:"assets,omitzero"`
+	Bindings opt.Optional[[]BoardBindingInput] `json:"bindings,omitzero"`
+	Shapes   []BoardShapeInput                 `json:"shapes"`
+}
+
+type BoardShapesCreated struct {
+	Assets   []BoardAsset   `json:"assets"`
+	Bindings []BoardBinding `json:"bindings"`
+	Shapes   []BoardShape   `json:"shapes"`
+	// Version The board `version`, also sent as `ETag`. Send it back as `If-Match` to fail with 412
+	// instead of overwriting a change made since.
+	Version string `json:"version"`
+}
+
+type BoardShapesDeleteParams struct {
+	// IDs Shape ids to delete.
+	IDs []string `json:"ids"`
+}
+
+type BoardShapesDeleted struct {
+	// BindingIDs Every binding deleted because one of its ends was deleted.
+	BindingIDs []string `json:"bindingIds"`
+	// ShapeIDs Every shape deleted: the named shapes and the shapes they contained.
+	ShapeIDs []string `json:"shapeIds"`
+	// Version The board `version`, also sent as `ETag`. Send it back as `If-Match` to fail with 412
+	// instead of overwriting a change made since.
+	Version string `json:"version"`
+}
+
+// BoardShapesUpdateParams Records are validated with tldraw's own validators for the schema in
+// `BoardContent.schema`, the schema the app's board view uses. A failure answers 400
+// VALIDATION_ERROR with one `errors[]` entry per failing field, such as `shapes[2].props.w`. A
+// `data:` or `blob:` URI in an image, video or bookmark asset or in a shape `url` answers 400
+// VALIDATION_ERROR naming the field: boards hold no inline image data.
+type BoardShapesUpdateParams struct {
+	Shapes []BoardShapePatch `json:"shapes"`
+}
+
+type BoardShapesUpdated struct {
+	Shapes []BoardShape `json:"shapes"`
+	// Version The board `version`, also sent as `ETag`. Send it back as `If-Match` to fail with 412
+	// instead of overwriting a change made since.
+	Version string `json:"version"`
 }
 
 type BulletListBlock struct {
@@ -1760,6 +2060,11 @@ type InfoboxBlockKind string
 const (
 	InfoboxBlockKindInfobox InfoboxBlockKind = "infobox"
 )
+
+// JSONValue Any JSON value: a string of up to 100,000 characters, a number, a boolean, null, an
+// array of up to 256 values, or an object of up to 256 keys of up to 256 characters. Arrays and
+// objects nest at most 8 levels.
+type JSONValue = json.RawMessage
 
 // KeyValueBlock Key-value rows drawn in the `display` variant. A row value is `content` (runs) or
 // `text` (a plain string); `content` wins when both are sent and `text` is always returned

@@ -20,7 +20,7 @@ tools: ## Install pinned dev tools into GOBIN
 	@command -v golangci-lint >/dev/null || { echo "golangci-lint v2 not found (brew install golangci-lint)"; exit 1; }
 
 # Operation tags whose schemas are generated. Extend this list phase by phase.
-GEN_TAGS    := Projects,Resources,Documents,Blocks,Properties,Search,Tags,Assets,Features,Timelines,Calendars,Templates
+GEN_TAGS    := Projects,Resources,Documents,Blocks,Properties,Search,Tags,Assets,Features,Timelines,Calendars,Templates,Boards
 
 generate: ## Regenerate lk/internal/gen from docs/legendkeeper/openapi.json
 	$(GO) run ./internal/cmd/lkgen -spec docs/legendkeeper/openapi.json -tags $(GEN_TAGS) -out lk/internal/gen/types.go
