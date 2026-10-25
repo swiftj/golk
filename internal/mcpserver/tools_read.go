@@ -584,6 +584,28 @@ type AssetItemOut struct {
 	Width    int    `json:"width,omitempty"`
 	Height   int    `json:"height,omitempty"`
 	Hidden   bool   `json:"hidden,omitempty"`
+	// Description is the asset's description.
+	Description string `json:"description,omitempty"`
+}
+
+func assetItem(a lk.Asset) AssetItemOut {
+	return AssetItemOut{ID: a.ID, Name: a.Name, Type: string(a.Type), FolderID: a.FolderID,
+		URL: a.URL, Width: a.Width, Height: a.Height, Hidden: a.IsHidden, Description: a.Description}
+}
+
+func assetLine(b *strings.Builder, a lk.Asset) {
+	fmt.Fprintf(b, "- %s (%s) %s", a.Name, a.ID, a.Type)
+	if a.Width > 0 && a.Height > 0 {
+		fmt.Fprintf(b, " %dx%d", a.Width, a.Height)
+	}
+	b.WriteString(listFlags(flagIf(a.IsHidden, "hidden")))
+	if a.URL != "" {
+		fmt.Fprintf(b, " %s", a.URL)
+	}
+	if a.Description != "" {
+		fmt.Fprintf(b, " — %s", a.Description)
+	}
+	b.WriteString("\n")
 }
 
 // ListAssetsOut is list_assets' output.
@@ -606,17 +628,8 @@ func (s *server) listAssets(ctx context.Context, c *lk.Client, in ListAssetsIn) 
 	out := ListAssetsOut{Assets: []AssetItemOut{}, HasMore: p.HasMore, NextCursor: p.NextCursor}
 	var b strings.Builder
 	for _, a := range p.Items {
-		out.Assets = append(out.Assets, AssetItemOut{ID: a.ID, Name: a.Name, Type: string(a.Type), FolderID: a.FolderID,
-			URL: a.URL, Width: a.Width, Height: a.Height, Hidden: a.IsHidden})
-		fmt.Fprintf(&b, "- %s (%s) %s", a.Name, a.ID, a.Type)
-		if a.Width > 0 && a.Height > 0 {
-			fmt.Fprintf(&b, " %dx%d", a.Width, a.Height)
-		}
-		b.WriteString(listFlags(flagIf(a.IsHidden, "hidden")))
-		if a.URL != "" {
-			fmt.Fprintf(&b, " %s", a.URL)
-		}
-		b.WriteString("\n")
+		out.Assets = append(out.Assets, assetItem(a))
+		assetLine(&b, a)
 	}
 	pagedFooter(&b, len(out.Assets), "asset(s)", p.NextCursor, p.HasMore)
 	return toolResult[ListAssetsOut]{out: out, text: b.String()}, nil

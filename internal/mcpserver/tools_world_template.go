@@ -198,10 +198,16 @@ type SaveAsTemplateIn struct {
 	ResourceID      string  `json:"resource_id" jsonschema:"the resource to copy into a template"`
 	Name            *string `json:"name,omitempty" jsonschema:"the template's name; omit for the resource's name"`
 	IncludeChildren *bool   `json:"include_children,omitempty" jsonschema:"also copy its descendants, keeping their tree (at most 100 resources)"`
+	ID              string  `json:"id,omitempty" jsonschema:"a client-chosen cuid2 id for the template; omit to let the server choose"`
+	After           string  `json:"after,omitempty" jsonschema:"place the template right after this sibling template id; not with before"`
+	Before          string  `json:"before,omitempty" jsonschema:"place the template right before this sibling template id; not with after"`
 }
 
 func (s *server) saveAsTemplate(ctx context.Context, c *lk.Client, in SaveAsTemplateIn) (toolResult[TemplateCopyOut], error) {
 	var zero toolResult[TemplateCopyOut]
+	if in.After != "" && in.Before != "" {
+		return zero, errors.New("give after or before, not both")
+	}
 	if in.Name != nil && strings.TrimSpace(*in.Name) == "" {
 		return zero, errors.New("name is empty: omit it for the resource's name")
 	}
@@ -246,6 +252,7 @@ func (s *server) saveAsTemplate(ctx context.Context, c *lk.Client, in SaveAsTemp
 	body := lk.SaveAsTemplate{}
 	setOpt(&body.Name, in.Name)
 	setOpt(&body.IncludeChildren, in.IncludeChildren)
+	body.ID, body.After, body.Before = optStr(in.ID), optStr(in.After), optStr(in.Before)
 	t, err := c.Resources.SaveAsTemplate(ctx, r.ID, body)
 	if err != nil {
 		return zero, err
@@ -263,10 +270,16 @@ type CreateFromTemplateIn struct {
 	Name            *string `json:"name,omitempty" jsonschema:"the new resource's name; omit for the template's name without the word Template"`
 	ParentID        *string `json:"parent_id,omitempty" jsonschema:"create it under this resource; omit for the top level"`
 	IncludeChildren *bool   `json:"include_children,omitempty" jsonschema:"also copy the template's descendants, keeping their tree"`
+	ID              string  `json:"id,omitempty" jsonschema:"a client-chosen cuid2 id for the new resource; omit to let the server choose"`
+	After           string  `json:"after,omitempty" jsonschema:"place the new resource right after this sibling id; not with before"`
+	Before          string  `json:"before,omitempty" jsonschema:"place the new resource right before this sibling id; not with after"`
 }
 
 func (s *server) createFromTemplate(ctx context.Context, c *lk.Client, in CreateFromTemplateIn) (toolResult[TemplateCopyOut], error) {
 	var zero toolResult[TemplateCopyOut]
+	if in.After != "" && in.Before != "" {
+		return zero, errors.New("give after or before, not both")
+	}
 	if in.TemplateID == "" {
 		return zero, errors.New("template_id is required")
 	}
@@ -331,6 +344,7 @@ func (s *server) createFromTemplate(ctx context.Context, c *lk.Client, in Create
 	setOpt(&body.Name, in.Name)
 	setOpt(&body.ParentID, in.ParentID)
 	setOpt(&body.IncludeChildren, in.IncludeChildren)
+	body.ID, body.After, body.Before = optStr(in.ID), optStr(in.After), optStr(in.Before)
 	nr, err := c.Resources.CreateFromTemplate(ctx, body)
 	if err != nil {
 		return zero, err

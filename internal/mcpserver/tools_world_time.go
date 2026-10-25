@@ -2,6 +2,7 @@ package mcpserver
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"slices"
@@ -106,8 +107,10 @@ func timeline(ctx context.Context, c *lk.Client, a TimelineRefArg, allowBlank bo
 type ReadTimelineIn struct {
 	ProjectArg
 	TimelineRefArg
-	Cursor string `json:"cursor,omitempty" jsonschema:"next_cursor from the previous call, with the same limit"`
-	Limit  int    `json:"limit,omitempty" jsonschema:"events per page, 1-100; omit for the server default"`
+	Cursor  string `json:"cursor,omitempty" jsonschema:"next_cursor from the previous call, with the same limit"`
+	Limit   int    `json:"limit,omitempty" jsonschema:"events per page, 1-100; omit for the server default"`
+	LaneID  string `json:"lane_id,omitempty" jsonschema:"read just this lane, with every field; not with event_id"`
+	EventID string `json:"event_id,omitempty" jsonschema:"read just this event, with every field; not with lane_id"`
 }
 
 // SourceOut is one chained timeline.
@@ -173,6 +176,9 @@ func (s *server) readTimeline(ctx context.Context, c *lk.Client, in ReadTimeline
 	t, err := timeline(ctx, c, in.TimelineRefArg, false)
 	if err != nil {
 		return zero, err
+	}
+	if in.LaneID != "" || in.EventID != "" {
+		return s.readTimelineItem(ctx, c, t, in)
 	}
 	// Resources.Get leaves out a document's sources; Documents.Get has them.
 	full, err := c.Documents.Get(ctx, t.ref)
@@ -276,6 +282,7 @@ type SetLaneIn struct {
 	Rank   *string      `json:"rank,omitempty" jsonschema:"fractional index ordering lanes, such as a0; a0V sorts between a0 and a1"`
 	Size   *string      `json:"size,omitempty" jsonschema:"sm or lg"`
 	Style  *LaneStyleIn `json:"style,omitempty"`
+	ID     string       `json:"id,omitempty" jsonschema:"a client-chosen cuid2 id for a new lane; omit to let the server choose"`
 }
 
 // LaneWriteOut is set_timeline_lane's output.
@@ -310,6 +317,9 @@ func (s *server) setLane(ctx context.Context, c *lk.Client, in SetLaneIn) (toolR
 		return zero, fmt.Errorf("size must be sm or lg, not %q", *in.Size)
 	}
 	create := in.LaneID == ""
+	if !create && in.ID != "" {
+		return zero, errors.New("id names a new lane; to update one use lane_id")
+	}
 	if create && (in.Name == nil || in.Rank == nil || in.Size == nil) {
 		return zero, errors.New("creating a lane needs name, rank and size (pass lane_id to update one)")
 	}
@@ -373,7 +383,7 @@ func (s *server) setLane(ctx context.Context, c *lk.Client, in SetLaneIn) (toolR
 	}
 	var l *lk.Lane
 	if create {
-		lc := lk.LaneCreate{Name: *in.Name, Rank: *in.Rank, Size: lk.LaneSize(*in.Size)}
+		lc := lk.LaneCreate{Name: *in.Name, Rank: *in.Rank, Size: lk.LaneSize(*in.Size), ID: optStr(in.ID)}
 		if in.Style != nil {
 			lc.Style = lk.Some(in.Style.lk())
 		}
@@ -476,6 +486,8 @@ type SetEventIn struct {
 	ImageURL       *string  `json:"image_url,omitempty" jsonschema:"the URL of an image asset of this project"`
 	IsHidden       *bool    `json:"is_hidden,omitempty" jsonschema:"hide the event from players; it is still checked by the spoiler guard"`
 	ShowOnCalendar *bool    `json:"show_on_calendar,omitempty"`
+	Detail         *int     `json:"detail,omitempty" jsonschema:"the precision of the dates: 1 year, 2 month, 3 day, 4 time"`
+	ID             string   `json:"id,omitempty" jsonschema:"a client-chosen cuid2 id for a new event; omit to let the server choose"`
 }
 
 // EventWriteOut is set_timeline_event's output.
@@ -489,6 +501,12 @@ type EventWriteOut struct {
 
 func (s *server) setEvent(ctx context.Context, c *lk.Client, in SetEventIn) (toolResult[EventWriteOut], error) {
 	var zero toolResult[EventWriteOut]
+	if in.Detail != nil && (*in.Detail < 1 || *in.Detail > 4) {
+		return zero, errors.New("detail is 1 (year), 2 (month), 3 (day) or 4 (time)")
+	}
+	if in.EventID != "" && in.ID != "" {
+		return zero, errors.New("id names a new event; to update one use event_id")
+	}
 	formatted, minutes := in.FormattedStart != nil || in.FormattedEnd != nil, in.Start != nil || in.End != nil
 	if formatted && minutes {
 		return zero, errors.New("give dates either as formatted_start/formatted_end or as start/end in minutes, not both")
@@ -506,7 +524,7 @@ func (s *server) setEvent(ctx context.Context, c *lk.Client, in SetEventIn) (too
 			return zero, errors.New("an event's type can't be changed; delete it and create a new one")
 		}
 		if in.LaneID == nil && in.Name == nil && !formatted && !minutes && in.URI == nil && in.Color == nil &&
-			in.IconGlyph == nil && in.ImageURL == nil && in.IsHidden == nil && in.ShowOnCalendar == nil {
+			in.IconGlyph == nil && in.ImageURL == nil && in.IsHidden == nil && in.ShowOnCalendar == nil && in.Detail == nil {
 			return zero, errors.New("nothing to change: give at least one field")
 		}
 	}
@@ -594,6 +612,10 @@ func (s *server) setEvent(ctx context.Context, c *lk.Client, in SetEventIn) (too
 		setOpt(&ec.ImageURL, in.ImageURL)
 		setOpt(&ec.IsHidden, in.IsHidden)
 		setOpt(&ec.ShowOnCalendar, in.ShowOnCalendar)
+		ec.ID = optStr(in.ID)
+		if in.Detail != nil {
+			ec.Detail = lk.Some(lk.EventDetail(*in.Detail))
+		}
 		e, err = c.Timelines.CreateEvent(ctx, t.ref, ec)
 	} else {
 		var u lk.EventUpdate
@@ -609,6 +631,9 @@ func (s *server) setEvent(ctx context.Context, c *lk.Client, in SetEventIn) (too
 		setOpt(&u.ImageURL, in.ImageURL)
 		setOpt(&u.IsHidden, in.IsHidden)
 		setOpt(&u.ShowOnCalendar, in.ShowOnCalendar)
+		if in.Detail != nil {
+			u.Detail = lk.Some(lk.EventDetail(*in.Detail))
+		}
 		e, err = c.Timelines.UpdateEvent(ctx, t.ref, in.EventID, u)
 	}
 	if err != nil {
@@ -759,4 +784,33 @@ func (s *server) shownToPlayers(ctx context.Context, c *lk.Client, t timelineTar
 	}
 	via, err := chainedIntoVisible(ctx, c, t.ref)
 	return via != nil, err
+}
+
+// readTimelineItem reads one lane or event of t with every field.
+func (s *server) readTimelineItem(ctx context.Context, c *lk.Client, t timelineTarget, in ReadTimelineIn) (toolResult[ReadTimelineOut], error) {
+	var zero toolResult[ReadTimelineOut]
+	if in.LaneID != "" && in.EventID != "" {
+		return zero, errors.New("give lane_id or event_id, not both")
+	}
+	out := ReadTimelineOut{ResourceID: t.ref.ResourceID, DocumentID: t.ref.DocumentID, Lanes: []LaneOut{}, Events: []EventOut{}}
+	var what string
+	var v any
+	if in.LaneID != "" {
+		l, err := c.Timelines.Lane(ctx, t.ref, in.LaneID)
+		if err != nil {
+			return zero, err
+		}
+		what, v = fmt.Sprintf("Lane %q (%s)", l.Name, l.ID), l
+	} else {
+		e, err := c.Timelines.Event(ctx, t.ref, in.EventID)
+		if err != nil {
+			return zero, err
+		}
+		what, v = fmt.Sprintf("Event %q (%s), %s to %s", e.Name, e.ID, orDash(e.FormattedStart), orDash(e.FormattedEnd)), e
+	}
+	data, err := json.MarshalIndent(v, "", "  ")
+	if err != nil {
+		return zero, err
+	}
+	return toolResult[ReadTimelineOut]{out: out, text: fmt.Sprintf("%s of %s:\n%s", what, t.describe(), data)}, nil
 }

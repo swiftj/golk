@@ -2,6 +2,7 @@ package mcpserver
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -70,6 +71,7 @@ type ReadMapIn struct {
 	ResourceID string `json:"resource_id" jsonschema:"the resource holding the map"`
 	DocumentID string `json:"document_id,omitempty" jsonschema:"the map document; omit for the resource's first map document"`
 	Type       string `json:"type,omitempty" jsonschema:"list only features of this type: pin, label, region, path or folder"`
+	FeatureID  string `json:"feature_id,omitempty" jsonschema:"read just this feature, with every field (style, image, polygons, ...)"`
 }
 
 // MapImageOut is a map's image and coordinate frame.
@@ -123,6 +125,18 @@ func (s *server) readMap(ctx context.Context, c *lk.Client, in ReadMapIn) (toolR
 	full, err := c.Documents.Get(ctx, ref)
 	if err != nil {
 		return zero, err
+	}
+	if in.FeatureID != "" {
+		f, err := c.Features.Get(ctx, ref, in.FeatureID)
+		if err != nil {
+			return zero, err
+		}
+		data, err := json.MarshalIndent(f, "", "  ")
+		if err != nil {
+			return zero, err
+		}
+		out := ReadMapOut{ResourceID: r.ID, DocumentID: full.ID, Name: full.Name, Hidden: full.IsHidden, Image: mapImageOut(full.MapImage), Features: 1}
+		return toolResult[ReadMapOut]{out: out, text: fmt.Sprintf("%s %q (%s) on map %q (%s) of %q:\n%s", orDash(string(f.Type)), f.Name, f.ID, full.Name, full.ID, r.Name, data)}, nil
 	}
 	fs, err := c.Features.List(ctx, ref, lk.FeatureListParams{Type: lk.FeatureType(in.Type)})
 	if err != nil {
@@ -195,20 +209,24 @@ type PinImageArg struct {
 type SetMapFeatureIn struct {
 	ProjectArg
 	DryRunArg
-	ResourceID string        `json:"resource_id" jsonschema:"the resource holding the map"`
-	DocumentID string        `json:"document_id,omitempty" jsonschema:"the map document (a blank one becomes a map); omit for the resource's first map document"`
-	FeatureID  string        `json:"feature_id,omitempty" jsonschema:"the feature to update; omit to create one"`
-	Type       string        `json:"type,omitempty" jsonschema:"pin, label, region, path or folder"`
-	Name       *string       `json:"name,omitempty" jsonschema:"the name players see"`
-	Pos        *[2]float64   `json:"pos,omitempty" jsonschema:"position [lat, lng] in the map's frame (not with pixel)"`
-	Pixel      *[2]float64   `json:"pixel,omitempty" jsonschema:"position [x, y] in pixels from the map image's top-left corner (not with pos; needs a map image)"`
-	ParentID   *string       `json:"parent_id,omitempty" jsonschema:"the folder feature to nest it in"`
-	Rank       *string       `json:"rank,omitempty" jsonschema:"order among its siblings"`
-	URI        *string       `json:"uri,omitempty" jsonschema:"link: lk://resources/<id>, lk://documents/<id> or lk://resources/<id>/docs/<id>; empty clears it on update"`
-	IsHidden   *bool         `json:"is_hidden,omitempty" jsonschema:"true hides it from players (it is still checked by the spoiler guard)"`
-	Polygon    *[][2]float64 `json:"polygon,omitempty" jsonschema:"a region's outline, [lat, lng] points"`
-	Polyline   *[][2]float64 `json:"polyline,omitempty" jsonschema:"a path's points, [lat, lng]"`
-	Style      *FeatureStyle `json:"style,omitempty" jsonschema:"colour, icon, opacity, stroke, border, fill, label and text style"`
+	ResourceID string          `json:"resource_id" jsonschema:"the resource holding the map"`
+	DocumentID string          `json:"document_id,omitempty" jsonschema:"the map document (a blank one becomes a map); omit for the resource's first map document"`
+	FeatureID  string          `json:"feature_id,omitempty" jsonschema:"the feature to update; omit to create one"`
+	Type       string          `json:"type,omitempty" jsonschema:"pin, label, region, path or folder"`
+	Name       *string         `json:"name,omitempty" jsonschema:"the name players see"`
+	Pos        *[2]float64     `json:"pos,omitempty" jsonschema:"position [lat, lng] in the map's frame (not with pixel)"`
+	Pixel      *[2]float64     `json:"pixel,omitempty" jsonschema:"position [x, y] in pixels from the map image's top-left corner (not with pos; needs a map image)"`
+	ParentID   *string         `json:"parent_id,omitempty" jsonschema:"the folder feature to nest it in"`
+	Rank       *string         `json:"rank,omitempty" jsonschema:"order among its siblings"`
+	URI        *string         `json:"uri,omitempty" jsonschema:"link: lk://resources/<id>, lk://documents/<id> or lk://resources/<id>/docs/<id>; empty clears it on update"`
+	IsHidden   *bool           `json:"is_hidden,omitempty" jsonschema:"true hides it from players (it is still checked by the spoiler guard)"`
+	Polygon    *[][2]float64   `json:"polygon,omitempty" jsonschema:"a region's outline, [lat, lng] points"`
+	Polyline   *[][2]float64   `json:"polyline,omitempty" jsonschema:"a path's points, [lat, lng]"`
+	Polygons   *[][][2]float64 `json:"polygons,omitempty" jsonschema:"a region made of several outlines, each a list of [lat, lng] points"`
+	// VisibilityRange is write-only in the API (D-014).
+	VisibilityRange *[2]float64   `json:"visibility_range,omitempty" jsonschema:"[min, max] zoom levels at which the feature shows"`
+	ID              string        `json:"id,omitempty" jsonschema:"a client-chosen cuid2 id for a new feature; omit to let the server choose"`
+	Style           *FeatureStyle `json:"style,omitempty" jsonschema:"colour, icon, opacity, stroke, border, fill, label and text style"`
 }
 
 // FeatureOut describes a feature after a write (or, with dry_run, as it
@@ -249,7 +267,7 @@ func (fc featureChange) count() int {
 	in := fc.in
 	n := 0
 	for _, set := range []bool{in.Type != "", in.Name != nil, fc.pos != nil, in.ParentID != nil, in.Rank != nil, in.URI != nil,
-		in.IsHidden != nil, in.Polygon != nil, in.Polyline != nil} {
+		in.IsHidden != nil, in.Polygon != nil, in.Polyline != nil, in.Polygons != nil, in.VisibilityRange != nil} {
 		if set {
 			n++
 		}
@@ -280,6 +298,8 @@ func (fc featureChange) update() lk.FeatureUpdate {
 	setOpt(&u.IsHidden, in.IsHidden)
 	setOpt(&u.Polygon, in.Polygon)
 	setOpt(&u.Polyline, in.Polyline)
+	setOpt(&u.Polygons, in.Polygons)
+	setOpt(&u.VisibilityRange, in.VisibilityRange)
 	if st := in.Style; st != nil {
 		setOpt(&u.IconGlyph, st.IconGlyph)
 		setOpt(&u.IconColor, st.IconColor)
@@ -304,13 +324,13 @@ func (fc featureChange) update() lk.FeatureUpdate {
 	return u
 }
 
-// create is update as a FeatureCreate: the two have the same fields, and
-// FeatureCreate's extras (ID, Polygons, VisibilityRange) stay unset.
+// create is update as a FeatureCreate: the two have the same fields, plus
+// the create-only ID.
 func (fc featureChange) create() lk.FeatureCreate {
 	u := fc.update()
 	return lk.FeatureCreate{
 		Type: u.Type, Name: u.Name, ParentID: u.ParentID, Rank: u.Rank, IsHidden: u.IsHidden, URI: u.URI,
-		Pos: u.Pos, Polygon: u.Polygon, Polyline: u.Polyline,
+		Pos: u.Pos, Polygon: u.Polygon, Polyline: u.Polyline, Polygons: u.Polygons, VisibilityRange: u.VisibilityRange, ID: optStr(fc.in.ID),
 		IconGlyph: u.IconGlyph, IconColor: u.IconColor, IconShape: u.IconShape, IconSize: u.IconSize, PinImage: u.PinImage,
 		Color: u.Color, FillOpacity: u.FillOpacity, FillStyle: u.FillStyle, BorderStyle: u.BorderStyle,
 		StrokeOpacity: u.StrokeOpacity, StrokeStyle: u.StrokeStyle, StrokeWidth: u.StrokeWidth,
@@ -345,6 +365,9 @@ func (fc featureChange) overlay(f lk.Feature) lk.Feature {
 	}
 	if v, ok := u.Polyline.Get(); ok {
 		f.Polyline = v
+	}
+	if v, ok := u.Polygons.Get(); ok {
+		f.Polygons = v
 	}
 	str(&f.IconGlyph, u.IconGlyph)
 	str(&f.IconColor, u.IconColor)

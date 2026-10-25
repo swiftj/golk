@@ -512,6 +512,13 @@ From CLAUDE.md §MCP server rules and the approved Phase 3 plan (DECISIONS.md D-
 | X-BLOCK-03 | `replace_block` sends one parsed block; `update_block` sends `patch` in the API's field names (strict; `rows`/`items` by block kind) or `content_markdown` as runs. Both send `If-Match`. | D-021 | 7 |
 | X-BLOCK-04 | `move_block` sends exactly one anchor; `delete_block` deletes with `If-Match`, its dry run showing the block. | D-021 | 7 |
 | X-GUARD-15 | Block writes are checked unless the page or resource is hidden or the block sits (or lands) inside a `secret` block; moving a block out of a secret into the open checks it. | D-021 | 7 |
+| X-ASSET-02 | `get_asset` reads one asset; `get_asset` and `list_assets` show its description. | D-021 | 7 |
+| X-ASSET-03 | `create_asset_folder` (name, folder_id) and `update_asset` (name, description, folder_id or move_to_root, is_hidden) send only what is given. | D-021 | 7 |
+| X-GUARD-16 | Asset folder names, and a visible asset's new name and description (and its URL when it is being shown), are checked; a hidden asset's aren't. | D-021 | 7 |
+| X-TPL-02 | `save_as_template` and `create_from_template` take `id` and `after`/`before`. | D-021 | 7 |
+| X-TL-03 | `set_timeline_lane` and `set_timeline_event` take a new item's `id`; events take `detail` (1–4); `read_timeline` with `lane_id` or `event_id` reads one item with every field. | D-021 | 7 |
+| X-MAP-03 | `set_map_feature` takes `id`, `polygons` and `visibility_range`; `read_map` with `feature_id` reads one feature with every field. | D-021 | 7 |
+| X-BOARD-03 | `read_board` with `page_id` lists that page's shapes (`listBoardShapes`). | D-021 | 7 |
 
 ---
 

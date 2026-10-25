@@ -201,6 +201,7 @@ type ReadBoardIn struct {
 	ResourceID string `json:"resource_id" jsonschema:"the resource holding the board"`
 	DocumentID string `json:"document_id,omitempty" jsonschema:"the board document; omit for the resource's first board"`
 	Raw        bool   `json:"raw,omitempty" jsonschema:"also return every page, shape, binding and asset record as JSON"`
+	PageID     string `json:"page_id,omitempty" jsonschema:"list only the shapes on this page (page:...), in drawing order; bindings and assets are left out"`
 }
 
 // BoardOut is the board tools' structured output.
@@ -238,6 +239,33 @@ func (s *server) readBoard(ctx context.Context, c *lk.Client, in ReadBoardIn) (t
 	d, err := boardDoc(r, in.DocumentID, false)
 	if err != nil {
 		return zero, err
+	}
+	if in.PageID != "" {
+		l, err := c.Boards.ListShapes(ctx, lk.DocRef{ResourceID: r.ID, DocumentID: d.ID}, lk.BoardShapeListParams{PageID: in.PageID})
+		if err != nil {
+			return zero, err
+		}
+		out := BoardOut{ResourceID: r.ID, DocumentID: d.ID, Name: d.Name, Hidden: d.IsHidden, Version: l.Version, Shapes: len(l.Items)}
+		var sb strings.Builder
+		fmt.Fprintf(&sb, "Shapes on page %s of board %q (%s), version %s:\n", in.PageID, d.Name, d.ID, l.Version)
+		for _, sh := range l.Items {
+			fmt.Fprintf(&sb, "- %s %s at (%g, %g)", sh.Type, sh.ID, sh.X, sh.Y)
+			if t := propString(sh.Props, "text"); t != "" {
+				fmt.Fprintf(&sb, " text %q", t)
+			}
+			sb.WriteString("\n")
+		}
+		if in.Raw {
+			data, err := json.Marshal(l.Items)
+			if err != nil {
+				return zero, err
+			}
+			sb.WriteString("Records:\n")
+			sb.Write(data)
+			sb.WriteString("\n")
+		}
+		fmt.Fprintf(&sb, "%d shape(s).", len(l.Items))
+		return toolResult[BoardOut]{out: out, text: sb.String()}, nil
 	}
 	b, err := c.Boards.GetContent(ctx, lk.DocRef{ResourceID: r.ID, DocumentID: d.ID})
 	if err != nil {

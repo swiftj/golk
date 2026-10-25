@@ -9,6 +9,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/swiftj/golk/lk"
 )
 
@@ -177,4 +178,158 @@ func (s *server) deleteAsset(ctx context.Context, c *lk.Client, in DeleteAssetIn
 		return zero, err
 	}
 	return toolResult[DeleteAssetOut]{out: out, text: fmt.Sprintf("Deleted %s from the asset library.%s", what, note)}, nil
+}
+
+func (s *server) addAssetTools(ms *mcp.Server, writes bool) {
+	addTool(s, ms, &mcp.Tool{
+		Name:        "get_asset",
+		Description: "Read one asset of the library (image, map image, audio or folder): name, type, folder, URL, size, description and hidden flag.",
+		Annotations: readOnly("Get asset"),
+	}, func(in GetAssetIn) string { return in.Project }, s.getAsset)
+	if !writes {
+		return
+	}
+	addTool(s, ms, &mcp.Tool{
+		Name:        "create_asset_folder",
+		Description: "Create a folder in the asset library, at the root or inside another folder (folder_id). Its name is checked by the spoiler guard.",
+		Annotations: write("Create asset folder", false, false),
+	}, func(in CreateAssetFolderIn) string { return in.Project }, serial(s, s.createAssetFolder))
+	addTool(s, ms, &mcp.Tool{
+		Name: "update_asset",
+		Description: "Change an asset: rename it, set its description, move it to a folder (folder_id) or the root (move_to_root), or hide or show it. Only the fields given change. " +
+			"Needs an ADMIN key. A visible asset's new name and description, and an asset being shown, are checked by the spoiler guard.",
+		Annotations: write("Update asset", false, true),
+	}, func(in UpdateAssetIn) string { return in.Project }, serial(s, s.updateAsset))
+}
+
+// GetAssetIn is get_asset's input.
+type GetAssetIn struct {
+	ProjectArg
+	AssetID string `json:"asset_id" jsonschema:"the asset id (list_assets)"`
+}
+
+func (s *server) getAsset(ctx context.Context, c *lk.Client, in GetAssetIn) (toolResult[AssetItemOut], error) {
+	var zero toolResult[AssetItemOut]
+	if in.AssetID == "" {
+		return zero, errors.New("asset_id is required")
+	}
+	a, err := c.Assets.Get(ctx, in.AssetID)
+	if err != nil {
+		return zero, err
+	}
+	var b strings.Builder
+	assetLine(&b, *a)
+	if a.FolderID != "" {
+		fmt.Fprintf(&b, "In folder %s.", a.FolderID)
+	} else {
+		b.WriteString("At the root of the library.")
+	}
+	return toolResult[AssetItemOut]{out: assetItem(*a), text: b.String()}, nil
+}
+
+// CreateAssetFolderIn is create_asset_folder's input.
+type CreateAssetFolderIn struct {
+	ProjectArg
+	DryRunArg
+	Name     string `json:"name" jsonschema:"the folder's name"`
+	FolderID string `json:"folder_id,omitempty" jsonschema:"the parent folder; omit for the root"`
+}
+
+func (s *server) createAssetFolder(ctx context.Context, c *lk.Client, in CreateAssetFolderIn) (toolResult[AssetItemOut], error) {
+	var zero toolResult[AssetItemOut]
+	if strings.TrimSpace(in.Name) == "" {
+		return zero, errors.New("name is required")
+	}
+	if err := s.check(map[string]any{"assetFolder": in.Name}); err != nil {
+		return zero, err
+	}
+	where := "at the root of the asset library"
+	if in.FolderID != "" {
+		where = "in asset folder " + in.FolderID
+	}
+	if in.DryRun {
+		return toolResult[AssetItemOut]{out: AssetItemOut{Name: in.Name, Type: string(lk.AssetFolder), FolderID: in.FolderID},
+			text: fmt.Sprintf("Dry run: would create folder %q %s. Nothing was written.", in.Name, where)}, nil
+	}
+	a, err := c.Assets.CreateFolder(ctx, lk.AssetFolderCreate{Name: in.Name, FolderID: optStr(in.FolderID)})
+	if err != nil {
+		return zero, err
+	}
+	return toolResult[AssetItemOut]{out: assetItem(*a), text: fmt.Sprintf("Created folder %q (%s) %s.", a.Name, a.ID, where)}, nil
+}
+
+// UpdateAssetIn is update_asset's input.
+type UpdateAssetIn struct {
+	ProjectArg
+	DryRunArg
+	AssetID     string  `json:"asset_id" jsonschema:"the asset to change"`
+	Name        *string `json:"name,omitempty" jsonschema:"the new name"`
+	Description *string `json:"description,omitempty" jsonschema:"the new description"`
+	FolderID    string  `json:"folder_id,omitempty" jsonschema:"move it into this folder; not with move_to_root"`
+	MoveToRoot  bool    `json:"move_to_root,omitempty" jsonschema:"move it to the root of the library"`
+	IsHidden    *bool   `json:"is_hidden,omitempty" jsonschema:"true hides it from players; false shows it"`
+}
+
+func (s *server) updateAsset(ctx context.Context, c *lk.Client, in UpdateAssetIn) (toolResult[AssetItemOut], error) {
+	var zero toolResult[AssetItemOut]
+	if in.AssetID == "" {
+		return zero, errors.New("asset_id is required")
+	}
+	if in.FolderID != "" && in.MoveToRoot {
+		return zero, errors.New("give folder_id or move_to_root, not both")
+	}
+	if in.Name == nil && in.Description == nil && in.FolderID == "" && !in.MoveToRoot && in.IsHidden == nil {
+		return zero, errors.New("nothing to change: give name, description, folder_id, move_to_root or is_hidden")
+	}
+	a, err := c.Assets.Get(ctx, in.AssetID)
+	if err != nil {
+		return zero, err
+	}
+	u := lk.AssetUpdate{Name: optPtr(in.Name), Description: optPtr(in.Description), IsHidden: optPtr(in.IsHidden)}
+	var did []string
+	after := *a
+	if in.Name != nil {
+		after.Name = *in.Name
+		did = append(did, fmt.Sprintf("rename it %q", *in.Name))
+	}
+	if in.Description != nil {
+		after.Description = *in.Description
+		did = append(did, "set its description")
+	}
+	switch {
+	case in.FolderID != "":
+		u.FolderID = lk.Value(in.FolderID)
+		did = append(did, "move it into folder "+in.FolderID)
+	case in.MoveToRoot:
+		u.FolderID = lk.Null[string]()
+		did = append(did, "move it to the root")
+	}
+	if in.IsHidden != nil {
+		after.IsHidden = *in.IsHidden
+		did = append(did, map[bool]string{true: "hide it from players", false: "show it to players"}[*in.IsHidden])
+	}
+	// A hidden asset shows players nothing; a visible one shows its name,
+	// description and file (X-GUARD-16).
+	if !after.IsHidden {
+		v := map[string]any{"name": after.Name, "description": after.Description}
+		if a.IsHidden {
+			v["url"] = after.URL
+		}
+		if err := s.check(map[string]any{"asset": v}); err != nil {
+			return zero, err
+		}
+	}
+	summary := strings.Join(did, " and ")
+	out := assetItem(after)
+	out.FolderID = map[bool]string{true: in.FolderID, false: a.FolderID}[in.FolderID != ""]
+	if in.MoveToRoot {
+		out.FolderID = ""
+	}
+	if in.DryRun {
+		return toolResult[AssetItemOut]{out: out, text: fmt.Sprintf("Dry run: would %s (asset %q, %s). Nothing was written.", summary, a.Name, a.ID)}, nil
+	}
+	if err := c.Assets.Update(ctx, a.ID, u); err != nil {
+		return zero, err
+	}
+	return toolResult[AssetItemOut]{out: out, text: fmt.Sprintf("Did %s: asset %q (%s).", summary, after.Name, a.ID)}, nil
 }
