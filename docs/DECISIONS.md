@@ -302,3 +302,11 @@ That is the whole module graph (`go mod graph`). UUIDs (idempotency keys) and cu
 - **Owner decision:** "writing is a big part of the purpose of this MCP server and skill." Without a terms file, lk-mcp now allows every write, unchecked, as `LK_MCP_GUARD=off` does. This replaces D-011's "with no guard file, refuse writes". The guard is opt-in: set `LK_MCP_GUARD_FILE`, or pick a file in the Desktop extension.
 - With a terms file, nothing changes: an empty file, or one that changes while it is being read, still fails closed. An empty file is something the owner set up, so it fails loudly rather than silently switching protection off.
 - `list_projects` reports the guard as `on`, `off`, or `off (no terms file)`. The Desktop extension drops its separate "Spoiler guard" toggle, since leaving the terms file empty now does the same thing. `LK_MCP_GUARD` stays for environment-variable users. The extension and plugin version moves to 0.2.0.
+
+## D-018 — Cowork is part of Claude Desktop
+
+- **Date:** 2026-10-25.
+- **Owner correction:** Cowork has been merged into Claude Desktop. It is a mode of the Desktop app, not a separate product, and it uses the extensions installed in Desktop.
+- So the Desktop extension (`.mcpb`) is how lk-mcp reaches both chat and Cowork, with one set of settings and the API key stored once. The plugin zip adds only the skills.
+- This supersedes D-016's open question ("whether Cowork tasks see the Desktop extension's tools"). The fallback described there, a plugin `.mcp.json` server with the key in a file, isn't planned.
+- The docs now say "Claude Desktop (chat and Cowork)", and the plugin is called the skills plugin. Cowork's packaging rules from D-016 (no top-level `bin/`, no prompting for settings) still apply to the plugin.

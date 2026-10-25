@@ -73,7 +73,7 @@ mcpb: ## Pack the Claude Desktop extension (Apple Silicon) into dist/
 	  rm -rf "$$stage"; \
 	  $(MCPB) info "$(DIST)/lk-mcp-darwin-arm64.mcpb"
 
-plugin: ## Zip the Cowork plugin (skills) into dist/
+plugin: ## Zip the skills plugin into dist/
 	@mkdir -p $(DIST)
 	@rm -f "$(DIST)/legendkeeper-plugin.zip"
 	cd plugin && zip -qr "../$(DIST)/legendkeeper-plugin.zip" .claude-plugin skills README.md -x '*.DS_Store'

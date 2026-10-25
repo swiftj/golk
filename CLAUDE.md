@@ -6,7 +6,7 @@ Three deliverables, built in this order:
 
 1. **`lk`** — a Go SDK for the LegendKeeper v3 REST API. It matches the official TypeScript SDK (`@legendkeeper/sdk`) in *behavior*, but is idiomatic Go in *shape*.
 2. **`lk-mcp`** — an MCP server for LegendKeeper, built on `lk` and the official MCP Go SDK.
-3. **A Claude plugin** — skills plus the `lk-mcp` binary, for Claude Desktop and Cowork (later phase).
+3. **A Claude plugin** — skills plus the `lk-mcp` binary, for Claude Desktop, including Cowork, which runs inside it (later phase).
 
 The owner uses this to publish a D&D world wiki that **players read**. Correctness, data safety and never leaking DM-only content matter more than speed.
 

@@ -5,8 +5,8 @@
 | Part | What it is | For |
 |---|---|---|
 | [`lk`](#the-lk-go-sdk) | A Go SDK for the LegendKeeper v3 REST API: retries, idempotency, versioned writes, pagination, rate limiting, typed blocks, and a lossless Markdown converter | Go developers |
-| [`lk-mcp`](#lk-mcp-the-mcp-server) | An MCP server with 39 task-shaped tools, built on `lk` | Claude Desktop, Claude Cowork, Claude Code and any MCP client |
-| [Claude extension and plugin](#install-in-claude-desktop-and-cowork) | A one-click Claude Desktop extension (`.mcpb`), plus a Cowork plugin with two skills | People who want Claude to read and write their wiki |
+| [`lk-mcp`](#lk-mcp-the-mcp-server) | An MCP server with 39 task-shaped tools, built on `lk` | Claude Desktop (chat and Cowork), Claude Code and any MCP client |
+| [Claude Desktop extension and plugin](#install-in-claude-desktop) | A one-click Claude Desktop extension (`.mcpb`), plus a plugin with two skills | People who want Claude to read and write their wiki |
 
 It was built for a DM who publishes a D&D world wiki that **players read**. So it puts correctness, data safety, and keeping DM-only content away from players ahead of speed:
 
@@ -21,7 +21,7 @@ It was built for a DM who publishes a D&D world wiki that **players read**. So i
 ## Contents
 
 - [Quick start (Claude Desktop)](#quick-start-claude-desktop)
-- [Install in Claude Desktop and Cowork](#install-in-claude-desktop-and-cowork)
+- [Install in Claude Desktop](#install-in-claude-desktop)
 - [What Claude can do](#what-claude-can-do)
 - [lk-mcp, the MCP server](#lk-mcp-the-mcp-server)
 - [The spoiler guard](#the-spoiler-guard)
@@ -50,18 +50,18 @@ make mcpb plugin        # needs Go 1.27+ and Node (npx) for the packer
 
 1. Double-click `lk-mcp-darwin-arm64.mcpb` and enter your API key.
 2. In a new chat, ask: **"List my LegendKeeper projects."**
-3. Optional, for Cowork: upload `legendkeeper-plugin.zip` under **Customize › Plugins › Add › Upload plugin**.
+3. Optional: upload `legendkeeper-plugin.zip` under **Customize › Plugins › Add › Upload plugin** to add the two skills. Cowork is part of Claude Desktop, so it uses the same extension; there's nothing else to set up.
 
 ---
 
-## Install in Claude Desktop and Cowork
+## Install in Claude Desktop
 
-The integration has two pieces, installed separately:
+Cowork is part of Claude Desktop, so everything below covers both chat and Cowork. The integration has two pieces, installed separately:
 
 | Piece | File | Contains |
 |---|---|---|
 | Claude Desktop extension | `dist/lk-mcp-darwin-arm64.mcpb` | The `lk-mcp` server binary and its settings. This is what gives Claude the LegendKeeper tools. |
-| Cowork plugin | `dist/legendkeeper-plugin.zip` | Two skills that teach Claude to use the tools well: `legendkeeper-wiki` (pages, LK Markdown, hidden content, the guard) and `legendkeeper-worldbuilding` (maps, timelines, calendars, templates, boards). It holds no server and no key. |
+| Plugin (skills) | `dist/legendkeeper-plugin.zip` | Two skills that teach Claude to use the tools well: `legendkeeper-wiki` (pages, LK Markdown, hidden content, the guard) and `legendkeeper-worldbuilding` (maps, timelines, calendars, templates, boards). It holds no server and no key. |
 
 ### 1. Get them
 
@@ -92,11 +92,13 @@ make plugin   # dist/legendkeeper-plugin.zip
 
 To change a setting later, open **Settings › Extensions › LegendKeeper**. To upgrade, install a newer `.mcpb` over the old one; your settings are kept.
 
-### 3. Install the Cowork plugin
+### 3. Install the plugin (skills)
 
-In Cowork, open **Customize › Plugins › Add › Upload plugin** and choose `dist/legendkeeper-plugin.zip`.
+In Claude Desktop, open **Customize › Plugins › Add › Upload plugin** and choose `dist/legendkeeper-plugin.zip`. The skills help in both chat and Cowork tasks.
 
-**Status:** whether Cowork tasks can call a server installed as a Desktop extension hasn't been confirmed yet. To test it, start a new Cowork task and ask it to list your LegendKeeper projects. If Cowork says it has no LegendKeeper tools, please open an issue. The fallback is to bundle the server into the plugin, with the key read from a file outside the repo.
+### Using it in Cowork
+
+Cowork runs inside Claude Desktop and uses the extensions installed there, so the LegendKeeper tools and your settings carry over. Start a Cowork task and ask, for example, *"List my LegendKeeper projects, then add a paragraph to the Tree Fort page."* If a task doesn't show the LegendKeeper tools, check that the extension is switched on in **Settings › Extensions**, then start a new task.
 
 ### Other MCP clients (Claude Code, any stdio client)
 
@@ -343,7 +345,7 @@ Requirements:
 | `make build` | Cross-compiles `dist/lk-mcp-darwin-arm64`, `dist/lk-mcp-linux-amd64` and `dist/lk-mcp-linux-arm64` |
 | `make verify-static` | Checks every binary (and the one inside the `.mcpb`) was built with `CGO_ENABLED=0`, and that Linux binaries are statically linked |
 | `make mcpb` | Packs the Claude Desktop extension `dist/lk-mcp-darwin-arm64.mcpb` |
-| `make plugin` | Zips the Cowork plugin `dist/legendkeeper-plugin.zip` |
+| `make plugin` | Zips the skills plugin `dist/legendkeeper-plugin.zip` |
 | `make lint` | `gofmt`, `go vet`, `staticcheck`, `golangci-lint`, `govulncheck` |
 | `make test` / `make test-race` | Unit tests, without and with the race detector |
 | `make test-integration` | Integration tests against a sandbox project (see below) |
@@ -383,7 +385,7 @@ internal/mcpserver/guard/  the spoiler guard
 internal/sandbox/      guarded sandbox client for integration tests
 internal/cmd/lkgen/    the code generator
 examples/              ports of the guide's examples (integration-tagged)
-plugin/                Desktop extension manifest, Cowork plugin, skills
+plugin/                Desktop extension manifest, skills plugin
 docs/                  sources of truth, contract, decisions, LK Markdown spec
 scripts/               build verification
 ```
