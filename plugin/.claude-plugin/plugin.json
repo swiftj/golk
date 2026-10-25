@@ -8,6 +8,6 @@
   },
   "homepage": "https://github.com/swiftj/golk",
   "repository": "https://github.com/swiftj/golk",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "keywords": ["legendkeeper", "worldbuilding", "wiki", "dnd", "ttrpg"]
 }
