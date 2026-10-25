@@ -507,6 +507,11 @@ From CLAUDE.md §MCP server rules and the approved Phase 3 plan (DECISIONS.md D-
 | X-ROW-01 | `set_row` adds a row (key, inline-Markdown value, optional text, after/before) to a sidebar keyValue property, a keyValue block or an infobox keyValue property, with the rows' version as `If-Match`. | D-021 | 7 |
 | X-ROW-02 | `set_row` matches an existing row by `row_id` or exact key and patches only `new_key`, `value` and `text` as given. | D-021 | 7 |
 | X-ROW-03 | `delete_row` deletes one row by id or key with `If-Match`. A row is checked by the guard unless its resource, page or property is hidden. | D-021 | 7 |
+| X-BLOCK-01 | `read_block` returns one block with its subtree as LK Markdown with ids, and the page version. | D-021 | 7 |
+| X-BLOCK-02 | `insert_block` parses exactly one block and sends it with at most one anchor (`after`, `before`, `parent`; none appends) and the page `version` as `If-Match`. | D-021 | 7 |
+| X-BLOCK-03 | `replace_block` sends one parsed block; `update_block` sends `patch` in the API's field names (strict; `rows`/`items` by block kind) or `content_markdown` as runs. Both send `If-Match`. | D-021 | 7 |
+| X-BLOCK-04 | `move_block` sends exactly one anchor; `delete_block` deletes with `If-Match`, its dry run showing the block. | D-021 | 7 |
+| X-GUARD-15 | Block writes are checked unless the page or resource is hidden or the block sits (or lands) inside a `secret` block; moving a block out of a secret into the open checks it. | D-021 | 7 |
 
 ---
 
