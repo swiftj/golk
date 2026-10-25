@@ -37,7 +37,7 @@ type Config struct {
 //	LEGENDKEEPER_BASE_URL        API host
 //	LK_MCP_READ_ONLY=true        read tools only
 //	LK_MCP_GUARD_FILE            spoiler guard terms file
-//	LK_MCP_GUARD=off             run without a spoiler guard
+//	LK_MCP_GUARD=off             run without a spoiler guard (false too; on and true are the default)
 //	LK_MCP_LOG_LEVEL             debug, info (default), warn or error
 func ConfigFromEnv(environ []string) (Config, error) {
 	c := Config{keys: map[string]string{}, LogLevel: slog.LevelInfo}
@@ -69,11 +69,13 @@ func ConfigFromEnv(environ []string) (Config, error) {
 			c.GuardFile = v
 		case k == "LK_MCP_GUARD":
 			switch strings.ToLower(v) {
-			case "off":
+			// true and false come from a boolean setting of the Claude
+			// Desktop extension (plugin/mcpb/manifest.json).
+			case "off", "false":
 				c.GuardOff = true
-			case "", "on":
+			case "", "on", "true":
 			default:
-				return Config{}, fmt.Errorf("lk-mcp: LK_MCP_GUARD must be on or off, not %q", v)
+				return Config{}, fmt.Errorf("lk-mcp: LK_MCP_GUARD must be on or off (or true or false), not %q", v)
 			}
 		case k == "LK_MCP_LOG_LEVEL":
 			if v != "" {

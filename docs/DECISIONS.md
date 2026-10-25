@@ -202,6 +202,7 @@ That is the whole module graph (`go mod graph`). UUIDs (idempotency keys) and cu
 - **Date:** 2026-10-24
 - **Decision (owner):** lk-mcp is built and supported for `darwin/arm64`, `darwin/amd64`, `linux/amd64` and `linux/arm64` only. Linux covers server deployments such as AWS Lightsail. Windows is not a target: no Windows builds, no Windows-specific code paths, now or later.
 - `make build` builds those four targets, and `make verify-static` fails on any other binary in `dist/`. CLAUDE.md's build section says the same.
+- **Amended 2026-10-25 (owner, Phase 6 approval):** no Intel Mac support at all. `darwin/amd64` is dropped; the targets are `darwin/arm64`, `linux/amd64` and `linux/arm64`, and `verify-static` refuses any other binary.
 
 ## D-011 — lk-mcp tools and spoiler guard semantics (Phase 3)
 

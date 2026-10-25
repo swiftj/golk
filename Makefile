@@ -5,7 +5,7 @@ GO          ?= go
 GOBIN       ?= $(shell $(GO) env GOPATH)/bin
 VERSION     ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
 DIST        := dist
-TARGETS     := darwin/arm64 darwin/amd64 linux/amd64 linux/arm64
+TARGETS     := darwin/arm64 linux/amd64 linux/arm64
 
 STATICCHECK_VERSION := 2026.2.2
 GOVULNCHECK_VERSION := v1.9.0

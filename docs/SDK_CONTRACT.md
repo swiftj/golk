@@ -435,7 +435,7 @@ From CLAUDE.md §MCP server rules and the approved Phase 3 plan (DECISIONS.md D-
 
 | ID | Requirement | Source | Phase |
 |---|---|---|---|
-| X-CFG-01 | Config comes from the environment only: `LEGENDKEEPER_API_KEY` is project `default`; `LEGENDKEEPER_API_KEY_<NAME>` is project `<name>` in lower case (letters, digits, `_`; `default` is reserved); empty values are ignored; `LEGENDKEEPER_BASE_URL`, `LK_MCP_READ_ONLY`, `LK_MCP_GUARD_FILE`, `LK_MCP_GUARD=off`, `LK_MCP_LOG_LEVEL`. A malformed value is a startup error. | CLAUDE.md §MCP Modes | 3 |
+| X-CFG-01 | Config comes from the environment only: `LEGENDKEEPER_API_KEY` is project `default`; `LEGENDKEEPER_API_KEY_<NAME>` is project `<name>` in lower case (letters, digits, `_`; `default` is reserved); empty values are ignored; `LEGENDKEEPER_BASE_URL`, `LK_MCP_READ_ONLY`, `LK_MCP_GUARD_FILE`, `LK_MCP_GUARD=off` (or `false`), `LK_MCP_LOG_LEVEL`. A malformed value is a startup error. | CLAUDE.md §MCP Modes | 3 |
 | X-CFG-02 | No API key appears in the config's `String()`, in logs, in tool output or in tool errors. | CLAUDE.md §MCP Logging | 3 |
 | X-PROJ-01 | Every tool takes an optional `project` name. Omitted means `default`, or the only project when one is configured; with several and no default, or an unknown name, the call fails naming the configured projects. | CLAUDE.md §MCP Modes | 3 |
 | X-PROJ-02 | Each project has one `lk.Client`, made on first use and reused, with its own rate limiter. | CLAUDE.md §Rate limits | 3 |

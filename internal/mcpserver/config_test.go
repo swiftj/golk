@@ -51,7 +51,9 @@ func TestConfigFromEnv_X_CFG_01(t *testing.T) {
 		{name: "guard OFF", env: []string{"LK_MCP_GUARD=OFF"}, keys: map[string]string{}, check: guardOf},
 		{name: "guard on", env: []string{"LK_MCP_GUARD=on"}, keys: map[string]string{}, check: guardOf},
 		{name: "guard empty", env: []string{"LK_MCP_GUARD="}, keys: map[string]string{}, check: guardOf},
-		{name: "guard invalid", env: []string{"LK_MCP_GUARD=false"}, wantErr: "LK_MCP_GUARD must be on or off"},
+		{name: "guard false", env: []string{"LK_MCP_GUARD=false"}, keys: map[string]string{}, check: guardOf},
+		{name: "guard true", env: []string{"LK_MCP_GUARD=true"}, keys: map[string]string{}, check: guardOf},
+		{name: "guard invalid", env: []string{"LK_MCP_GUARD=maybe"}, wantErr: "LK_MCP_GUARD must be on or off"},
 		{name: "guard file", env: []string{"LK_MCP_GUARD_FILE=/elsewhere/terms.txt"}, keys: map[string]string{}, check: guardOf},
 		{name: "log level debug", env: []string{"LK_MCP_LOG_LEVEL=debug"}, keys: map[string]string{}, check: levelOf},
 		{name: "log level WARN", env: []string{"LK_MCP_LOG_LEVEL=WARN"}, keys: map[string]string{}, check: levelOf},
@@ -65,6 +67,7 @@ func TestConfigFromEnv_X_CFG_01(t *testing.T) {
 		"read-only false": "false", "read-only 0": "false", "read-only empty": "false",
 		"guard off": "off=true file=", "guard OFF": "off=true file=", "guard on": "off=false file=",
 		"guard empty": "off=false file=", "guard file": "off=false file=/elsewhere/terms.txt",
+		"guard false": "off=true file=", "guard true": "off=false file=",
 		"log level debug": "DEBUG", "log level WARN": "WARN", "log level error": "ERROR", "log level default": "INFO",
 	}
 	for _, tt := range tests {

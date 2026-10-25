@@ -55,7 +55,7 @@ CGO_ENABLED=0 GOOS=<os> GOARCH=<arch> \
   -o dist/lk-mcp-<os>-<arch> ./cmd/lk-mcp
 ```
 
-Build targets: `darwin/arm64`, `darwin/amd64`, `linux/amd64`, `linux/arm64`. **Only macOS and Linux are supported** (Linux covers server deployments such as AWS Lightsail). Never build, ship or add code paths for Windows.
+Build targets: `darwin/arm64`, `linux/amd64`, `linux/arm64`. **Only Apple Silicon macOS and Linux are supported** (Linux covers server deployments such as AWS Lightsail). No Intel Macs. Never build, ship or add code paths for Windows.
 
 Rules:
 
