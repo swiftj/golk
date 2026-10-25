@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"slices"
 	"time"
 	"unicode/utf8"
 
@@ -275,6 +276,12 @@ type DocSummaryOut struct {
 	Name   string `json:"name"`
 	Type   string `json:"type"`
 	Hidden bool   `json:"hidden,omitempty"`
+	// Rank orders the tabs (update_document rank); FullWidth is the
+	// document's full-width layout.
+	Rank      string `json:"rank,omitempty"`
+	FullWidth bool   `json:"full_width,omitempty"`
+	// CalendarID is a timeline's calendar.
+	CalendarID string `json:"calendar_id,omitempty"`
 }
 
 // ResourceItemOut is one resource of list_resources.
@@ -286,6 +293,13 @@ type ResourceItemOut struct {
 	Hidden      bool            `json:"hidden,omitempty"`
 	HasChildren bool            `json:"has_children,omitempty"`
 	Documents   []DocSummaryOut `json:"documents"`
+	// Rank orders siblings in the sidebar: compare as plain strings.
+	Rank      string `json:"rank,omitempty"`
+	IconGlyph string `json:"icon_glyph,omitempty"`
+	IconColor string `json:"icon_color,omitempty"`
+	IconShape string `json:"icon_shape,omitempty"`
+	IconSize  string `json:"icon_size,omitempty"`
+	UpdatedAt string `json:"updated_at,omitempty"`
 }
 
 // ListResourcesOut is list_resources' output.
@@ -313,10 +327,25 @@ func (s *server) listResources(ctx context.Context, c *lk.Client, in ListResourc
 	}
 	out := ListResourcesOut{Resources: []ResourceItemOut{}, HasMore: p.HasMore, NextCursor: p.NextCursor}
 	var b strings.Builder
-	for _, r := range p.Items {
+	items := p.Items
+	if params.ParentID != "" {
+		// Siblings in sidebar order: by rank as plain strings (G§Resource
+		// order). Only one parent's children share an order.
+		items = slices.Clone(items)
+		slices.SortStableFunc(items, func(a, b lk.ResourceListItem) int { return strings.Compare(a.Rank, b.Rank) })
+		b.WriteString("In sidebar order (by rank):\n")
+	}
+	for _, r := range items {
 		it := ResourceItemOut{ID: r.ID, Name: r.Name, ParentID: r.ParentID, Tags: r.Tags, Hidden: r.IsHidden,
-			HasChildren: r.HasChildren, Documents: []DocSummaryOut{}}
-		fmt.Fprintf(&b, "- %s (%s)%s", r.Name, r.ID, listFlags(flagIf(r.IsHidden, "hidden"), flagIf(r.HasChildren, "has children")))
+			HasChildren: r.HasChildren, Documents: []DocSummaryOut{}, Rank: r.Rank,
+			IconGlyph: r.IconGlyph, IconColor: r.IconColor, IconShape: string(r.IconShape), IconSize: string(r.IconSize)}
+		if !r.UpdatedAt.IsZero() {
+			it.UpdatedAt = r.UpdatedAt.Format(time.RFC3339)
+		}
+		fmt.Fprintf(&b, "- %s (%s) rank %s%s", r.Name, r.ID, orDash(r.Rank), listFlags(flagIf(r.IsHidden, "hidden"), flagIf(r.HasChildren, "has children")))
+		if r.IconGlyph != "" {
+			fmt.Fprintf(&b, " icon %s", r.IconGlyph)
+		}
 		if len(r.Tags) > 0 {
 			fmt.Fprintf(&b, " tags: %s;", strings.Join(r.Tags, ", "))
 		}
@@ -368,6 +397,23 @@ type GetResourceOut struct {
 	Locked     bool                  `json:"locked,omitempty"`
 	Documents  []DocSummaryOut       `json:"documents"`
 	Properties []PropertySummaryOut  `json:"properties"`
+	Rank       string                `json:"rank,omitempty"`
+	IconGlyph  string                `json:"icon_glyph,omitempty"`
+	IconColor  string                `json:"icon_color,omitempty"`
+	IconShape  string                `json:"icon_shape,omitempty"`
+	IconSize   string                `json:"icon_size,omitempty"`
+	ImageURL   string                `json:"image_url,omitempty"`
+	Banner     *BannerOut            `json:"banner,omitempty"`
+	// Permissions are access levels by role or user id (0 no access, 1 can
+	// read, 2 can edit, 3 full access, 4 defer to role, 5 inherit).
+	Permissions map[string]int `json:"permissions,omitempty"`
+}
+
+// BannerOut is a resource's banner.
+type BannerOut struct {
+	Enabled   bool    `json:"enabled"`
+	URL       string  `json:"url"`
+	YPosition float64 `json:"y_position"`
 }
 
 func (s *server) getResource(ctx context.Context, c *lk.Client, in GetResourceIn) (toolResult[GetResourceOut], error) {
@@ -401,10 +447,37 @@ func (s *server) getResource(ctx context.Context, c *lk.Client, in GetResourceIn
 	if len(r.Aliases) > 0 {
 		fmt.Fprintf(&b, "Aliases: %s\n", strings.Join(r.Aliases, ", "))
 	}
-	b.WriteString("Documents:\n")
-	for _, d := range r.Documents {
-		out.Documents = append(out.Documents, DocSummaryOut{ID: d.ID, Name: d.Name, Type: string(d.Type), Hidden: d.IsHidden})
-		fmt.Fprintf(&b, "- %s (%s, %s)%s\n", d.Name, d.Type, d.ID, listFlags(flagIf(d.IsHidden, "hidden from players")))
+	out.Rank, out.IconGlyph, out.IconColor, out.IconShape, out.IconSize, out.ImageURL =
+		r.Rank, r.IconGlyph, r.IconColor, string(r.IconShape), string(r.IconSize), r.ImageURL
+	fmt.Fprintf(&b, "Sidebar rank: %s\n", orDash(r.Rank))
+	if r.IconGlyph != "" || r.IconShape != "" {
+		fmt.Fprintf(&b, "Icon: glyph %s, colour %s, shape %s, size %s\n", orDash(r.IconGlyph), orDash(r.IconColor), orDash(string(r.IconShape)), orDash(string(r.IconSize)))
+	}
+	if r.ImageURL != "" {
+		fmt.Fprintf(&b, "Image: %s\n", r.ImageURL)
+	}
+	if r.Banner != nil {
+		out.Banner = &BannerOut{Enabled: r.Banner.Enabled, URL: r.Banner.URL, YPosition: r.Banner.YPosition}
+		fmt.Fprintf(&b, "Banner: %s (enabled %t, y %g)\n", r.Banner.URL, r.Banner.Enabled, r.Banner.YPosition)
+	}
+	if len(r.Permissions) > 0 {
+		out.Permissions = map[string]int{}
+		var ps []string
+		for k, v := range r.Permissions {
+			out.Permissions[k] = int(v)
+			ps = append(ps, fmt.Sprintf("%s=%d", k, v))
+		}
+		slices.Sort(ps)
+		fmt.Fprintf(&b, "Permissions (0 none, 1 read, 2 edit, 3 full, 4 role, 5 inherit): %s\n", strings.Join(ps, ", "))
+	}
+	b.WriteString("Documents (tabs, in order):\n")
+	docs := slices.Clone(r.Documents)
+	slices.SortStableFunc(docs, func(a, b lk.Document) int { return strings.Compare(a.Rank, b.Rank) })
+	for _, d := range docs {
+		out.Documents = append(out.Documents, DocSummaryOut{ID: d.ID, Name: d.Name, Type: string(d.Type), Hidden: d.IsHidden,
+			Rank: d.Rank, FullWidth: d.IsFullWidth, CalendarID: d.CalendarID})
+		fmt.Fprintf(&b, "- %s (%s, %s) rank %s%s\n", d.Name, d.Type, d.ID, orDash(d.Rank),
+			listFlags(flagIf(d.IsHidden, "hidden from players"), flagIf(d.IsFullWidth, "full width")))
 	}
 	if len(r.Documents) == 0 {
 		b.WriteString("- none\n")

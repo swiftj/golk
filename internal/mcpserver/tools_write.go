@@ -20,12 +20,21 @@ func (s *server) addWriteTools(ms *mcp.Server) {
 	}, func(in UpdateDocumentIn) string { return in.Project }, serial(s, s.updateDocument))
 	addTool(s, ms, &mcp.Tool{
 		Name:        "create_resource",
-		Description: "Create a resource (wiki entry), optionally with its first page as LK Markdown. Its name, aliases, tags and page are checked by the spoiler guard unless it is created hidden.",
+		Description: "Create a resource (wiki entry), optionally with its first page as LK Markdown, or with 1-5 documents of any type (page, map, time, board, blank). " +
+			"Can set its place in the sidebar (after or before a sibling), icon, lock and banner. Its content is checked by the spoiler guard unless it is created hidden.",
 		Annotations: write("Create resource", false, false),
 	}, func(in CreateResourceIn) string { return in.Project }, serial(s, s.createResource))
 	addTool(s, ms, &mcp.Tool{
+		Name: "create_resources",
+		Description: "Create 1-100 resources (wiki entries) in one batch, in order, each with the fields create_resource takes. The batch counts as one write against the rate limit, " +
+			"and nothing is created if any item is invalid. Each visible resource is checked by the spoiler guard.",
+		Annotations: write("Create resources", false, false),
+	}, func(in CreateResourcesIn) string { return in.Project }, serial(s, s.createResources))
+	addTool(s, ms, &mcp.Tool{
 		Name:        "update_resource",
-		Description: "Rename a resource, set its tags or aliases, hide or show it, or move it (parent_id or move_to_root). Only the fields given change. Showing a hidden resource checks everything it would show with the spoiler guard first.",
+		Description: "Change a resource: rename it, set its tags, aliases, icon, lock, banner or permissions, hide or show it, move it (parent_id or move_to_root), " +
+			"or reorder it among its siblings in the sidebar (after or before a sibling id; list_resources shows the order). Only the fields given change. " +
+			"Showing a hidden resource, or giving players (MEMBER) access, checks everything it would show with the spoiler guard first.",
 		Annotations: write("Update resource", true, true),
 	}, func(in UpdateResourceIn) string { return in.Project }, serial(s, s.updateResource))
 	addTool(s, ms, &mcp.Tool{

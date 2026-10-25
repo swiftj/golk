@@ -194,6 +194,12 @@ func uncheckable(r *lk.Resource, d *lk.Document) error {
 type CreateResourceIn struct {
 	ProjectArg
 	DryRunArg
+	ResourceSpec
+}
+
+// ResourceSpec is one resource to create (create_resource, and each item of
+// create_resources).
+type ResourceSpec struct {
 	Name         string   `json:"name" jsonschema:"the resource's name, as players see it in the sidebar"`
 	ParentID     string   `json:"parent_id,omitempty" jsonschema:"the parent resource id; omit to create it at the top level"`
 	Tags         []string `json:"tags,omitempty" jsonschema:"tags to set"`
@@ -201,10 +207,34 @@ type CreateResourceIn struct {
 	IsHidden     *bool    `json:"is_hidden,omitempty" jsonschema:"true creates it hidden from players (DM-only)"`
 	PageMarkdown *string  `json:"page_markdown,omitempty" jsonschema:"the first page's content as LK Markdown (as read_page writes it); omit for an empty page"`
 	PageName     string   `json:"page_name,omitempty" jsonschema:"the first page's name; default Main"`
+	// Documents creates 1-5 documents of any type instead of one page.
+	Documents []NewDocArg `json:"documents,omitempty" jsonschema:"1-5 documents (tabs) to create, in order, instead of page_markdown/page_name"`
+	ID        string      `json:"id,omitempty" jsonschema:"a client-chosen cuid2 id (8 or 24 characters); omit to let the server choose"`
+	PositionArgs
+	IconArgs
+	IsLocked *bool      `json:"is_locked,omitempty" jsonschema:"true creates it locked against edits in the app"`
+	Banner   *BannerArg `json:"banner,omitempty" jsonschema:"a banner image (an image asset URL of the project)"`
 }
 
-func (s *server) createResource(ctx context.Context, c *lk.Client, in CreateResourceIn) (toolResult[ResourceOut], error) {
-	var zero toolResult[ResourceOut]
+// NewDocArg is a document of a new resource.
+type NewDocArg struct {
+	Name       string  `json:"name,omitempty" jsonschema:"the document's name; default Main"`
+	Type       string  `json:"type,omitempty" jsonschema:"page, map, time (timeline), board or blank; default page with markdown, otherwise blank"`
+	CalendarID string  `json:"calendar_id,omitempty" jsonschema:"a time document's calendar (list_calendars)"`
+	Markdown   *string `json:"markdown,omitempty" jsonschema:"a page document's content as LK Markdown"`
+}
+
+// builtResource is a ResourceSpec ready to send: the create body, what
+// players would see of it, and its block count.
+type builtResource struct {
+	rc      lk.ResourceCreate
+	visible map[string]any
+	hidden  bool
+	nblocks int
+}
+
+func buildResource(in ResourceSpec) (builtResource, error) {
+	var zero builtResource
 	if strings.TrimSpace(in.Name) == "" {
 		return zero, errors.New("name is required")
 	}
@@ -222,8 +252,55 @@ func (s *server) createResource(ctx context.Context, c *lk.Client, in CreateReso
 	if in.IsHidden != nil {
 		rc.IsHidden = lk.Some(*in.IsHidden)
 	}
+	if err := in.PositionArgs.check(); err != nil {
+		return zero, err
+	}
+	if in.Documents != nil && (in.PageMarkdown != nil || in.PageName != "") {
+		return zero, errors.New("give documents, or page_markdown/page_name, not both")
+	}
+	rc.ID, rc.After, rc.Before = optStr(in.ID), optStr(in.After), optStr(in.Before)
+	rc.IconGlyph, rc.IconColor = optPtr(in.IconGlyph), optPtr(in.IconColor)
+	if in.IconShape != nil {
+		rc.IconShape = lk.Some(lk.IconShape(*in.IconShape))
+	}
+	if in.IconSize != nil {
+		rc.IconSize = lk.Some(lk.IconSize(*in.IconSize))
+	}
+	rc.IsLocked = optPtr(in.IsLocked)
 	visible := map[string]any{"name": in.Name, "aliases": in.Aliases, "tags": in.Tags}
+	if in.Banner != nil {
+		b := in.Banner.merge(nil)
+		rc.Banner = lk.Some(b)
+		visible["bannerUrl"] = b.URL
+	}
 	nblocks := 0
+	if in.Documents != nil {
+		if len(in.Documents) < 1 || len(in.Documents) > 5 {
+			return zero, errors.New("documents takes 1 to 5 documents")
+		}
+		var docs []lk.ResourceDocument
+		var shown []map[string]any
+		for i, d := range in.Documents {
+			doc := lk.ResourceDocument{Name: optStr(d.Name), CalendarID: optStr(d.CalendarID)}
+			if d.Type != "" {
+				doc.Type = lk.Some(lk.DocumentType(d.Type))
+			}
+			v := map[string]any{"name": d.Name}
+			if d.Markdown != nil {
+				content, _, err := markdown.FromMarkdown(*d.Markdown, markdown.FromOptions{})
+				if err != nil {
+					return zero, fmt.Errorf("documents[%d].markdown: %w", i, err)
+				}
+				doc.Blocks = content
+				nblocks += len(content)
+				v["blocks"] = content
+			}
+			docs = append(docs, doc)
+			shown = append(shown, v)
+		}
+		rc.Documents = lk.Some(docs)
+		visible["documents"] = shown
+	}
 	if in.PageMarkdown != nil || in.PageName != "" {
 		doc := lk.ResourceDocument{Type: lk.Some(lk.DocumentPage)}
 		if in.PageName != "" {
@@ -240,9 +317,19 @@ func (s *server) createResource(ctx context.Context, c *lk.Client, in CreateReso
 		}
 		rc.Documents = lk.Some([]lk.ResourceDocument{doc})
 	}
+	return builtResource{rc: rc, visible: visible, hidden: hidden, nblocks: nblocks}, nil
+}
+
+func (s *server) createResource(ctx context.Context, c *lk.Client, in CreateResourceIn) (toolResult[ResourceOut], error) {
+	var zero toolResult[ResourceOut]
+	b, err := buildResource(in.ResourceSpec)
+	if err != nil {
+		return zero, err
+	}
+	rc, hidden, nblocks := b.rc, b.hidden, b.nblocks
 	// A resource created hidden shows players nothing (X-GUARD-04).
 	if !hidden {
-		if err := s.check(visible); err != nil {
+		if err := s.check(b.visible); err != nil {
 			return zero, err
 		}
 	}
@@ -250,6 +337,9 @@ func (s *server) createResource(ctx context.Context, c *lk.Client, in CreateReso
 	where := "at the top level"
 	if in.ParentID != "" {
 		where = "under " + in.ParentID
+	}
+	if in.PositionArgs.set() {
+		where += ", " + strings.TrimPrefix(in.PositionArgs.text(), "place it ")
 	}
 	if in.DryRun {
 		return toolResult[ResourceOut]{out: out, text: fmt.Sprintf("Dry run: would create resource %q %s, %s, with a page of %d block(s). Nothing was written.",
@@ -286,6 +376,103 @@ type UpdateResourceIn struct {
 	IsHidden   *bool     `json:"is_hidden,omitempty" jsonschema:"true hides the resource from players; false shows it (its whole content is checked by the spoiler guard first)"`
 	ParentID   *string   `json:"parent_id,omitempty" jsonschema:"move the resource (with its children) under this resource"`
 	MoveToRoot bool      `json:"move_to_root,omitempty" jsonschema:"move the resource (with its children) to the top level; not with parent_id"`
+	PositionArgs
+	IconArgs
+	IsLocked    *bool          `json:"is_locked,omitempty" jsonschema:"true locks the resource against edits in the app"`
+	Banner      *BannerArg     `json:"banner,omitempty" jsonschema:"the banner image; fields left out keep their value"`
+	Permissions map[string]int `json:"permissions,omitempty" jsonschema:"access levels keyed by role (MEMBER, ADMIN, OWNER) or user id: 0 no access, 1 can read, 2 can edit, 3 full access, 4 defer to the role, 5 inherit from the parent; entries left out keep their value"`
+}
+
+// PositionArgs place a resource among its siblings (moveResource,
+// createResource and the template copies take after or before).
+type PositionArgs struct {
+	After  string `json:"after,omitempty" jsonschema:"place it right after this sibling resource id (sidebar order); not with before"`
+	Before string `json:"before,omitempty" jsonschema:"place it right before this sibling resource id (sidebar order); not with after"`
+}
+
+func (p PositionArgs) check() error {
+	if p.After != "" && p.Before != "" {
+		return errors.New("give after or before, not both")
+	}
+	return nil
+}
+
+func (p PositionArgs) set() bool { return p.After != "" || p.Before != "" }
+
+func (p PositionArgs) text() string {
+	if p.After != "" {
+		return "place it after " + p.After
+	}
+	return "place it before " + p.Before
+}
+
+// IconArgs are a resource's icon: a glyph, its colour, and the map-pin
+// shape and size drawn behind it.
+type IconArgs struct {
+	IconGlyph *string `json:"icon_glyph,omitempty" jsonschema:"the icon glyph name; empty clears it"`
+	IconColor *string `json:"icon_color,omitempty" jsonschema:"the icon colour, e.g. #aa3300"`
+	IconShape *string `json:"icon_shape,omitempty" jsonschema:"pin, diamond, flag, marker, shield, circle, banner, arch, or none for the glyph alone"`
+	IconSize  *string `json:"icon_size,omitempty" jsonschema:"medium or small"`
+}
+
+func (a IconArgs) count() int {
+	n := 0
+	for _, v := range []*string{a.IconGlyph, a.IconColor, a.IconShape, a.IconSize} {
+		if v != nil {
+			n++
+		}
+	}
+	return n
+}
+
+// BannerArg is a resource's banner. URL must be an image asset URL of the
+// project (upload_image).
+type BannerArg struct {
+	Enabled   *bool    `json:"enabled,omitempty" jsonschema:"show or hide the banner"`
+	URL       *string  `json:"url,omitempty" jsonschema:"the image asset URL"`
+	YPosition *float64 `json:"y_position,omitempty" jsonschema:"the vertical focus, 0 (top) to 1 (bottom)"`
+}
+
+// merge lays b over cur (nil for none).
+func (b *BannerArg) merge(cur *lk.Banner) lk.Banner {
+	out := lk.Banner{Enabled: true, YPosition: 0.5}
+	if cur != nil {
+		out = *cur
+	}
+	if b.Enabled != nil {
+		out.Enabled = *b.Enabled
+	}
+	if b.URL != nil {
+		out.URL = *b.URL
+	}
+	if b.YPosition != nil {
+		out.YPosition = *b.YPosition
+	}
+	return out
+}
+
+// raisesMemberAccess reports whether perms gives the MEMBER role (players)
+// any access other than none: like unhiding, that can show content, so the
+// guard checks it (D-021).
+// optPtr is *v as an Optional: unset when v is nil.
+func optPtr[T any](v *T) lk.Optional[T] {
+	if v == nil {
+		return lk.Optional[T]{}
+	}
+	return lk.Some(*v)
+}
+
+// optStr is v as an Optional: unset when empty.
+func optStr(v string) lk.Optional[string] {
+	if v == "" {
+		return lk.Optional[string]{}
+	}
+	return lk.Some(v)
+}
+
+func raisesMemberAccess(perms map[string]int) bool {
+	v, ok := perms["MEMBER"]
+	return ok && v != int(lk.PermissionNoAccess)
 }
 
 func (s *server) updateResource(ctx context.Context, c *lk.Client, in UpdateResourceIn) (toolResult[ResourceOut], error) {
@@ -293,8 +480,17 @@ func (s *server) updateResource(ctx context.Context, c *lk.Client, in UpdateReso
 	if in.ParentID != nil && in.MoveToRoot {
 		return zero, errors.New("give parent_id or move_to_root, not both")
 	}
-	if in.Name == nil && in.Tags == nil && in.Aliases == nil && in.IsHidden == nil && in.ParentID == nil && !in.MoveToRoot {
-		return zero, errors.New("nothing to change: give name, tags, aliases, is_hidden, parent_id or move_to_root")
+	if err := in.PositionArgs.check(); err != nil {
+		return zero, err
+	}
+	for k, v := range in.Permissions {
+		if v < 0 || v > 5 {
+			return zero, fmt.Errorf("permissions[%s] = %d: a level is 0 to 5", k, v)
+		}
+	}
+	if in.Name == nil && in.Tags == nil && in.Aliases == nil && in.IsHidden == nil && in.ParentID == nil && !in.MoveToRoot &&
+		!in.PositionArgs.set() && in.IconArgs.count() == 0 && in.IsLocked == nil && in.Banner == nil && in.Permissions == nil {
+		return zero, errors.New("nothing to change: give a field to set (name, tags, aliases, is_hidden, parent_id, move_to_root, after, before, icon_*, is_locked, banner or permissions)")
 	}
 	r, err := c.Resources.Get(ctx, in.ID)
 	if err != nil {
@@ -326,8 +522,48 @@ func (s *server) updateResource(ctx context.Context, c *lk.Client, in UpdateReso
 		unhide = !*in.IsHidden
 		did = append(did, map[bool]string{true: "hide it from players", false: "show it to players"}[*in.IsHidden])
 	}
+	setStr := func(dst *lk.Optional[string], v *string, cur, what string) {
+		if v != nil && *v != cur {
+			*dst = lk.Some(*v)
+			changed[what] = *v
+			did = append(did, fmt.Sprintf("set %s to %q", what, *v))
+		}
+	}
+	setStr(&u.IconGlyph, in.IconGlyph, r.IconGlyph, "iconGlyph")
+	setStr(&u.IconColor, in.IconColor, r.IconColor, "iconColor")
+	if in.IconShape != nil && *in.IconShape != string(r.IconShape) {
+		u.IconShape = lk.Some(lk.IconShape(*in.IconShape))
+		did = append(did, fmt.Sprintf("set the icon shape to %s", *in.IconShape))
+	}
+	if in.IconSize != nil && *in.IconSize != string(r.IconSize) {
+		u.IconSize = lk.Some(lk.IconSize(*in.IconSize))
+		did = append(did, fmt.Sprintf("set the icon size to %s", *in.IconSize))
+	}
+	if in.IsLocked != nil && *in.IsLocked != r.IsLocked {
+		u.IsLocked = lk.Some(*in.IsLocked)
+		did = append(did, map[bool]string{true: "lock it", false: "unlock it"}[*in.IsLocked])
+	}
+	if in.Banner != nil {
+		b := in.Banner.merge(r.Banner)
+		u.Banner = lk.Some(b)
+		changed["bannerUrl"] = b.URL
+		did = append(did, "set its banner")
+	}
+	if in.Permissions != nil {
+		p := make(map[string]lk.PermissionLevel, len(in.Permissions))
+		for k, v := range in.Permissions {
+			p[k] = lk.PermissionLevel(v)
+		}
+		u.Permissions = lk.Some(p)
+		did = append(did, "set its permissions")
+	}
 	var mv lk.ResourceMove
 	move := false
+	if in.PositionArgs.set() {
+		mv.After, mv.Before = optStr(in.After), optStr(in.Before)
+		move = true
+		did = append(did, in.PositionArgs.text())
+	}
 	switch {
 	case in.MoveToRoot && r.ParentID != "":
 		mv.ParentID, out.ParentID, move = lk.Null[string](), "", true
@@ -349,7 +585,7 @@ func (s *server) updateResource(ctx context.Context, c *lk.Client, in UpdateReso
 	// inherited (D-012).
 	if !out.Hidden && !s.cfg.GuardOff {
 		visible := changed
-		if unhide {
+		if unhide || raisesMemberAccess(in.Permissions) {
 			if visible, err = visibleResource(ctx, c, &after); err != nil {
 				return zero, err
 			}
@@ -365,7 +601,8 @@ func (s *server) updateResource(ctx context.Context, c *lk.Client, in UpdateReso
 		return toolResult[ResourceOut]{out: out, text: fmt.Sprintf("Dry run: would %s (resource %q, %s). Nothing was written.", summary, r.Name, r.ID)}, nil
 	}
 	cur := r
-	upd := len(did) > 0 && (len(changed) > 0 || in.IsHidden != nil && *in.IsHidden != r.IsHidden)
+	upd := len(changed) > 0 || u.IsHidden.IsSet() || u.IconShape.IsSet() || u.IconSize.IsSet() ||
+		u.IsLocked.IsSet() || u.Banner.IsSet() || u.Permissions.IsSet()
 	if upd {
 		if cur, err = c.Resources.Update(ctx, r.ID, u); err != nil {
 			return zero, err
@@ -565,4 +802,66 @@ func (s *server) recheck(ctx context.Context, c *lk.Client, id string) error {
 
 type flaggedResource struct {
 	id, name string
+}
+
+// maxBatchCreate is the most resources one createManyResources call takes.
+const maxBatchCreate = 100
+
+// CreateResourcesIn is create_resources' input.
+type CreateResourcesIn struct {
+	ProjectArg
+	DryRunArg
+	Resources []ResourceSpec `json:"resources" jsonschema:"1-100 resources to create in order, each with the fields create_resource takes; the batch counts as one write"`
+}
+
+// CreateResourcesOut is create_resources' output.
+type CreateResourcesOut struct {
+	Resources []ResourceOut `json:"resources"`
+	DryRun    bool          `json:"dry_run,omitempty"`
+}
+
+func (s *server) createResources(ctx context.Context, c *lk.Client, in CreateResourcesIn) (toolResult[CreateResourcesOut], error) {
+	var zero toolResult[CreateResourcesOut]
+	if len(in.Resources) == 0 || len(in.Resources) > maxBatchCreate {
+		return zero, fmt.Errorf("resources takes 1 to %d resources", maxBatchCreate)
+	}
+	rcs := make([]lk.ResourceCreate, len(in.Resources))
+	out := CreateResourcesOut{Resources: []ResourceOut{}, DryRun: in.DryRun}
+	for i, spec := range in.Resources {
+		b, err := buildResource(spec)
+		if err != nil {
+			return zero, fmt.Errorf("resources[%d]: %w", i, err)
+		}
+		// Each resource is checked by its own hidden flag (X-GUARD-04).
+		if !b.hidden {
+			if err := s.check(map[string]any{"resources": map[string]any{fmt.Sprint(i): b.visible}}); err != nil {
+				return zero, err
+			}
+		}
+		rcs[i] = b.rc
+		out.Resources = append(out.Resources, ResourceOut{Name: spec.Name, ParentID: spec.ParentID, Hidden: b.hidden})
+	}
+	if in.DryRun {
+		return toolResult[CreateResourcesOut]{out: out, text: fmt.Sprintf("Dry run: would create %d resource(s) in one batch: %s. Nothing was written.",
+			len(rcs), specNames(in.Resources))}, nil
+	}
+	rs, err := c.Resources.CreateMany(ctx, rcs)
+	if err != nil {
+		return zero, err
+	}
+	out.Resources = out.Resources[:0]
+	var lines []string
+	for _, r := range rs {
+		out.Resources = append(out.Resources, ResourceOut{ResourceID: r.ID, Name: r.Name, ParentID: r.ParentID, Hidden: r.IsHidden, Documents: docRefs(r.Documents)})
+		lines = append(lines, fmt.Sprintf("- %q (%s), %s", r.Name, r.ID, hiddenWord(r.IsHidden)))
+	}
+	return toolResult[CreateResourcesOut]{out: out, text: fmt.Sprintf("Created %d resource(s):\n%s", len(rs), strings.Join(lines, "\n"))}, nil
+}
+
+func specNames(specs []ResourceSpec) string {
+	names := make([]string, len(specs))
+	for i, sp := range specs {
+		names[i] = fmt.Sprintf("%q", sp.Name)
+	}
+	return strings.Join(names, ", ")
 }

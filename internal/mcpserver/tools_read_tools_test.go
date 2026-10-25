@@ -75,11 +75,11 @@ const rtSearchJSON = `{"data":[
 "hasMore":false}`
 
 const rtListJSON = `{"data":[
-{"id":"r1","name":"Candy Kingdom","tags":["place","sweet"],"aliases":[],"hasChildren":true,"isHidden":false,"documents":[{"id":"d1","name":"Main","type":"page"},{"id":"m1","name":"Map","type":"map"}]},
-{"id":"r9","name":"Lich Lair","tags":[],"aliases":[],"hasChildren":false,"isHidden":true,"documents":[]}],
+{"id":"r1","name":"Candy Kingdom","tags":["place","sweet"],"aliases":[],"hasChildren":true,"isHidden":false,"rank":"a1","iconGlyph":"castle","documents":[{"id":"d1","name":"Main","type":"page"},{"id":"m1","name":"Map","type":"map"}]},
+{"id":"r9","name":"Lich Lair","tags":[],"aliases":[],"hasChildren":false,"isHidden":true,"rank":"a0","documents":[]}],
 "hasMore":true,"nextCursor":"c2"}`
 
-const rtList2JSON = `{"data":[{"id":"r3","name":"Ice Kingdom","tags":[],"aliases":[],"hasChildren":false,"documents":[]}],"hasMore":false,"nextCursor":null}`
+const rtList2JSON = `{"data":[{"id":"r3","name":"Ice Kingdom","tags":[],"aliases":[],"hasChildren":false,"rank":"a5","documents":[]}],"hasMore":false,"nextCursor":null}`
 
 const rtResourceJSON = `{"id":"r2","name":"Princess Bubblegum","parentId":"r1","tags":["royal"],"aliases":["PB","Bonnie"],
 "rank":"a","isHidden":false,"isLocked":true,"permissions":{},
@@ -129,19 +129,21 @@ func TestReadTools_X_TOOL_01_X_OUT_01(t *testing.T) {
 			args:    map[string]any{"root": true, "limit": 2},
 			replies: []testutil.Reply{testutil.JSON(http.StatusOK, rtListJSON)},
 			reqs:    []rtReq{rtGet("/resources", "parentId", "root", "limit", "2")},
-			text: "- Candy Kingdom (r1) [has children] tags: place, sweet; docs: Main (page, d1), Map (map, m1)\n" +
-				"- Lich Lair (r9) [hidden]\n" +
+			// Siblings come in sidebar order, by rank.
+			text: "In sidebar order (by rank):\n" +
+				"- Lich Lair (r9) rank a0 [hidden]\n" +
+				"- Candy Kingdom (r1) rank a1 [has children] icon castle tags: place, sweet; docs: Main (page, d1), Map (map, m1)\n" +
 				`2 resource(s) on this page; more follow: pass cursor "c2" for the next page.`,
-			out: `{"resources":[{"id":"r1","name":"Candy Kingdom","tags":["place","sweet"],"has_children":true,"documents":[{"id":"d1","name":"Main","type":"page"},{"id":"m1","name":"Map","type":"map"}]},` +
-				`{"id":"r9","name":"Lich Lair","hidden":true,"documents":[]}],"has_more":true,"next_cursor":"c2"}`,
+			out: `{"resources":[{"id":"r9","name":"Lich Lair","hidden":true,"documents":[],"rank":"a0"},` +
+				`{"id":"r1","name":"Candy Kingdom","tags":["place","sweet"],"has_children":true,"documents":[{"id":"d1","name":"Main","type":"page"},{"id":"m1","name":"Map","type":"map"}],"rank":"a1","icon_glyph":"castle"}],"has_more":true,"next_cursor":"c2"}`,
 		},
 		{
 			name: "list_resources children", tool: "list_resources",
 			args:    map[string]any{"parent_id": "r1"},
 			replies: []testutil.Reply{testutil.JSON(http.StatusOK, rtList2JSON)},
 			reqs:    []rtReq{rtGet("/resources", "parentId", "r1")},
-			text:    "- Ice Kingdom (r3)\n1 resource(s); no more pages.",
-			out:     `{"resources":[{"id":"r3","name":"Ice Kingdom","documents":[]}]}`,
+			text:    "In sidebar order (by rank):\n- Ice Kingdom (r3) rank a5\n1 resource(s); no more pages.",
+			out:     `{"resources":[{"id":"r3","name":"Ice Kingdom","documents":[],"rank":"a5"}]}`,
 		},
 		{
 			name: "list_resources whole project", tool: "list_resources",
@@ -160,15 +162,16 @@ func TestReadTools_X_TOOL_01_X_OUT_01(t *testing.T) {
 				"Parent path: Candy Kingdom (r1)\n" +
 				"Tags: royal\n" +
 				"Aliases: PB, Bonnie\n" +
-				"Documents:\n" +
-				"- Main (page, d2)\n" +
-				"- DM notes (page, d3) [hidden from players]\n" +
+				"Sidebar rank: a\n" +
+				"Documents (tabs, in order):\n" +
+				"- Main (page, d2) rank a\n" +
+				"- DM notes (page, d3) rank b [hidden from players]\n" +
 				"Sidebar properties (2), as LK Markdown; isHidden marks DM-only content:\n" +
 				"Hidden from players: True origin (pr2)\n\n" +
 				":::infobox\n:::keyvalue title=Stats\n- Age {text=827}\n:::\n\n:::textfield title=\"True origin\" isHidden\nGrown from the Mother Gum\n:::\n:::\n",
 			out: `{"id":"r2","name":"Princess Bubblegum","parent_id":"r1","ancestors":[{"id":"r1","name":"Candy Kingdom"}],"tags":["royal"],"aliases":["PB","Bonnie"],"locked":true,` +
-				`"documents":[{"id":"d2","name":"Main","type":"page"},{"id":"d3","name":"DM notes","type":"page","hidden":true}],` +
-				`"properties":[{"id":"pr1","kind":"keyValue","title":"Stats"},{"id":"pr2","kind":"textField","title":"True origin","hidden":true}]}`,
+				`"documents":[{"id":"d2","name":"Main","type":"page","rank":"a"},{"id":"d3","name":"DM notes","type":"page","hidden":true,"rank":"b"}],` +
+				`"properties":[{"id":"pr1","kind":"keyValue","title":"Stats"},{"id":"pr2","kind":"textField","title":"True origin","hidden":true}],"rank":"a"}`,
 		},
 		{
 			name: "get_resource no properties", tool: "get_resource",
@@ -176,8 +179,8 @@ func TestReadTools_X_TOOL_01_X_OUT_01(t *testing.T) {
 			replies: []testutil.Reply{testutil.JSON(http.StatusOK, `{"id":"r1","name":"Candy Kingdom","tags":[],"aliases":[],"rank":"a","isHidden":true,`+
 				`"permissions":{},"documents":[],"properties":[],"ancestors":[]}`)},
 			reqs: []rtReq{rtGet("/resources/r1")},
-			text: "Candy Kingdom (resource r1) [hidden from players]\nParent: none (top level)\nDocuments:\n- none\nSidebar properties: none.",
-			out:  `{"id":"r1","name":"Candy Kingdom","tags":[],"aliases":[],"hidden":true,"documents":[],"properties":[]}`,
+			text: "Candy Kingdom (resource r1) [hidden from players]\nParent: none (top level)\nSidebar rank: a\nDocuments (tabs, in order):\n- none\nSidebar properties: none.",
+			out:  `{"id":"r1","name":"Candy Kingdom","tags":[],"aliases":[],"hidden":true,"documents":[],"properties":[],"rank":"a"}`,
 		},
 		{
 			name: "list_tags", tool: "list_tags",
@@ -311,7 +314,7 @@ func TestListResources_X_TOOL_01_Cursor(t *testing.T) {
 	if r2.IsError {
 		t.Fatal(text(r2))
 	}
-	if got, want := text(r2), "- Ice Kingdom (r3)\n1 resource(s); no more pages."; got != want {
+	if got, want := text(r2), "In sidebar order (by rank):\n- Ice Kingdom (r3) rank a5\n1 resource(s); no more pages."; got != want {
 		t.Errorf("text %q, want %q", got, want)
 	}
 	rtAssertRequests(t, h,

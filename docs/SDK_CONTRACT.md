@@ -490,6 +490,12 @@ From CLAUDE.md §MCP server rules and the approved Phase 3 plan (DECISIONS.md D-
 | X-PROMPT-02 | Getting a prompt returns one user message with its arguments filled in. A missing required argument is an error; optional arguments may be left out. | D-019 | 6 |
 | X-PROMPT-03 | Every tool a prompt names exists in lk-mcp. | D-019 | 6 |
 | X-ASSET-01 | `delete_asset` reads the asset, then sends `DELETE …/assets/{id}`. Its text names the asset and, for an image, says pages that show it keep it but its URL can't be added anywhere new. For a folder it counts the contents (at any depth, capped) that go with it. A dry run only reads. The guard doesn't run (a delete shows players nothing). | D-020 | 6 |
+| X-RES-01 | `update_resource` takes `after` or `before` (a sibling id) and sends `moveResource`, with `parentId` only when the parent changes; both together is an error. | D-021 | 7 |
+| X-RES-02 | `update_resource` takes `icon_glyph`, `icon_color`, `icon_shape`, `icon_size`, `is_locked`, `banner` (merged over the current one) and `permissions` (levels 0–5), sending only what changes. | D-021 | 7 |
+| X-RES-03 | `create_resource` takes `id`, `after`/`before`, the icon fields, `is_locked`, `banner`, and `documents` (1–5, any type, with `calendar_id` and page `markdown`). | D-021 | 7 |
+| X-RES-04 | `create_resources` sends one `createManyResources` batch of 1–100; each item takes create_resource's fields and is checked by its own hidden flag. | D-021 | 7 |
+| X-RES-05 | `list_resources` shows each resource's `rank`, siblings in rank order (plain string order), and icons; `get_resource` shows rank, icon, image, banner, permissions and the documents in tab order with rank and full width. | D-021 | 7 |
+| X-GUARD-13 | Giving the MEMBER role any access other than 0 checks everything the resource would show, like unhiding; taking access away isn't checked. A resource with MEMBER access 0 is still not treated as DM-only. | D-021 | 7 |
 
 ---
 
