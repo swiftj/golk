@@ -252,7 +252,7 @@ func buildResource(in ResourceSpec) (builtResource, error) {
 	if in.IsHidden != nil {
 		rc.IsHidden = lk.Some(*in.IsHidden)
 	}
-	if err := in.PositionArgs.check(); err != nil {
+	if err := in.check(); err != nil {
 		return zero, err
 	}
 	if in.Documents != nil && (in.PageMarkdown != nil || in.PageName != "") {
@@ -338,8 +338,8 @@ func (s *server) createResource(ctx context.Context, c *lk.Client, in CreateReso
 	if in.ParentID != "" {
 		where = "under " + in.ParentID
 	}
-	if in.PositionArgs.set() {
-		where += ", " + strings.TrimPrefix(in.PositionArgs.text(), "place it ")
+	if in.set() {
+		where += ", " + strings.TrimPrefix(in.text(), "place it ")
 	}
 	if in.DryRun {
 		return toolResult[ResourceOut]{out: out, text: fmt.Sprintf("Dry run: would create resource %q %s, %s, with a page of %d block(s). Nothing was written.",
@@ -480,7 +480,7 @@ func (s *server) updateResource(ctx context.Context, c *lk.Client, in UpdateReso
 	if in.ParentID != nil && in.MoveToRoot {
 		return zero, errors.New("give parent_id or move_to_root, not both")
 	}
-	if err := in.PositionArgs.check(); err != nil {
+	if err := in.check(); err != nil {
 		return zero, err
 	}
 	for k, v := range in.Permissions {
@@ -489,7 +489,7 @@ func (s *server) updateResource(ctx context.Context, c *lk.Client, in UpdateReso
 		}
 	}
 	if in.Name == nil && in.Tags == nil && in.Aliases == nil && in.IsHidden == nil && in.ParentID == nil && !in.MoveToRoot &&
-		!in.PositionArgs.set() && in.IconArgs.count() == 0 && in.IsLocked == nil && in.Banner == nil && in.Permissions == nil {
+		!in.set() && in.count() == 0 && in.IsLocked == nil && in.Banner == nil && in.Permissions == nil {
 		return zero, errors.New("nothing to change: give a field to set (name, tags, aliases, is_hidden, parent_id, move_to_root, after, before, icon_*, is_locked, banner or permissions)")
 	}
 	r, err := c.Resources.Get(ctx, in.ID)
@@ -559,10 +559,10 @@ func (s *server) updateResource(ctx context.Context, c *lk.Client, in UpdateReso
 	}
 	var mv lk.ResourceMove
 	move := false
-	if in.PositionArgs.set() {
+	if in.set() {
 		mv.After, mv.Before = optStr(in.After), optStr(in.Before)
 		move = true
-		did = append(did, in.PositionArgs.text())
+		did = append(did, in.text())
 	}
 	switch {
 	case in.MoveToRoot && r.ParentID != "":
