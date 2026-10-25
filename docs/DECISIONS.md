@@ -333,3 +333,34 @@ That is the whole module graph (`go mod graph`). UUIDs (idempotency keys) and cu
   - The guard doesn't run, since a delete shows players nothing.
   - A key without the ADMIN role gets the API's 403 with the existing "an admin key may be needed" hint.
 - The wiki skill now spells out how to replace an image: upload the new one, swap the URL with `edit_page`, then `delete_asset` the old one.
+
+## D-021 — Phase 7: 100% API coverage in lk-mcp
+
+- **Date:** 2026-10-25. **Owner request:** "I want our MCP server to have 100% support for everything that the API does." It was prompted by Claude Desktop being unable to reorder sidebar entries: `moveResource` takes `after`/`before`, but `update_resource` didn't expose them.
+- **Audit:**
+  - The SDK lacked only the five member and invite operations. They are now `Members` and `Invites` (C-MEM, C-INV).
+  - lk-mcp lacked whole operations: block-level edits, rows, infobox properties, document delete, restore and assign-ids, batch create, asset folders and updates, members and invites.
+  - Many request fields were missing too: positioning, icons, lock, banner, permissions, client ids, every document type, full width, tab rank, property kinds, event detail, polygons, visibility range.
+  - Some read output was too thin to act on, such as `rank`.
+- **Enforcement:**
+  - `internal/mcpserver/coverage.go` maps every `operationId` to its tools, and every body and query field to the `tool.param` that carries it. `TestCoverage_X_COV_01` reads the spec and the live tool schemas, and fails on any unmapped operation or field, or any missing tool or parameter.
+  - The only "internal" fields are `listProjects`'s `cursor`/`limit`, which the SDK pages itself when resolving a key's project.
+  - `docs/API_COVERAGE.md` is generated from the table (`make coverage-doc`).
+- **Design choices:**
+  - Content is LK Markdown everywhere it is text: blocks (`insert_block`/`replace_block`), properties of any kind (`property_markdown`, the directive `get_resource` renders), and row values (inline).
+  - `update_block` takes `patch` in the API's own field names, decoded strictly, with `rows`/`items` decoded by the block's kind.
+  - One `set_row`/`delete_row` pair covers all three row targets (sidebar property, keyValue block, infobox property). One `set_property`/`delete_property` pair covers the sidebar and infoboxes (`document_id`+`block_id`).
+  - Reordering lives in `update_resource` (`after`/`before`), which already moved resources. `list_resources` now shows `rank`, with a parent's children sorted by rank as plain strings (the guide's order).
+  - Every block, row and infobox write sends the version it read as `If-Match`.
+- **Spoiler guard** (only with a terms file; D-017):
+  - Block writes are checked unless the page or resource is hidden, or the block is or lands inside a `secret` block. Moving a block out of a secret into the open checks it (X-GUARD-15).
+  - Rows are checked unless their resource, page or property is hidden.
+  - Asset folder names, and a visible asset's name and description, are checked (X-GUARD-16).
+  - `restore_document` restores, hides, checks and shows again, like `restore_resource` (X-GUARD-14).
+  - Raising the MEMBER role's access on a resource is treated like unhiding it. Lowering it is not checked. A resource with MEMBER access 0 is still not treated as DM-only, which is fail-safe (X-GUARD-13).
+  - Members, invites, deletes, moves and reorders aren't checked.
+- **Members and invites:**
+  - `invite_member` is annotated open-world because it emails someone. It is the only tool that is.
+  - The skills tell Claude to confirm with the user before inviting, removing or revoking.
+  - The sandbox integration test invites a reserved, non-deliverable `@example.com` address and revokes it at once. `remove_member` is unit-tested only, since the sandbox has no throwaway member.
+- The tool count goes from 40 to 60 (17 read, 43 write). The extension and plugin version is 0.4.0.

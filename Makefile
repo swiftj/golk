@@ -12,7 +12,7 @@ GOVULNCHECK_VERSION := v1.9.0
 # MCPB packs the Claude Desktop extension (build-only dev tool, DECISIONS.md D-016).
 MCPB                := npx -y @anthropic-ai/mcpb@2.1.2
 
-.PHONY: all tools generate lint test test-race test-integration build verify-static mcpb plugin clean
+.PHONY: all tools generate lint test test-race test-integration build verify-static mcpb plugin coverage-doc clean
 
 all: lint test
 
@@ -72,6 +72,9 @@ mcpb: ## Pack the Claude Desktop extension (Apple Silicon) into dist/
 	  $(MCPB) pack "$$stage" "$(DIST)/lk-mcp-darwin-arm64.mcpb"; \
 	  rm -rf "$$stage"; \
 	  $(MCPB) info "$(DIST)/lk-mcp-darwin-arm64.mcpb"
+
+coverage-doc: ## Regenerate docs/API_COVERAGE.md from internal/mcpserver/coverage.go
+	CGO_ENABLED=0 $(GO) test ./internal/mcpserver -run X_COV -update-coverage
 
 plugin: ## Zip the skills plugin into dist/
 	@mkdir -p $(DIST)

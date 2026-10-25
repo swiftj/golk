@@ -9,7 +9,7 @@ Each of these lives in a document (tab) of a resource. Read before you write, ke
 
 ## Maps
 
-- `read_map` shows the map image (size and bounds) and every feature: pins, labels, regions, paths and folders, with ids and positions `[lat, lng]`.
+- `read_map` shows the map image (size and bounds) and every feature: pins, labels, regions, paths and folders, with ids and positions `[lat, lng]`. Pass `feature_id` to see one feature with every field (style, image, polygons).
 - `set_map_feature` creates a feature (give `type`), or updates one by `feature_id`, sending only the fields you give.
   - Place it with `pos: [lat, lng]`, or with `pixel: [x, y]` counted from the image's top-left corner, but not both.
   - Group features with a folder (`type: folder`) and `parent_id`. Link a feature to an entry with `uri: lk://resources/<id>`.
@@ -20,7 +20,7 @@ Each of these lives in a document (tab) of a resource. Read before you write, ke
 
 ## Timelines
 
-- `read_timeline` shows lanes by rank and one page of events (pass `cursor` for more) with formatted dates. Lanes and events from chained timelines are marked.
+- `read_timeline` shows lanes by rank and one page of events (pass `cursor` for more) with formatted dates. Lanes and events from chained timelines are marked. Pass `lane_id` or `event_id` to see one item with every field.
 - Create a lane first: `set_timeline_lane` takes `name`, `rank` (`a0`, `a1`, …) and `size` (`sm` or `lg`).
 - `set_timeline_event` takes `lane_id`, `type` (`event` or `note`) and `name`.
   - Give dates as `formatted_start`/`formatted_end` in the calendar's format, or as `start`/`end` in minutes.
@@ -45,7 +45,7 @@ Each of these lives in a document (tab) of a resource. Read before you write, ke
 
 A board is a tldraw canvas of shapes, arrows (bindings) and images (assets).
 
-1. `read_board` shows each shape's id, type, position and text, arrows as "from A to B", and the board `version`. Add `raw: true` for the full JSON records.
+1. `read_board` shows each shape's id, type, position and text, arrows as "from A to B", and the board `version`. Add `raw: true` for the full JSON records, or `page_id` for one page's shapes.
 2. Pass that `version` to every write. A write after someone else's change is refused, so read again.
 
 The write tools:

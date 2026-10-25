@@ -1,6 +1,6 @@
 ---
 name: legendkeeper-wiki
-description: Read and edit a LegendKeeper world wiki through the lk-mcp tools. Use when the user asks to look up, create, update, reorganise, hide or delete wiki entries (resources), their pages, sidebar properties, tags or images in LegendKeeper, or mentions their campaign wiki, DM notes or spoilers.
+description: Read and edit a LegendKeeper world wiki through the lk-mcp tools. Use when the user asks to look up, create, update, reorder, reorganise, hide or delete wiki entries (resources), their pages, blocks, tabs, sidebar properties, infoboxes, tags, images or assets in LegendKeeper, manage the project's members and invites, or mentions their campaign wiki, DM notes or spoilers.
 ---
 
 # LegendKeeper wiki
@@ -28,6 +28,14 @@ The DM's players read this wiki. Never let DM-only content reach a page players 
 4. If it says the page changed since it was read, someone edited it in the app. Read it again and redo the change. Never retry with a guessed version.
 
 Use `dry_run: true` first for anything large or destructive. It reports what would change and writes nothing.
+
+**Small edits to one block**: `read_page` with `ids: true` (or `read_block`) shows block ids. Then `insert_block`, `replace_block`, `update_block` (one field, e.g. tick a task with `patch: {checked: true}`, or `content_markdown`), `move_block` or `delete_block`, each with the page `version`. Each returns the new version for the next edit. A page written in the app long ago may need `assign_block_ids` once first.
+
+## Ordering the sidebar and tabs
+
+- `list_resources` with `parent_id` lists siblings in sidebar order and shows each one's `rank`.
+- To reorder, `update_resource` with `after` or `before` a sibling id. To sort children alphabetically, move each one `after` the previous in turn.
+- Tabs (documents) are ordered by `update_document rank`; `get_resource` shows each tab's rank.
 
 ## LK Markdown cheatsheet
 
@@ -70,11 +78,30 @@ When a write is refused:
 - **Don't** rephrase, misspell, split or abbreviate the term to get past the check. That defeats the DM's protection.
 - **Do** tell the DM which term was found where, and offer to put that part in a `:::secret` block or a hidden document or resource.
 
+## Properties and infoboxes
+
+- `set_property` sets a sidebar property by title: `markdown` (a text field), `rows` (key-value), or `property_markdown` for **any kind**, written as `get_resource` shows it, e.g.:
+
+  ```
+  :::meter mode=bar title=Vitals
+  - HP :: 3/5 icon=heart
+  :::
+  ```
+
+  Use `rank` to move an existing property, and `after`/`before` to place a new one.
+- With `document_id` and `block_id`, `set_property` and `delete_property` work on an **infobox** inside a page.
+- `set_row` / `delete_row` change one key-value row without touching the others. They work on a sidebar property (`property_id`), a keyValue block (`document_id` + `block_id`), or an infobox property (all three).
+
 ## Other tools
 
-- **Resources:** `create_resource` (optionally with `page_markdown`), `update_resource` (rename, tags, aliases, move, hide or show), `delete_resource` (`cascade` for children; dry run first) and `restore_resource`.
-- **Documents:** `create_document` and `update_document` (rename, hide or show).
+- **Resources:** `create_resource` (with `page_markdown`, or `documents` of any type), `create_resources` (up to 100 at once), `update_resource` (rename, tags, aliases, icon, lock, banner, permissions, move, reorder, hide or show), `delete_resource` (`cascade` for children; dry run first) and `restore_resource`.
+- **Documents:** `create_document` (page, map, time, board or blank), `update_document` (rename, hide or show, tab order, full width), `delete_document` and `restore_document`.
 - **Sidebar properties:** `set_property` (by title; Markdown or rows) and `delete_property`.
+- **Asset library:** `list_assets`, `get_asset`, `create_asset_folder` and `update_asset` (rename, describe, move, hide).
 - **Images:** `upload_image` (from a local file path), then use the returned URL in `![alt](url)`. Only this project's asset URLs are accepted. To replace an image, upload the new one, swap its URL into the page with `edit_page`, then remove the old one with `delete_asset` (use `list_assets` to find it, and dry run first). A deleted image stays on pages that already show it, but can't be added anywhere new.
 
 For maps, timelines, calendars, templates and boards, see the legendkeeper-worldbuilding skill.
+
+## Members and invites
+
+`list_members` and `list_invites` show who can read the wiki. `invite_member` emails someone an invite, and `remove_member` and `revoke_invite` take access away. These change who your players are, so **always confirm with the user before inviting, removing or revoking**, and dry run first.

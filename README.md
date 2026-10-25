@@ -5,7 +5,7 @@
 | Part | What it is | For |
 |---|---|---|
 | [`lk`](#the-lk-go-sdk) | A Go SDK for the LegendKeeper v3 REST API: retries, idempotency, versioned writes, pagination, rate limiting, typed blocks, and a lossless Markdown converter | Go developers |
-| [`lk-mcp`](#lk-mcp-the-mcp-server) | An MCP server with 40 task-shaped tools and 4 prompts, built on `lk` | Claude Desktop (chat and Cowork), Claude Code and any MCP client |
+| [`lk-mcp`](#lk-mcp-the-mcp-server) | An MCP server with 60 task-shaped tools and 4 prompts, covering 100% of the LegendKeeper API, built on `lk` | Claude Desktop (chat and Cowork), Claude Code and any MCP client |
 | [Claude Desktop extension and plugin](#install-in-claude-desktop) | A one-click Claude Desktop extension (`.mcpb`), plus a plugin with two skills | People who want Claude to read and write their wiki |
 
 It was built for a DM who publishes a D&D world wiki that **players read**. So it puts correctness, data safety, and keeping DM-only content away from players ahead of speed:
@@ -131,6 +131,10 @@ Once the extension is installed, you can ask for things like:
 - *"Add a timeline event 'The Mushroom War' in year −1000 on the History lane."*
 - *"Save the Kingdom page as a template, then create Fire Kingdom from it."*
 - *"On the Rivalries board, add the Fire Kingdom and an arrow from it to the Candy Kingdom."*
+- *"Sort the children of Atlas alphabetically."*
+- *"Tick off 'Find the Enchiridion' on the Quests page."*
+- *"Add a Vitals meter to Finn's sidebar with HP 3 of 5."*
+- *"Who are the members of this wiki?"*
 
 How it stays safe:
 
@@ -150,18 +154,23 @@ Every tool carries MCP annotations (read-only, destructive, idempotent), and eve
 
 | Area | Read tools | Write tools |
 |---|---|---|
-| Projects and search | `list_projects`, `search`, `list_resources`, `get_resource`, `list_tags` | |
-| Resources (wiki entries) | | `create_resource`, `update_resource` (rename, tags, aliases, move, hide or show), `delete_resource`, `restore_resource` |
-| Documents (tabs) and pages | `read_page` (as LK Markdown, with its version) | `create_document`, `update_document` (rename, hide or show, timeline calendar and chained sources), `edit_page` |
-| Sidebar properties | | `set_property`, `delete_property` |
-| Images and the asset library | `list_assets` | `upload_image` (from a local file), `delete_asset` (an image, map image, audio file or folder; e.g. the old version after a replacement) |
+| Projects and search | `list_projects`, `search`, `list_tags` | |
+| Resources (wiki entries) | `list_resources` (in sidebar order, with ranks), `get_resource` | `create_resource` (with a page, or 1–5 documents of any type), `create_resources` (up to 100 at once), `update_resource` (rename, tags, aliases, icon, lock, banner, permissions, move, **reorder** with `after`/`before`, hide or show), `delete_resource`, `restore_resource` |
+| Documents (tabs) | (in `get_resource`) | `create_document` (page, map, time, board, blank), `update_document` (rename, hide or show, tab order, full width, timeline calendar and chained sources), `delete_document`, `restore_document` |
+| Pages | `read_page` (as LK Markdown, with its version) | `edit_page` (the whole page) |
+| Blocks | `read_block` | `insert_block`, `replace_block`, `update_block`, `move_block`, `delete_block`, `assign_block_ids` |
+| Properties and infoboxes | (in `get_resource`, `read_block`) | `set_property` (any kind, sidebar or infobox), `delete_property`, `set_row`, `delete_row` |
+| Assets | `list_assets`, `get_asset` | `upload_image` (from a local file), `create_asset_folder`, `update_asset`, `delete_asset` |
 | Maps | `read_map` | `set_map_feature` (pins, labels, regions, paths, folders; place by lat/lng or by image pixel), `delete_map_feature`, `set_map_image` |
 | Timelines | `read_timeline` | `set_timeline_lane`, `delete_timeline_lane`, `set_timeline_event`, `delete_timeline_event` |
 | Calendars | `list_calendars`, `get_calendar` | `create_calendar`, `replace_calendar`, `delete_calendar` |
 | Templates | `list_templates` | `save_as_template`, `create_from_template` |
 | Boards (tldraw canvases) | `read_board` | `add_board_shapes`, `update_board_shapes`, `delete_board_shapes`, `replace_board` |
+| Members and invites | `list_members`, `list_invites` | `invite_member` (emails someone), `remove_member`, `revoke_invite` |
 
-That's 13 read tools and 27 write tools. In read-only mode the write tools aren't registered at all.
+That's 17 read tools and 43 write tools. In read-only mode the write tools aren't registered at all.
+
+**100% API coverage.** Every one of the 89 operations of the LegendKeeper v3 API, and every request field, is reachable through these tools. [`docs/API_COVERAGE.md`](docs/API_COVERAGE.md) maps each operation and field to the tool parameter that carries it. A test checks that table against the API spec and the live tool schemas, so a gap fails the build.
 
 ### Prompts
 
@@ -341,7 +350,7 @@ func main() {
   - `unsupported` blocks keep their ids.
   - Unmodelled fields round-trip.
 
-**Namespaces:** `Projects`, `Resources` (with templates), `Documents`, `Blocks`, `Properties`, `Search`, `Tags`, `Assets` (with image upload), `Features` (map features), `Timelines` (lanes and events), `Calendars`, `Templates` and `Boards`. There are map helpers too: `lk.PixelToPos` and `lk.PosToPixel`. `lk/markdown` has `ToMarkdown`, `FromMarkdown`, `Get` and `Replace` (with `DryRun`).
+**Namespaces:** `Projects`, `Resources` (with templates), `Documents`, `Blocks`, `Properties`, `Search`, `Tags`, `Assets` (with image upload), `Features` (map features), `Timelines` (lanes and events), `Calendars`, `Templates`, `Boards`, `Members` and `Invites`: every operation of the API. There are map helpers too: `lk.PixelToPos` and `lk.PosToPixel`. `lk/markdown` has `ToMarkdown`, `FromMarkdown`, `Get` and `Replace` (with `DryRun`).
 
 Runnable ports of the examples in LegendKeeper's developer guide are in [`examples/`](examples/). They are integration tests against a sandbox project.
 
@@ -412,7 +421,8 @@ scripts/               build verification
 | Document | What it holds |
 |---|---|
 | [`docs/SDK_CONTRACT.md`](docs/SDK_CONTRACT.md) | Every numbered behavioural requirement (`C-*` SDK, `M-*` Markdown, `X-*` MCP), each tested |
-| [`docs/DECISIONS.md`](docs/DECISIONS.md) | Every non-obvious choice, sandbox probe result and conflict between the LegendKeeper spec and guide (D-001 to D-017) |
+| [`docs/DECISIONS.md`](docs/DECISIONS.md) | Every non-obvious choice, sandbox probe result and conflict between the LegendKeeper spec and guide (D-001 to D-021) |
+| [`docs/API_COVERAGE.md`](docs/API_COVERAGE.md) | Every API operation and request field, and the tool parameter that carries it |
 | [`docs/LK_MARKDOWN.md`](docs/LK_MARKDOWN.md) | The LK Markdown format and its fail-closed rules |
 | [`docs/legendkeeper/`](docs/legendkeeper/) | LegendKeeper's public API docs, the build's sources of truth (see [NOTICE](docs/legendkeeper/NOTICE.md)) |
 | [`plugin/README.md`](plugin/README.md) | Short install guide for the extension and plugin |
