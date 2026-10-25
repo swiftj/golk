@@ -38,7 +38,7 @@ It was built for a DM who publishes a D&D world wiki that **players read**. So i
 
 ## Quick start (Claude Desktop)
 
-You need an Apple Silicon Mac with Claude Desktop, a LegendKeeper project and an API key for it. Use a test project first.
+You need an Apple Silicon Mac with Claude Desktop 3.6556.2 or later, a LegendKeeper project and an API key for it. Use a test project first.
 
 **Download** `lk-mcp-darwin-arm64.mcpb` and `legendkeeper-plugin.zip` from the [latest release](https://github.com/swiftj/golk/releases/latest), or build them yourself:
 
@@ -50,13 +50,13 @@ make mcpb plugin        # needs Go 1.27+ and Node (npx) for the packer
 
 1. Double-click `lk-mcp-darwin-arm64.mcpb` and enter your API key.
 2. In a new chat, ask: **"List my LegendKeeper projects."**
-3. Optional: upload `legendkeeper-plugin.zip` under **Customize › Plugins › Add › Upload plugin** to add the two skills. Cowork is part of Claude Desktop, so it uses the same extension; there's nothing else to set up.
+3. Recommended: in Claude Desktop, open **Customize** and choose **Add › Upload plugin**, then pick `legendkeeper-plugin.zip`. This adds the two skills to every chat and every Cowork task. Cowork is part of Claude Desktop, so it uses the same extension, with nothing else to set up.
 
 ---
 
 ## Install in Claude Desktop
 
-Cowork is part of Claude Desktop, so everything below covers both chat and Cowork. The integration has two pieces, installed separately:
+Cowork is part of Claude Desktop, so everything below covers both chat and Cowork. The integration has two pieces, installed separately. (Why not one file? A plugin can carry an `.mcpb`, but Claude Desktop ignores a local server inside a plugin in chat. Cowork ignores it too when a setting has no default, as the API key doesn't. The extension is what gets prompted for settings. See [D-019](docs/DECISIONS.md).)
 
 | Piece | File | Contains |
 |---|---|---|
@@ -94,7 +94,7 @@ To change a setting later, open **Settings › Extensions › LegendKeeper**. To
 
 ### 3. Install the plugin (skills)
 
-In Claude Desktop, open **Customize › Plugins › Add › Upload plugin** and choose `dist/legendkeeper-plugin.zip`. The skills help in both chat and Cowork tasks.
+In Claude Desktop, open **Customize** and choose **Add › Upload plugin**, then pick `dist/legendkeeper-plugin.zip`. Plugin skills apply to ordinary chats as well as Cowork tasks. You can see them under **Customize › Skills**.
 
 ### Using it in Cowork
 
@@ -162,6 +162,21 @@ Every tool carries MCP annotations (read-only, destructive, idempotent), and eve
 | Boards (tldraw canvases) | `read_board` | `add_board_shapes`, `update_board_shapes`, `delete_board_shapes`, `replace_board` |
 
 That's 13 read tools and 26 write tools. In read-only mode the write tools aren't registered at all.
+
+### Prompts
+
+lk-mcp also offers four MCP prompts. These are ready-made requests that walk Claude through a multi-step job in the right order:
+
+| Prompt | Arguments | Does |
+|---|---|---|
+| `summarize_topic` | `topic` | Finds and summarizes what the wiki says about a topic, marking what's DM-only. It only reads. |
+| `edit_page_safely` | `page`, `change` | Reads the page, makes only that change, previews it with a dry run, then writes with the version it read |
+| `add_map_location` | `map`, `place`, `where` (optional) | Places a pin on a map, linked to the place's page if one exists |
+| `session_notes` | `notes`, `session` (optional) | Turns rough session notes into a session page plus updates to the pages they touch, proposing the changes before making any |
+
+The three write prompts exist only when the write tools do. Clients that support MCP prompts, such as Claude Code, list them for you. Whether Claude Desktop shows MCP prompts isn't documented, so the skills cover the same workflows.
+
+The extension declares a minimum Claude Desktop version of 3.6556.2 (`compatibility.claude_desktop` in the manifest). That's the version it was tested with, because no documentation names an earlier one that supports manifest 0.3.
 
 ### Configuration
 

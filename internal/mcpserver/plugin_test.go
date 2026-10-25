@@ -29,7 +29,8 @@ type mcpbManifest struct {
 		} `json:"mcp_config"`
 	} `json:"server"`
 	Compatibility struct {
-		Platforms []string `json:"platforms"`
+		ClaudeDesktop string   `json:"claude_desktop"`
+		Platforms     []string `json:"platforms"`
 	} `json:"compatibility"`
 	UserConfig map[string]struct {
 		Type      string `json:"type"`
@@ -105,6 +106,11 @@ func TestPlugin_X_PLUG_01_Manifest(t *testing.T) {
 	if m.ManifestVersion != "0.3" || m.Server.Type != "binary" || m.Server.EntryPoint != "server/lk-mcp" ||
 		m.Server.MCPConfig.Command != "${__dirname}/server/lk-mcp" || len(m.Server.MCPConfig.Args) != 0 {
 		t.Errorf("server = %+v (manifest %s)", m.Server, m.ManifestVersion)
+	}
+	// The minimum Claude Desktop is a semver floor: the version the
+	// extension was tested with (D-019).
+	if !regexp.MustCompile(`^>=\d+\.\d+\.\d+$`).MatchString(m.Compatibility.ClaudeDesktop) {
+		t.Errorf("claude_desktop = %q, want a >=MAJOR.MINOR.PATCH floor", m.Compatibility.ClaudeDesktop)
 	}
 	if !slices.Equal(m.Compatibility.Platforms, []string{"darwin"}) {
 		t.Errorf("platforms = %v, want darwin only (D-013)", m.Compatibility.Platforms)

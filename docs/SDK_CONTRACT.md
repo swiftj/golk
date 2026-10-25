@@ -472,10 +472,13 @@ From CLAUDE.md §MCP server rules and the approved Phase 3 plan (DECISIONS.md D-
 | X-BOARD-01 | `read_board` returns the board's pages, shapes (id, type, position, text, parent), arrows with their ends, assets and `version`; `raw` returns the records as JSON. | Plan §Phase 5 | 5 |
 | X-BOARD-02 | `add_board_shapes`, `update_board_shapes`, `delete_board_shapes` and `replace_board` require `version`, send it as `If-Match`, and send only the records given. The dry runs of the destructive tools name what would be removed. | Plan §Phase 5 | 5 |
 | X-GUARD-12 | Board records are guarded content: a board write checks every string it sends unless the board document or its resource is hidden. Showing a board document, or unhiding, restoring or copying a resource holding one, checks the whole board. Board documents are no longer refused. Keys the guard would exempt elsewhere (`blocks`, `children`, `rows`, `properties`, `property`) exempt nothing on a board. | Plan §Phase 5 | 5 |
-| X-PLUG-01 | The Claude Desktop extension (`plugin/mcpb/manifest.json`, manifest 0.3) runs the bundled `server/lk-mcp` on macOS only, takes the API key as a required, sensitive setting and an optional terms file, and sets only variables lk-mcp reads. Every setting it references is required or has a default. | Plan §Phase 6; D-016 | 6 |
+| X-PLUG-01 | The Claude Desktop extension (`plugin/mcpb/manifest.json`, manifest 0.3) runs the bundled `server/lk-mcp` on macOS only, declares a minimum Claude Desktop version (`compatibility.claude_desktop`, a `>=` semver floor), takes the API key as a required, sensitive setting and an optional terms file, and sets only variables lk-mcp reads. Every setting it references is required or has a default. | Plan §Phase 6; D-016 | 6 |
 | X-PLUG-02 | Each combination of extension settings, substituted as Claude Desktop does it, gives the intended config: a terms file or none (none means every write is allowed), read-only or not, one default project. | Plan §Phase 6; D-016, D-017 | 6 |
 | X-PLUG-03 | Each skill has `name` (its folder, lower case and hyphens, ≤64) and `description` (≤1024) frontmatter and at most 200 lines. The plugin's version equals the extension's. The plugin has no top-level `bin/`. | Plan §Phase 6 | 6 |
 | X-PLUG-04 | Every tool a skill names exists in lk-mcp. | Plan §Phase 6 | 6 |
+| X-PROMPT-01 | lk-mcp offers MCP prompts: `summarize_topic` always; `edit_page_safely`, `add_map_location` and `session_notes` only when the write tools exist. Each has a title and description. | D-019 | 6 |
+| X-PROMPT-02 | Getting a prompt returns one user message with its arguments filled in. A missing required argument is an error; optional arguments may be left out. | D-019 | 6 |
+| X-PROMPT-03 | Every tool a prompt names exists in lk-mcp. | D-019 | 6 |
 
 ---
 

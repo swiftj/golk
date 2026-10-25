@@ -4,7 +4,7 @@ Two pieces, installed separately:
 
 | Piece | File | What it does |
 |---|---|---|
-| Claude Desktop extension | `lk-mcp-darwin-arm64.mcpb` | Runs lk-mcp, the server that gives Claude the LegendKeeper tools. Apple Silicon Macs only. |
+| Claude Desktop extension | `lk-mcp-darwin-arm64.mcpb` | Runs lk-mcp, the server that gives Claude the LegendKeeper tools and prompts. Apple Silicon Macs, Claude Desktop 3.6556.2 or later. |
 | Plugin (skills) | `legendkeeper-plugin.zip` | Two skills that teach Claude how to use those tools well: `legendkeeper-wiki` and `legendkeeper-worldbuilding`. |
 
 Build both with `make mcpb plugin` in the repository root; they land in `dist/`.
@@ -22,7 +22,7 @@ The key is stored by Claude Desktop, masked, and never written to a file by lk-m
 
 ## 2. Install the plugin
 
-In Claude Desktop: Customize › Plugins › Add › Upload plugin, then choose `dist/legendkeeper-plugin.zip`. Cowork is part of Claude Desktop, so it uses the same extension and skills, with nothing more to set up.
+In Claude Desktop, open Customize and choose Add › Upload plugin, then pick `dist/legendkeeper-plugin.zip`. The skills apply to ordinary chats and to Cowork tasks; Cowork is part of Claude Desktop, so it uses the same extension and skills, with nothing more to set up.
 
 The plugin carries no server and no key. The tools come from the Desktop extension.
 
