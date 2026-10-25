@@ -9,8 +9,10 @@ TARGETS     := darwin/arm64 linux/amd64 linux/arm64
 
 STATICCHECK_VERSION := 2026.2.2
 GOVULNCHECK_VERSION := v1.9.0
+# MCPB packs the Claude Desktop extension (build-only dev tool, DECISIONS.md D-016).
+MCPB                := npx -y @anthropic-ai/mcpb@2.1.2
 
-.PHONY: all tools generate lint test test-race test-integration build verify-static clean
+.PHONY: all tools generate lint test test-race test-integration build verify-static mcpb plugin clean
 
 all: lint test
 
@@ -59,6 +61,23 @@ build: ## Cross-compile lk-mcp for every target into dist/
 
 verify-static: ## Check every binary in dist/ is cgo-free (and static on Linux)
 	./scripts/verify-static.sh $(DIST)
+
+mcpb: ## Pack the Claude Desktop extension (Apple Silicon) into dist/
+	@mkdir -p $(DIST)
+	@stage="$(DIST)/mcpb-stage"; rm -rf "$$stage"; mkdir -p "$$stage/server"; \
+	  cp plugin/mcpb/manifest.json "$$stage/"; \
+	  CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 $(GO) build -trimpath \
+	    -ldflags "-s -w -X main.version=$(VERSION)" -o "$$stage/server/lk-mcp" ./cmd/lk-mcp; \
+	  $(MCPB) validate "$$stage/manifest.json"; \
+	  $(MCPB) pack "$$stage" "$(DIST)/lk-mcp-darwin-arm64.mcpb"; \
+	  rm -rf "$$stage"; \
+	  $(MCPB) info "$(DIST)/lk-mcp-darwin-arm64.mcpb"
+
+plugin: ## Zip the Cowork plugin (skills) into dist/
+	@mkdir -p $(DIST)
+	@rm -f "$(DIST)/legendkeeper-plugin.zip"
+	cd plugin && zip -qr "../$(DIST)/legendkeeper-plugin.zip" .claude-plugin skills README.md -x '*.DS_Store'
+	@unzip -l "$(DIST)/legendkeeper-plugin.zip"
 
 clean:
 	rm -rf $(DIST)

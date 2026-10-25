@@ -1,0 +1,13 @@
+{
+  "name": "legendkeeper",
+  "version": "0.1.0",
+  "description": "Skills for reading and editing a LegendKeeper world wiki with the lk-mcp tools: pages and LK Markdown, hidden DM content and the spoiler guard, maps, timelines, calendars, templates and boards.",
+  "author": {
+    "name": "John Swift",
+    "url": "https://github.com/swiftj"
+  },
+  "homepage": "https://github.com/swiftj/golk",
+  "repository": "https://github.com/swiftj/golk",
+  "license": "UNLICENSED",
+  "keywords": ["legendkeeper", "worldbuilding", "wiki", "dnd", "ttrpg"]
+}
