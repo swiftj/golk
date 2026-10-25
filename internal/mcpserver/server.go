@@ -63,6 +63,7 @@ func New(cfg Config, d Deps) *mcp.Server {
 	s.addTemplateTools(ms, !cfg.ReadOnly)
 	s.addTimelineTools(ms, !cfg.ReadOnly)
 	s.addCalendarTools(ms, !cfg.ReadOnly)
+	s.addBoardTools(ms, !cfg.ReadOnly)
 	return ms
 }
 

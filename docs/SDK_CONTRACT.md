@@ -469,6 +469,9 @@ From CLAUDE.md §MCP server rules and the approved Phase 3 plan (DECISIONS.md D-
 | X-GUARD-09 | `create_calendar` and `replace_calendar` check every string of the spec. | Plan §Phase 4 | 4 |
 | X-GUARD-10 | `save_as_template` and `create_from_template` check every resource they copy, each by its own hidden flag, before the write. | Plan §Phase 4 (templates treated as visible) | 4 |
 | X-GUARD-11 | Hidden features and events are checked like public content until the owner confirms in the player view that hidden pins are invisible (`hiddenFeaturesConfirmed`). | Plan §Phase 4 | 4 |
+| X-BOARD-01 | `read_board` returns the board's pages, shapes (id, type, position, text, parent), arrows with their ends, assets and `version`; `raw` returns the records as JSON. | Plan §Phase 5 | 5 |
+| X-BOARD-02 | `add_board_shapes`, `update_board_shapes`, `delete_board_shapes` and `replace_board` require `version`, send it as `If-Match`, and send only the records given. The dry runs of the destructive tools name what would be removed. | Plan §Phase 5 | 5 |
+| X-GUARD-12 | Board records are guarded content: a board write checks every string it sends unless the board document or its resource is hidden. Showing a board document, or unhiding, restoring or copying a resource holding one, checks the whole board. Board documents are no longer refused. Keys the guard would exempt elsewhere (`blocks`, `children`, `rows`, `properties`, `property`) exempt nothing on a board. | Plan §Phase 5 | 5 |
 
 ---
 

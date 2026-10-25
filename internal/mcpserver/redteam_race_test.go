@@ -29,15 +29,15 @@ func (b *blockingGuard) Check(v any) ([]guard.Violation, error) {
 	return b.g.Check(v)
 }
 
-// A board document's content can't be read by the guard yet (Phase 5),
-// so lk-mcp refuses to show one: unhiding the document, or unhiding a
-// resource with such a document visible.
+// A document of a kind the guard can't read is refused rather than shown:
+// unhiding the document, or unhiding a resource with such a document
+// visible. (Boards are read since Phase 5; "codex" is a made-up kind.)
 func TestRedteam_X_GUARD_05_UncheckableDocumentsStayHidden(t *testing.T) {
-	hiddenMap := `{"id":"r1","name":"Ooo","isHidden":false,"documents":[
+	hiddenDoc := `{"id":"r1","name":"Ooo","isHidden":false,"documents":[
 {"id":"d1","name":"Main","type":"page","rank":"a","isHidden":false},
-{"id":"m1","name":"Board","type":"board","rank":"c","isHidden":true}]}`
+{"id":"m1","name":"Codex","type":"codex","rank":"c","isHidden":true}]}`
 	h := rgHarness(t, "Zorblax")
-	h.lk.Enqueue(wtOK(hiddenMap))
+	h.lk.Enqueue(wtOK(hiddenDoc))
 	wtMustFail(t, h, "update_document", map[string]any{"resource_id": "r1", "document_id": "m1", "is_hidden": false}, "can't read")
 	if len(h.writes()) != 0 {
 		t.Errorf("writes %+v", h.writes())
@@ -45,7 +45,7 @@ func TestRedteam_X_GUARD_05_UncheckableDocumentsStayHidden(t *testing.T) {
 
 	resHidden := `{"id":"r1","name":"Ooo","isHidden":true,"documents":[
 {"id":"d1","name":"Main","type":"page","rank":"a","isHidden":false},
-{"id":"m1","name":"Board","type":"board","rank":"c","isHidden":false}]}`
+{"id":"m1","name":"Codex","type":"codex","rank":"c","isHidden":false}]}`
 	h = rgHarness(t, "Zorblax")
 	h.lk.Enqueue(wtOK(resHidden), wtOK(rgBlocks))
 	wtMustFail(t, h, "update_resource", map[string]any{"id": "r1", "is_hidden": false, "dry_run": true}, "can't read")

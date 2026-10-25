@@ -57,11 +57,10 @@ func (s *server) guardReady() error {
 // visible: its name, aliases and tags, its image and banner URLs, the names and blocks of its
 // documents that are not hidden, and its sidebar properties (hidden ones
 // carry "isHidden":true, which the guard skips). Hidden documents are left
-// out: players can't see them whatever the resource's flag. Only page and
-// blank documents have blocks the SDK can read; a visible document of any
-// other kind (map, board, timeline) holds content the guard can't check,
-// so it is an error (errUncheckable): showing it would show that content
-// unchecked.
+// out: players can't see them whatever the resource's flag. Each visible
+// document's content is read by documentContent; a document of a kind it
+// can't read is an error (uncheckable): showing it would show that
+// content unchecked.
 func visibleResource(ctx context.Context, c *lk.Client, r *lk.Resource) (map[string]any, error) {
 	var docs []map[string]any
 	for _, d := range r.Documents {
@@ -96,8 +95,9 @@ const hiddenFeaturesConfirmed = false
 
 // documentContent is what players see of document d of r, for the guard:
 // its name, and a page's blocks, a map's image and features, or a
-// timeline's lanes and events (its sources' too, which it shows). A board
-// can't be read yet, so showing one is refused.
+// timeline's lanes and events (its sources' too, which it shows), or a
+// board's records (with nothing exempt, see strictContent). A kind it
+// doesn't know is refused.
 func documentContent(ctx context.Context, c *lk.Client, r *lk.Resource, d *lk.Document) (map[string]any, error) {
 	ref := lk.DocRef{ResourceID: r.ID, DocumentID: d.ID}
 	doc := map[string]any{"name": d.Name}
@@ -148,6 +148,16 @@ func documentContent(ctx context.Context, c *lk.Client, r *lk.Resource, d *lk.Do
 				}
 			}
 		}
+	case lk.DocumentBoard:
+		b, err := c.Boards.GetContent(ctx, ref)
+		if err != nil {
+			return nil, err
+		}
+		strict, err := strictContent(map[string]any{"pages": b.Pages, "shapes": b.Shapes, "bindings": b.Bindings, "assets": b.Assets})
+		if err != nil {
+			return nil, err
+		}
+		doc["board"] = strict
 	default:
 		return nil, uncheckable(r, d)
 	}
@@ -182,8 +192,8 @@ func shownEvents(es []lk.Event) []lk.Event {
 	return out
 }
 
-// uncheckable refuses to show document d of r: a board's content can't be
-// read yet (Phase 5), so the guard can't check it.
+// uncheckable refuses to show document d of r: its kind is one
+// documentContent can't read, so the guard can't check it.
 func uncheckable(r *lk.Resource, d *lk.Document) error {
 	return fmt.Errorf("document %q (%s) of %q (%s) is a %s document, whose content the spoiler guard can't read, so lk-mcp won't show it to players. "+
 		"Hint: review it in LegendKeeper and show it there, or hide that document first (update_document is_hidden=true)", d.Name, d.ID, r.Name, r.ID, d.Type)

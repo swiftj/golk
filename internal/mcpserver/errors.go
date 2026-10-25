@@ -74,7 +74,7 @@ func explain(err error) error {
 func hint(e *lk.APIError) string {
 	switch e.Code {
 	case lk.ErrVersionMismatch:
-		return "the page changed since it was read; call read_page again and redo the edit on the new version"
+		return "the content changed since it was read; read it again (read_page, read_board or get_calendar) and redo the edit on the new version"
 	case lk.ErrNotFound:
 		return "check the id; hidden content is visible only to admin keys"
 	case lk.ErrValidation, lk.ErrInvalidContent:
