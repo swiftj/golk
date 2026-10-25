@@ -519,6 +519,9 @@ From CLAUDE.md §MCP server rules and the approved Phase 3 plan (DECISIONS.md D-
 | X-TL-03 | `set_timeline_lane` and `set_timeline_event` take a new item's `id`; events take `detail` (1–4); `read_timeline` with `lane_id` or `event_id` reads one item with every field. | D-021 | 7 |
 | X-MAP-03 | `set_map_feature` takes `id`, `polygons` and `visibility_range`; `read_map` with `feature_id` reads one feature with every field. | D-021 | 7 |
 | X-BOARD-03 | `read_board` with `page_id` lists that page's shapes (`listBoardShapes`). | D-021 | 7 |
+| X-MEM-01 | `list_members` and `list_invites` read the members (user id, name, role, email for admins) and pending invites (email, role, expiry). | D-021 | 7 |
+| X-MEM-02 | `invite_member` posts `{email}` (open-world: it emails someone); a dry run sends nothing; an existing member or invite is reported. | D-021 | 7 |
+| X-MEM-03 | `remove_member` and `revoke_invite` find the member or invite first (an unknown id is an error), name it in the dry run, then delete it. | D-021 | 7 |
 
 ---
 

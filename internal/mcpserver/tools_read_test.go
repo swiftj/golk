@@ -75,7 +75,8 @@ func TestTools_X_TOOL_02_AnnotationsOnEveryTool(t *testing.T) {
 	}
 	for _, tool := range res.Tools {
 		a := tool.Annotations
-		if a == nil || a.Title == "" || a.OpenWorldHint == nil || *a.OpenWorldHint {
+		// Only invite_member reaches outside the project: it emails someone.
+		if a == nil || a.Title == "" || a.OpenWorldHint == nil || *a.OpenWorldHint != (tool.Name == "invite_member") {
 			t.Errorf("%s: annotations %+v", tool.Name, a)
 			continue
 		}

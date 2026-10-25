@@ -73,6 +73,7 @@ func New(cfg Config, d Deps) *mcp.Server {
 	s.addBoardTools(ms, !cfg.ReadOnly)
 	s.addBlockTools(ms, !cfg.ReadOnly)
 	s.addAssetTools(ms, !cfg.ReadOnly)
+	s.addAdminTools(ms, !cfg.ReadOnly)
 	s.addPrompts(ms)
 	return ms
 }
