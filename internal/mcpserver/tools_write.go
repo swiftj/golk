@@ -19,7 +19,7 @@ func (s *server) addWriteTools(ms *mcp.Server) {
 		Annotations: write("Update document", true, true),
 	}, func(in UpdateDocumentIn) string { return in.Project }, serial(s, s.updateDocument))
 	addTool(s, ms, &mcp.Tool{
-		Name:        "create_resource",
+		Name: "create_resource",
 		Description: "Create a resource (wiki entry), optionally with its first page as LK Markdown, or with 1-5 documents of any type (page, map, time, board, blank). " +
 			"Can set its place in the sidebar (after or before a sibling), icon, lock and banner. Its content is checked by the spoiler guard unless it is created hidden.",
 		Annotations: write("Create resource", false, false),
@@ -31,7 +31,7 @@ func (s *server) addWriteTools(ms *mcp.Server) {
 		Annotations: write("Create resources", false, false),
 	}, func(in CreateResourcesIn) string { return in.Project }, serial(s, s.createResources))
 	addTool(s, ms, &mcp.Tool{
-		Name:        "update_resource",
+		Name: "update_resource",
 		Description: "Change a resource: rename it, set its tags, aliases, icon, lock, banner or permissions, hide or show it, move it (parent_id or move_to_root), " +
 			"or reorder it among its siblings in the sidebar (after or before a sibling id; list_resources shows the order). Only the fields given change. " +
 			"Showing a hidden resource, or giving players (MEMBER) access, checks everything it would show with the spoiler guard first.",
