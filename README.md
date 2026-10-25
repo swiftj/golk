@@ -40,15 +40,17 @@ It was built for a DM who publishes a D&D world wiki that **players read**. So i
 
 You need an Apple Silicon Mac with Claude Desktop, a LegendKeeper project and an API key for it. Use a test project first.
 
+**Download** `lk-mcp-darwin-arm64.mcpb` and `legendkeeper-plugin.zip` from the [latest release](https://github.com/swiftj/golk/releases/latest), or build them yourself:
+
 ```sh
 git clone https://github.com/swiftj/golk.git
 cd golk
 make mcpb plugin        # needs Go 1.27+ and Node (npx) for the packer
 ```
 
-1. Double-click `dist/lk-mcp-darwin-arm64.mcpb` and enter your API key.
+1. Double-click `lk-mcp-darwin-arm64.mcpb` and enter your API key.
 2. In a new chat, ask: **"List my LegendKeeper projects."**
-3. Optional, for Cowork: upload `dist/legendkeeper-plugin.zip` under **Customize › Plugins › Add › Upload plugin**.
+3. Optional, for Cowork: upload `legendkeeper-plugin.zip` under **Customize › Plugins › Add › Upload plugin**.
 
 ---
 
@@ -61,7 +63,10 @@ The integration has two pieces, installed separately:
 | Claude Desktop extension | `dist/lk-mcp-darwin-arm64.mcpb` | The `lk-mcp` server binary and its settings. This is what gives Claude the LegendKeeper tools. |
 | Cowork plugin | `dist/legendkeeper-plugin.zip` | Two skills that teach Claude to use the tools well: `legendkeeper-wiki` (pages, LK Markdown, hidden content, the guard) and `legendkeeper-worldbuilding` (maps, timelines, calendars, templates, boards). It holds no server and no key. |
 
-### 1. Build them
+### 1. Get them
+
+Download both from the [releases page](https://github.com/swiftj/golk/releases), and check them with `shasum -a 256 -c SHA256SUMS`. Or build them:
+
 
 ```sh
 make mcpb     # dist/lk-mcp-darwin-arm64.mcpb  (runs `npx -y @anthropic-ai/mcpb@2.1.2` to validate and pack)
