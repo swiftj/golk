@@ -482,7 +482,7 @@ type SetEventIn struct {
 	End            *float64 `json:"end,omitempty" jsonschema:"end in minutes; not with formatted dates"`
 	URI            *string  `json:"uri,omitempty" jsonschema:"link: lk://resources/<id>, lk://documents/<id> or lk://resources/<id>/docs/<id>; empty clears it"`
 	Color          *string  `json:"color,omitempty" jsonschema:"fill color, #RRGGBB"`
-	IconGlyph      *string  `json:"icon_glyph,omitempty"`
+	IconGlyph      *string  `json:"icon_glyph,omitempty" jsonschema:"a Font Awesome 6 icon name, lowercase with no fa- prefix, e.g. crown, castle, dragon, skull, house; Pro icons work, brand icons and Font Awesome 5 names don't; empty clears it"`
 	ImageURL       *string  `json:"image_url,omitempty" jsonschema:"the URL of an image asset of this project"`
 	IsHidden       *bool    `json:"is_hidden,omitempty" jsonschema:"hide the event from players; it is still checked by the spoiler guard"`
 	ShowOnCalendar *bool    `json:"show_on_calendar,omitempty"`
@@ -504,6 +504,7 @@ func (s *server) setEvent(ctx context.Context, c *lk.Client, in SetEventIn) (too
 	if in.Detail != nil && (*in.Detail < 1 || *in.Detail > 4) {
 		return zero, errors.New("detail is 1 (year), 2 (month), 3 (day) or 4 (time)")
 	}
+	normalizeGlyph(in.IconGlyph)
 	if in.EventID != "" && in.ID != "" {
 		return zero, errors.New("id names a new event; to update one use event_id")
 	}

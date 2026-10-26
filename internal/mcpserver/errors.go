@@ -75,6 +75,10 @@ func hint(e *lk.APIError) string {
 	case lk.ErrNotFound:
 		return "check the id; hidden content is visible only to admin keys"
 	case lk.ErrValidation, lk.ErrInvalidContent:
+		// A rejected glyph comes with no field, only this message.
+		if strings.Contains(strings.ToLower(e.Message), "icon") {
+			return glyphHint
+		}
 		return "fix the fields listed above"
 	case lk.ErrRateLimited, lk.ErrUploadRateExceeded:
 		if e.RetryAfter > 0 {

@@ -1,6 +1,6 @@
 ---
 name: legendkeeper-wiki
-description: Read and edit a LegendKeeper world wiki through the lk-mcp tools. Use when the user asks to look up, create, update, reorder, reorganise, hide or delete wiki entries (resources), their pages, blocks, tabs, sidebar properties, infoboxes, tags, images or assets in LegendKeeper, manage the project's members and invites, or mentions their campaign wiki, DM notes or spoilers.
+description: Read and edit a LegendKeeper world wiki through the lk-mcp tools. Use when the user asks to look up, create, update, reorder, reorganise, hide or delete wiki entries (resources), their pages, blocks, tabs, sidebar properties, infoboxes, tags, icons, images or assets in LegendKeeper, manage the project's members and invites, or mentions their campaign wiki, DM notes or spoilers.
 ---
 
 # LegendKeeper wiki
@@ -91,6 +91,20 @@ When a write is refused:
   Use `rank` to move an existing property, and `after`/`before` to place a new one.
 - With `document_id` and `block_id`, `set_property` and `delete_property` work on an **infobox** inside a page.
 - `set_row` / `delete_row` change one key-value row without touching the others. They work on a sidebar property (`property_id`), a keyValue block (`document_id` + `block_id`), or an infobox property (all three).
+
+## Icons
+
+`icon_glyph` (on resources, map pins and timeline events) is a **Font Awesome 6** icon name: lowercase, no `fa-` prefix. Pro icons work (`castle`, `swords`); brand icons and old Font Awesome 5 names (`home`, `shield-alt`) don't. The server fixes `fa-` prefixes, capitals and common Font Awesome 5 names. If a name is still rejected, pick another rather than giving up. These are known to work:
+
+- **People:** user person person-dress user-crown user-tie user-secret user-ninja user-shield hat-wizard people-group users crown
+- **Places:** castle fort chess-rook dungeon tower-observation city house house-chimney cabin tent campground church place-of-worship landmark monument archway bridge shop building-columns school
+- **Land and sea:** mountain mountain-sun volcano tree trees island-tropical water globe map map-location-dot location-dot anchor ship sailboat compass
+- **Factions and faiths:** shield shield-halved flag ankh cross yin-yang star-of-david dharmachakra om peace masks-theater
+- **Creatures:** dragon horse unicorn spider crow dove fish frog paw ghost skull skull-crossbones
+- **Items:** sword swords dagger axe axe-battle bow-arrow hammer ring gem coins sack-dollar key scroll book book-open book-skull flask wand-magic-sparkles staff
+- **Events and ideas:** fire bolt snowflake sun moon star hourglass calendar-days eye heart heart-crack trophy music utensils beer-mug-empty hand-fist scale-balanced gavel
+
+Use one glyph and `icon_color` (`#RRGGBB`) for every resource of the same kind.
 
 ## Other tools
 

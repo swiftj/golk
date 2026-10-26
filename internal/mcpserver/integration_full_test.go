@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/swiftj/golk/internal/mcpserver"
 	"github.com/swiftj/golk/internal/sandbox"
 	"github.com/swiftj/golk/lk"
 )
@@ -164,4 +165,18 @@ func TestIntegration_MCPFullCoverage(t *testing.T) {
 		t.Fatalf("list_invites lacks %s:\n%s", email, li.text)
 	}
 	mustOK(t, cs, "revoke_invite", map[string]any{"invite_id": inviteID})
+}
+
+// TestIntegration_Glyphs_X_ICON_03 checks that LegendKeeper accepts every glyph
+// lk-mcp suggests or renames to (X-ICON-03), so the list can't drift.
+func TestIntegration_Glyphs_X_ICON_03(t *testing.T) {
+	cs := session(t)
+	r := mustOK(t, cs, "create_resource", map[string]any{"name": sandbox.Name("Icons")})
+	id, _ := r.out["resource_id"].(string)
+	sandbox.Cleanup(t, id)
+	for _, g := range mcpserver.GlyphsToCheck() {
+		if res := call(t, cs, "update_resource", map[string]any{"id": id, "icon_glyph": g}); res.err {
+			t.Errorf("glyph %q rejected: %s", g, res.text)
+		}
+	}
 }

@@ -364,3 +364,17 @@ That is the whole module graph (`go mod graph`). UUIDs (idempotency keys) and cu
   - The skills tell Claude to confirm with the user before inviting, removing or revoking.
   - The sandbox integration test invites a reserved, non-deliverable `@example.com` address and revokes it at once. `remove_member` is unit-tested only, since the sandbox has no throwaway member.
 - The tool count goes from 40 to 60 (17 read, 43 write). The extension and plugin version is 0.4.0.
+
+## D-022 — Icon glyphs
+
+- **Problem:** Claude Desktop couldn't set any resource icon. Every glyph it tried was rejected with `VALIDATION_ERROR: Invalid icon name. Must be a valid FontAwesome icon.` The guide says only "a Font Awesome icon name, such as `crown` or `dog`".
+- **Probe (sandbox, 2026-10-25)** on `iconGlyph`:
+  - Accepted: bare, lowercase Font Awesome 6 names, Free and Pro (`crown`, `castle`, `swords`, `dagger`, `unicorn`, `shield-halved`, `house`).
+  - Rejected: prefixes (`fa-crown`, `fas fa-crown`, `fa-solid fa-crown`), capitals (`Crown`), Font Awesome 5 names (`home`, `shield-alt`, `map-marked-alt`), and brand icons (`fort-awesome`, `wolf-pack-battalion`).
+  - The 400 carries no field error, only that message.
+- **Decision:**
+  - lk-mcp normalizes every `icon_glyph` before sending it. It lowercases it, drops Font Awesome class words and the `fa-` prefix, joins words with hyphens, and renames common Font Awesome 5 names (a fixed table, `glyphAliases`).
+  - A rejected icon gets a hint (matched on the message, since there is no field) saying which form works.
+  - `glyphSuggestions` lists glyphs for a world wiki. The wiki skill lists the same names.
+  - The sandbox test `TestIntegration_Glyphs_X_ICON_03` checks every suggestion and every rename target, so the list can't drift from what LegendKeeper accepts.
+  - No local allow-list: LegendKeeper accepts Pro names, and their list isn't public data we can pin, so the server stays the judge.

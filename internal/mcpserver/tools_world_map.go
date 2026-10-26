@@ -179,7 +179,7 @@ func (s *server) readMap(ctx context.Context, c *lk.Client, in ReadMapIn) (toolR
 // (pins: icon_*, pin_image; regions and paths: color, fill_*, border_style,
 // stroke_*); a field on a type it doesn't apply to fails validation.
 type FeatureStyle struct {
-	IconGlyph       *string      `json:"icon_glyph,omitempty" jsonschema:"a pin's icon glyph name"`
+	IconGlyph       *string      `json:"icon_glyph,omitempty" jsonschema:"a Font Awesome 6 icon name, lowercase with no fa- prefix, e.g. crown, castle, dragon, skull, house; Pro icons work, brand icons and Font Awesome 5 names don't; empty clears it"`
 	IconColor       *string      `json:"icon_color,omitempty" jsonschema:"a pin's icon colour, such as #aa3344"`
 	IconShape       *string      `json:"icon_shape,omitempty" jsonschema:"a pin's shape: pin, diamond, flag, marker, shield, circle, banner, arch or none"`
 	IconSize        *string      `json:"icon_size,omitempty" jsonschema:"a pin's size: medium or small"`
@@ -425,6 +425,9 @@ func (s *server) setMapFeature(ctx context.Context, c *lk.Client, in SetMapFeatu
 	var zero toolResult[FeatureOut]
 	if in.Pos != nil && in.Pixel != nil {
 		return zero, errors.New("give pos or pixel, not both")
+	}
+	if in.Style != nil {
+		normalizeGlyph(in.Style.IconGlyph)
 	}
 	fc := featureChange{in: in, pos: in.Pos}
 	if in.FeatureID == "" && in.Type == "" {

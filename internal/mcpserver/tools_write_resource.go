@@ -259,6 +259,7 @@ func buildResource(in ResourceSpec) (builtResource, error) {
 		return zero, errors.New("give documents, or page_markdown/page_name, not both")
 	}
 	rc.ID, rc.After, rc.Before = optStr(in.ID), optStr(in.After), optStr(in.Before)
+	normalizeGlyph(in.IconGlyph)
 	rc.IconGlyph, rc.IconColor = optPtr(in.IconGlyph), optPtr(in.IconColor)
 	if in.IconShape != nil {
 		rc.IconShape = lk.Some(lk.IconShape(*in.IconShape))
@@ -409,7 +410,7 @@ func (p PositionArgs) text() string {
 // IconArgs are a resource's icon: a glyph, its colour, and the map-pin
 // shape and size drawn behind it.
 type IconArgs struct {
-	IconGlyph *string `json:"icon_glyph,omitempty" jsonschema:"the icon glyph name; empty clears it"`
+	IconGlyph *string `json:"icon_glyph,omitempty" jsonschema:"a Font Awesome 6 icon name, lowercase with no fa- prefix, e.g. crown, castle, dragon, skull, house; Pro icons work, brand icons and Font Awesome 5 names don't; empty clears it"`
 	IconColor *string `json:"icon_color,omitempty" jsonschema:"the icon colour, e.g. #aa3300"`
 	IconShape *string `json:"icon_shape,omitempty" jsonschema:"pin, diamond, flag, marker, shield, circle, banner, arch, or none for the glyph alone"`
 	IconSize  *string `json:"icon_size,omitempty" jsonschema:"medium or small"`
@@ -529,6 +530,7 @@ func (s *server) updateResource(ctx context.Context, c *lk.Client, in UpdateReso
 			did = append(did, fmt.Sprintf("set %s to %q", what, *v))
 		}
 	}
+	normalizeGlyph(in.IconGlyph)
 	setStr(&u.IconGlyph, in.IconGlyph, r.IconGlyph, "iconGlyph")
 	setStr(&u.IconColor, in.IconColor, r.IconColor, "iconColor")
 	if in.IconShape != nil && *in.IconShape != string(r.IconShape) {
