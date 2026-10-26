@@ -378,3 +378,4 @@ That is the whole module graph (`go mod graph`). UUIDs (idempotency keys) and cu
   - `glyphSuggestions` lists glyphs for a world wiki. The wiki skill lists the same names.
   - The sandbox test `TestIntegration_Glyphs_X_ICON_03` checks every suggestion and every rename target, so the list can't drift from what LegendKeeper accepts.
   - No local allow-list: LegendKeeper accepts Pro names, and their list isn't public data we can pin, so the server stays the judge.
+- The extension and plugin version is 0.4.1.

@@ -1,6 +1,6 @@
 {
   "name": "legendkeeper",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Skills for reading and editing a LegendKeeper world wiki with the lk-mcp tools: pages and LK Markdown, hidden DM content and the spoiler guard, maps, timelines, calendars, templates and boards.",
   "author": {
     "name": "John Swift",
