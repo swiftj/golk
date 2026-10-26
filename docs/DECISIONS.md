@@ -380,4 +380,4 @@ That is the whole module graph (`go mod graph`). UUIDs (idempotency keys) and cu
   - **No local allow-list.** A name outside the Free directory is still sent, since LegendKeeper also takes Pro names, so the server stays the judge.
   - **`find_icon`** (read-only, no API call) searches the directory by name, label, term and category, so an agent looks a name up instead of guessing. A rejected icon's hint (matched on the message, since there is no field) points to it.
   - **Suggestions.** `glyphSuggestions` is a short list for a world wiki, all from the Free directory. The wiki skill lists the same names.
-- The extension and plugin version is 0.4.1.
+- The extension and plugin version is 0.4.2.

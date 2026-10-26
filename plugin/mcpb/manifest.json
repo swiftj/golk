@@ -2,7 +2,7 @@
   "manifest_version": "0.3",
   "name": "lk-mcp",
   "display_name": "LegendKeeper",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "Read and edit a LegendKeeper world wiki: pages, maps, timelines, calendars, templates and boards, with a spoiler guard for DM-only content.",
   "long_description": "lk-mcp lets Claude create, read, update and delete content in one LegendKeeper project through the LegendKeeper API. Every write supports a dry run, and versioned writes never overwrite a change made in the app since Claude's last read. An optional spoiler guard refuses any write that would show a protected term (one per line in a text file you keep outside the wiki) on content players can see; without a terms file Claude has full DM access.",
   "author": {
