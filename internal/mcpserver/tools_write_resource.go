@@ -410,7 +410,7 @@ func (p PositionArgs) text() string {
 // IconArgs are a resource's icon: a glyph, its colour, and the map-pin
 // shape and size drawn behind it.
 type IconArgs struct {
-	IconGlyph *string `json:"icon_glyph,omitempty" jsonschema:"a Font Awesome 6 icon name, lowercase with no fa- prefix, e.g. crown, castle, dragon, skull, house; Pro icons work, brand icons and Font Awesome 5 names don't; empty clears it"`
+	IconGlyph *string `json:"icon_glyph,omitempty" jsonschema:"a Font Awesome 6 icon name, lowercase with no fa- prefix, e.g. crown, chess-rook, dragon, skull, house; look names up with find_icon; empty clears it"`
 	IconColor *string `json:"icon_color,omitempty" jsonschema:"the icon colour, e.g. #aa3300"`
 	IconShape *string `json:"icon_shape,omitempty" jsonschema:"pin, diamond, flag, marker, shield, circle, banner, arch, or none for the glyph alone"`
 	IconSize  *string `json:"icon_size,omitempty" jsonschema:"medium or small"`

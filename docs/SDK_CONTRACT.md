@@ -523,9 +523,11 @@ From CLAUDE.md §MCP server rules and the approved Phase 3 plan (DECISIONS.md D-
 | X-MEM-02 | `invite_member` posts `{email}` (open-world: it emails someone); a dry run sends nothing; an existing member or invite is reported. | D-021 | 7 |
 | X-MEM-03 | `remove_member` and `revoke_invite` find the member or invite first (an unknown id is an error), name it in the dry run, then delete it. | D-021 | 7 |
 | X-COV-01 | Every operation of `docs/legendkeeper/openapi.json` is performed by an existing tool, and every request field (body and query) is carried by an existing tool parameter, or set by the SDK itself with a stated reason (`internal/mcpserver/coverage.go`); `docs/API_COVERAGE.md` is generated from that table. | D-021 | 7 |
-| X-ICON-01 | Every `icon_glyph` (resources, map pins, timeline events) is normalized before it is sent: lowercase, Font Awesome class words and the `fa-` prefix dropped, words joined by hyphens, Font Awesome 5 names renamed to their Font Awesome 6 names. Empty still clears it. A rejected icon gets a hint naming the accepted form. | D-022 | 7 |
+| X-ICON-01 | Every `icon_glyph` (resources, map pins, timeline events) is normalized before it is sent: lowercase, Font Awesome class words and the `fa-` prefix dropped, words joined by hyphens, and an older Font Awesome name renamed to its current one per Font Awesome's metadata. A name not in the directory is sent as is. Empty still clears it. A rejected icon gets a hint naming the accepted form and `find_icon`. | D-022 | 7 |
 | X-ICON-02 | Every `icon_glyph` parameter has the same description. The wiki skill lists exactly the suggested glyphs. | D-022 | 7 |
-| X-ICON-03 | LegendKeeper accepts every suggested glyph and every Font Awesome 5 rename target (sandbox). | D-022 | 7 |
+| X-ICON-03 | Every suggested glyph is in the Font Awesome 6 Free directory. | D-022 | 7 |
+| X-ICON-04 | `internal/fontawesome` holds every Font Awesome 6 Free icon with a non-brand style, generated from Font Awesome's metadata at a pinned version. It resolves older names to current ones and searches names, labels, terms, older names and categories. | D-022 | 7 |
+| X-ICON-05 | `find_icon` (read-only, no API call) searches the directory, filters by category, and with no arguments lists the categories. | D-022 | 7 |
 
 ---
 

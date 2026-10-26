@@ -167,8 +167,11 @@ Every tool carries MCP annotations (read-only, destructive, idempotent), and eve
 | Templates | `list_templates` | `save_as_template`, `create_from_template` |
 | Boards (tldraw canvases) | `read_board` | `add_board_shapes`, `update_board_shapes`, `delete_board_shapes`, `replace_board` |
 | Members and invites | `list_members`, `list_invites` | `invite_member` (emails someone), `remove_member`, `revoke_invite` |
+| Icons | `find_icon` (search the 1,402 Font Awesome 6 Free icons by idea or category; no API call) | (set with `icon_glyph` on resources, map pins and timeline events) |
 
-That's 17 read tools and 43 write tools. In read-only mode the write tools aren't registered at all.
+That's 18 read tools and 43 write tools. In read-only mode the write tools aren't registered at all.
+
+Icon names are normalized before they're sent: `fa-` prefixes and capitals are dropped, and old Font Awesome 5 names are renamed (`home` → `house`). The icon directory comes from Font Awesome Free's metadata (MIT; see [`internal/fontawesome/NOTICE.md`](internal/fontawesome/NOTICE.md)).
 
 **100% API coverage.** Every one of the 89 operations of the LegendKeeper v3 API, and every request field, is reachable through these tools. [`docs/API_COVERAGE.md`](docs/API_COVERAGE.md) maps each operation and field to the tool parameter that carries it. A test checks that table against the API spec and the live tool schemas, so a gap fails the build.
 

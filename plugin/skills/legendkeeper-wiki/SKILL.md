@@ -94,17 +94,19 @@ When a write is refused:
 
 ## Icons
 
-`icon_glyph` (on resources, map pins and timeline events) is a **Font Awesome 6** icon name: lowercase, no `fa-` prefix. Pro icons work (`castle`, `swords`); brand icons and old Font Awesome 5 names (`home`, `shield-alt`) don't. The server fixes `fa-` prefixes, capitals and common Font Awesome 5 names. If a name is still rejected, pick another rather than giving up. These are known to work:
+`icon_glyph` (on resources, map pins and timeline events) is a **Font Awesome 6** icon name: lowercase, no `fa-` prefix. Brand icons don't work.
 
-- **People:** user person person-dress user-crown user-tie user-secret user-ninja user-shield hat-wizard people-group users crown
-- **Places:** castle fort chess-rook dungeon tower-observation city house house-chimney cabin tent campground church place-of-worship landmark monument archway bridge shop building-columns school
-- **Land and sea:** mountain mountain-sun volcano tree trees island-tropical water globe map map-location-dot location-dot anchor ship sailboat compass
-- **Factions and faiths:** shield shield-halved flag ankh cross yin-yang star-of-david dharmachakra om peace masks-theater
-- **Creatures:** dragon horse unicorn spider crow dove fish frog paw ghost skull skull-crossbones
-- **Items:** sword swords dagger axe axe-battle bow-arrow hammer ring gem coins sack-dollar key scroll book book-open book-skull flask wand-magic-sparkles staff
-- **Events and ideas:** fire bolt snowflake sun moon star hourglass calendar-days eye heart heart-crack trophy music utensils beer-mug-empty hand-fist scale-balanced gavel
-
-Use one glyph and `icon_color` (`#RRGGBB`) for every resource of the same kind.
+- **Look names up with `find_icon`** rather than guessing. Search by what the icon should show (`king`, `tavern`, `ship`), or browse a category. It searches all 1,402 free icons, and every name it returns works.
+- The server fixes `fa-` prefixes, capitals and old Font Awesome 5 names (`home` → `house`).
+- Some good ones for a world wiki:
+  - **People:** user person person-dress user-tie user-secret user-ninja user-shield hat-wizard people-group users crown
+  - **Places:** chess-rook dungeon tower-observation city tree-city mountain-city house house-chimney tent campground church place-of-worship landmark monument archway bridge shop building-columns school
+  - **Land and sea:** mountain mountain-sun volcano tree water globe map map-location-dot location-dot anchor ship sailboat compass
+  - **Factions and faiths:** shield shield-halved flag ankh cross yin-yang star-of-david dharmachakra om peace masks-theater
+  - **Creatures:** dragon horse horse-head cat dog spider crow dove fish frog paw ghost skull skull-crossbones bone
+  - **Items:** hammer wand-sparkles wand-magic-sparkles bomb ring gem coins sack-dollar key scroll book book-open book-skull flask feather dice-d20
+  - **Events and ideas:** fire bolt explosion snowflake sun moon star hourglass calendar-days eye heart heart-crack trophy music utensils beer-mug-empty hand-fist scale-balanced gavel
+- Use one glyph and `icon_color` (`#RRGGBB`) for every resource of the same kind.
 
 ## Other tools
 

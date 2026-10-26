@@ -61,6 +61,7 @@ func New(cfg Config, d Deps) *mcp.Server {
 		Instructions: instructions,
 	})
 	s.addReadTools(ms)
+	s.addIconTools(ms)
 	if !cfg.ReadOnly {
 		s.addWriteTools(ms)
 	}
@@ -81,7 +82,8 @@ func New(cfg Config, d Deps) *mcp.Server {
 const instructions = `Tools for a LegendKeeper wiki that players read.
 Pages are LK Markdown: read_page returns it with a version; edit_page takes the whole edited page and that version.
 Keep :::secret blocks for DM-only text, and keep ::unsupported and lk-raw lines as returned.
-Every write tool has dry_run; use it to preview. When the DM has configured protected terms, a spoiler guard refuses writes that put them in player-visible content (list_projects says whether it is on).`
+Every write tool has dry_run; use it to preview. When the DM has configured protected terms, a spoiler guard refuses writes that put them in player-visible content (list_projects says whether it is on).
+Icon glyphs are Font Awesome 6 names; find_icon looks them up.`
 
 // ProjectArg is the project parameter every tool takes.
 type ProjectArg struct {

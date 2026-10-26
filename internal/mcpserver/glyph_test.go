@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/swiftj/golk/internal/fontawesome"
 	"github.com/swiftj/golk/internal/testutil"
 )
 
@@ -34,10 +35,42 @@ func TestGlyphs_X_ICON_01_Normalize(t *testing.T) {
 		}
 	}
 	normalizeGlyph(nil)
-	for from, to := range glyphAliases {
-		if _, chained := glyphAliases[to]; chained || from == to {
-			t.Errorf("alias %s -> %s", from, to)
+}
+
+// X-ICON-03: every suggested glyph is in the Font Awesome 6 directory.
+func TestGlyphs_X_ICON_03_SuggestionsExist(t *testing.T) {
+	for _, s := range glyphSuggestions {
+		for _, n := range strings.Fields(s.names) {
+			if _, ok := fontawesome.Lookup(n); !ok {
+				t.Errorf("suggested glyph %s (%s) isn't a Font Awesome %s Free icon", n, s.kind, fontawesome.Version)
+			}
 		}
+	}
+}
+
+// X-ICON-05: find_icon searches the directory, filters by category, and
+// with no arguments lists the categories.
+func TestFindIcon_X_ICON_05(t *testing.T) {
+	h := newHarness(t)
+	got := text(h.call("find_icon", map[string]any{"query": "king"}))
+	if !strings.Contains(got, "\n- crown: Crown (") || !strings.Contains(got, "use the name as icon_glyph") {
+		t.Errorf("king:\n%s", got)
+	}
+	got = text(h.call("find_icon", map[string]any{"query": "horse", "category": "animals", "limit": 3}))
+	if !strings.Contains(got, "- horse: Horse") || strings.Count(got, "\n- ") > 3 {
+		t.Errorf("horse in animals:\n%s", got)
+	}
+	got = text(h.call("find_icon", map[string]any{}))
+	if !strings.Contains(got, "- animals: Animals, ") {
+		t.Errorf("categories:\n%s", got)
+	}
+	if got = text(h.call("find_icon", map[string]any{"query": "zzzqqq"})); !strings.Contains(got, "No Font Awesome") {
+		t.Errorf("nonsense:\n%s", got)
+	}
+	wtMustFail(t, h, "find_icon", map[string]any{"category": "nope"}, "no Font Awesome category")
+	wtMustFail(t, h, "find_icon", map[string]any{"query": "x", "limit": 101}, "limit is 1 to 100")
+	if len(h.lk.Requests()) != 0 {
+		t.Errorf("find_icon called the API: %v", h.lk.Requests())
 	}
 }
 
@@ -109,7 +142,7 @@ func TestGlyphs_X_ICON_02_Docs(t *testing.T) {
 		t.Fatal(err)
 	}
 	for _, s := range glyphSuggestions {
-		if line := "- **" + s.kind + ":** " + s.names + "\n"; !strings.Contains(string(skill), line) {
+		if line := "  - **" + s.kind + ":** " + s.names + "\n"; !strings.Contains(string(skill), line) {
 			t.Errorf("the wiki skill lacks the line %q", line)
 		}
 	}

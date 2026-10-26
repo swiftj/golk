@@ -12,7 +12,7 @@ GOVULNCHECK_VERSION := v1.9.0
 # MCPB packs the Claude Desktop extension (build-only dev tool, DECISIONS.md D-016).
 MCPB                := npx -y @anthropic-ai/mcpb@2.1.2
 
-.PHONY: all tools generate lint test test-race test-integration build verify-static mcpb plugin coverage-doc clean
+.PHONY: all tools generate icons lint test test-race test-integration build verify-static mcpb plugin coverage-doc clean
 
 all: lint test
 
@@ -26,6 +26,16 @@ GEN_TAGS    := Projects,Resources,Documents,Blocks,Properties,Search,Tags,Assets
 
 generate: ## Regenerate lk/internal/gen from docs/legendkeeper/openapi.json
 	$(GO) run ./internal/cmd/lkgen -spec docs/legendkeeper/openapi.json -tags $(GEN_TAGS) -out lk/internal/gen/types.go
+
+FA_VERSION ?= 6.7.2
+
+icons: ## Regenerate internal/fontawesome/icons.tsv from Font Awesome Free's metadata
+	@d="$$(mktemp -d)"; trap 'rm -rf "$$d"' EXIT; \
+	for f in icon-families.json categories.yml; do \
+		curl -sSfL -o "$$d/$$f" "https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@$(FA_VERSION)/metadata/$$f" || exit 1; \
+	done; \
+	shasum -a 256 "$$d"/*; \
+	$(GO) run ./internal/cmd/faicons -version $(FA_VERSION) -families "$$d/icon-families.json" -categories "$$d/categories.yml" -out internal/fontawesome/icons.tsv
 
 lint: ## gofmt, go vet, staticcheck, golangci-lint, govulncheck
 	@out="$$(gofmt -l $$(git ls-files -co --exclude-standard '*.go'))"; \
