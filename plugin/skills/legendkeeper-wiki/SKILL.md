@@ -78,6 +78,10 @@ When a write is refused:
 - **Don't** rephrase, misspell, split or abbreviate the term to get past the check. That defeats the DM's protection.
 - **Do** tell the DM which term was found where, and offer to put that part in a `:::secret` block or a hidden document or resource.
 
+## Settings only the app can change
+
+Whether a resource's **property sidebar starts open or closed** shows in `get_resource` ("Property sidebar: open/closed by default", `property_bar_open`). The LegendKeeper API can read it but not set it: it rejects the field on create and update. To change it, the DM toggles it in the LegendKeeper app. Say so plainly, and offer to list which entries are open or closed, so they know which ones to change.
+
 ## Properties and infoboxes
 
 - `set_property` sets a sidebar property by title: `markdown` (a text field), `rows` (key-value), or `property_markdown` for **any kind**, written as `get_resource` shows it, e.g.:
