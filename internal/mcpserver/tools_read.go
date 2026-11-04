@@ -403,7 +403,10 @@ type GetResourceOut struct {
 	IconShape  string                `json:"icon_shape,omitempty"`
 	IconSize   string                `json:"icon_size,omitempty"`
 	ImageURL   string                `json:"image_url,omitempty"`
-	Banner     *BannerOut            `json:"banner,omitempty"`
+	// PropertyBarOpen is whether the property sidebar starts open. It is
+	// read-only: the API rejects writes, so only the app changes it (DECISIONS.md D-024).
+	PropertyBarOpen bool       `json:"property_bar_open"`
+	Banner          *BannerOut `json:"banner,omitempty"`
 	// Permissions are access levels by role or user id (0 no access, 1 can
 	// read, 2 can edit, 3 full access, 4 defer to role, 5 inherit).
 	Permissions map[string]int `json:"permissions,omitempty"`
@@ -449,6 +452,7 @@ func (s *server) getResource(ctx context.Context, c *lk.Client, in GetResourceIn
 	}
 	out.Rank, out.IconGlyph, out.IconColor, out.IconShape, out.IconSize, out.ImageURL =
 		r.Rank, r.IconGlyph, r.IconColor, string(r.IconShape), string(r.IconSize), r.ImageURL
+	out.PropertyBarOpen = r.ShowPropertyBar
 	fmt.Fprintf(&b, "Sidebar rank: %s\n", orDash(r.Rank))
 	if r.IconGlyph != "" || r.IconShape != "" {
 		fmt.Fprintf(&b, "Icon: glyph %s, colour %s, shape %s, size %s\n", orDash(r.IconGlyph), orDash(r.IconColor), orDash(string(r.IconShape)), orDash(string(r.IconSize)))
@@ -470,6 +474,8 @@ func (s *server) getResource(ctx context.Context, c *lk.Client, in GetResourceIn
 		slices.Sort(ps)
 		fmt.Fprintf(&b, "Permissions (0 none, 1 read, 2 edit, 3 full, 4 role, 5 inherit): %s\n", strings.Join(ps, ", "))
 	}
+	fmt.Fprintf(&b, "Property sidebar: %s by default (set only in the LegendKeeper app; the API can't change it)\n",
+		map[bool]string{true: "open", false: "closed"}[r.ShowPropertyBar])
 	b.WriteString("Documents (tabs, in order):\n")
 	docs := slices.Clone(r.Documents)
 	slices.SortStableFunc(docs, func(a, b lk.Document) int { return strings.Compare(a.Rank, b.Rank) })

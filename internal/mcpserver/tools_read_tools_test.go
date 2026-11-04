@@ -82,7 +82,7 @@ const rtListJSON = `{"data":[
 const rtList2JSON = `{"data":[{"id":"r3","name":"Ice Kingdom","tags":[],"aliases":[],"hasChildren":false,"rank":"a5","documents":[]}],"hasMore":false,"nextCursor":null}`
 
 const rtResourceJSON = `{"id":"r2","name":"Princess Bubblegum","parentId":"r1","tags":["royal"],"aliases":["PB","Bonnie"],
-"rank":"a","isHidden":false,"isLocked":true,"permissions":{},
+"rank":"a","isHidden":false,"isLocked":true,"showPropertyBar":true,"permissions":{},
 "ancestors":[{"id":"r1","name":"Candy Kingdom"}],
 "documents":[{"id":"d2","name":"Main","type":"page","rank":"a","isHidden":false},{"id":"d3","name":"DM notes","type":"page","rank":"b","isHidden":true}],
 "properties":[
@@ -163,6 +163,7 @@ func TestReadTools_X_TOOL_01_X_OUT_01(t *testing.T) {
 				"Tags: royal\n" +
 				"Aliases: PB, Bonnie\n" +
 				"Sidebar rank: a\n" +
+				"Property sidebar: open by default (set only in the LegendKeeper app; the API can't change it)\n" +
 				"Documents (tabs, in order):\n" +
 				"- Main (page, d2) rank a\n" +
 				"- DM notes (page, d3) rank b [hidden from players]\n" +
@@ -171,7 +172,7 @@ func TestReadTools_X_TOOL_01_X_OUT_01(t *testing.T) {
 				":::infobox\n:::keyvalue title=Stats\n- Age {text=827}\n:::\n\n:::textfield title=\"True origin\" isHidden\nGrown from the Mother Gum\n:::\n:::\n",
 			out: `{"id":"r2","name":"Princess Bubblegum","parent_id":"r1","ancestors":[{"id":"r1","name":"Candy Kingdom"}],"tags":["royal"],"aliases":["PB","Bonnie"],"locked":true,` +
 				`"documents":[{"id":"d2","name":"Main","type":"page","rank":"a"},{"id":"d3","name":"DM notes","type":"page","hidden":true,"rank":"b"}],` +
-				`"properties":[{"id":"pr1","kind":"keyValue","title":"Stats"},{"id":"pr2","kind":"textField","title":"True origin","hidden":true}],"rank":"a"}`,
+				`"properties":[{"id":"pr1","kind":"keyValue","title":"Stats"},{"id":"pr2","kind":"textField","title":"True origin","hidden":true}],"rank":"a","property_bar_open":true}`,
 		},
 		{
 			name: "get_resource no properties", tool: "get_resource",
@@ -179,8 +180,8 @@ func TestReadTools_X_TOOL_01_X_OUT_01(t *testing.T) {
 			replies: []testutil.Reply{testutil.JSON(http.StatusOK, `{"id":"r1","name":"Candy Kingdom","tags":[],"aliases":[],"rank":"a","isHidden":true,`+
 				`"permissions":{},"documents":[],"properties":[],"ancestors":[]}`)},
 			reqs: []rtReq{rtGet("/resources/r1")},
-			text: "Candy Kingdom (resource r1) [hidden from players]\nParent: none (top level)\nSidebar rank: a\nDocuments (tabs, in order):\n- none\nSidebar properties: none.",
-			out:  `{"id":"r1","name":"Candy Kingdom","tags":[],"aliases":[],"hidden":true,"documents":[],"properties":[],"rank":"a"}`,
+			text: "Candy Kingdom (resource r1) [hidden from players]\nParent: none (top level)\nSidebar rank: a\nProperty sidebar: closed by default (set only in the LegendKeeper app; the API can't change it)\nDocuments (tabs, in order):\n- none\nSidebar properties: none.",
+			out:  `{"id":"r1","name":"Candy Kingdom","tags":[],"aliases":[],"hidden":true,"documents":[],"properties":[],"rank":"a","property_bar_open":false}`,
 		},
 		{
 			name: "list_tags", tool: "list_tags",
