@@ -118,6 +118,14 @@ When a write is refused:
 
 For maps, timelines, calendars, templates and boards, see the legendkeeper-worldbuilding skill.
 
+## When a tool call hangs
+
+Claude Desktop may ask the user to approve a tool call before it runs. lk-mcp answers in a few seconds, so a call that gets no result for minutes, often ending after about 4 minutes, is almost always an **approval prompt nobody answered** that then expired. The call never reached the server, so nothing was written.
+
+- Don't blame the server or ask for a restart. Tell the user the call is waiting on (or expired at) their approval, ask them to approve it, and retry once they're back.
+- Suggest they set the tools they use often to "Always allow" in the LegendKeeper extension's settings, so later calls don't wait.
+- A real server-side failure comes back quickly as an error with a code and a request ID.
+
 ## Members and invites
 
 `list_members` and `list_invites` show who can read the wiki. `invite_member` emails someone an invite, and `remove_member` and `revoke_invite` take access away. These change who your players are, so **always confirm with the user before inviting, removing or revoking**, and dry run first.
