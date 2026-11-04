@@ -98,10 +98,34 @@ func renderKey(n blocks.Node) string {
 }
 
 // rendersOpaque reports whether n renders as ::unsupported or lk-raw.
+//
+// A row, cell, list item, task item or layout column has no Markdown form of
+// its own, so on its own it would always render as lk-raw. It is judged
+// inside a minimal parent of its natural kind instead: it is opaque only
+// when that parent is, which is when its real container would fall back to
+// lk-raw because of it.
 func rendersOpaque(n blocks.Node) bool {
 	r := newRenderer(false)
-	rd := r.node(n)
+	rd := r.node(inParent(n))
 	return rd != nil && rd.opaque
+}
+
+// inParent wraps a block that can't stand alone in a minimal parent of its
+// natural kind; any other node is returned as is.
+func inParent(n blocks.Node) blocks.Node {
+	switch v := n.(type) {
+	case *blocks.ListItemBlock:
+		return &blocks.BulletListBlock{Children: blocks.List{v}}
+	case *blocks.TaskItemBlock:
+		return &blocks.TaskListBlock{Children: blocks.List{v}}
+	case *blocks.LayoutColumnBlock:
+		return &blocks.LayoutBlock{Children: blocks.List{v}}
+	case *blocks.TableRowBlock:
+		return &blocks.TableBlock{Children: blocks.List{v}}
+	case *blocks.TableCellBlock:
+		return &blocks.TableBlock{Children: blocks.List{&blocks.TableRowBlock{Children: blocks.List{v}}}}
+	}
+	return n
 }
 
 type renderer struct {

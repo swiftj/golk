@@ -381,3 +381,9 @@ That is the whole module graph (`go mod graph`). UUIDs (idempotency keys) and cu
   - **`find_icon`** (read-only, no API call) searches the directory by name, label, term and category, so an agent looks a name up instead of guessing. A rejected icon's hint (matched on the message, since there is no field) points to it.
   - **Suggestions.** `glyphSuggestions` is a short list for a world wiki, all from the Free directory. The wiki skill lists the same names.
 - The extension and plugin version is 0.4.2.
+
+## D-023 — Nested-only blocks and the opaque-removal check (M-SAFE-04)
+
+- **Problem:** `rendersOpaque` judged each node on its own. Table rows and cells, list items, task items and layout columns have no Markdown form of their own, so judged alone they always rendered as `lk-raw` and counted as opaque. Any edit that removed a table row, a list item, a task or a column failed with `ErrRemovesOpaque`, and needed `allow_remove_opaque` even though nothing hidden was lost. It also kept those nodes out of hunk pairing, so edited rows and items lost their ids.
+- **Observed (2026-11-04):** a sandbox scan found no table that renders as `lk-raw`: 16 tables over 559 pages, including editor-made stat blocks, and none carried unmodelled fields. The flag came only from the removal check.
+- **Decision:** such a node is judged inside a minimal parent of its natural kind (`inParent`). It is opaque only when that parent would be, for example when the row has unmodelled fields. An `unsupported` block or `lk-raw` content inside a removed row or cell is still caught, because the removal walk visits children. Tests: `TestNestedRemoval_M_SAFE_04` (unit) and `TestIntegration_StatBlockTable_M_SAFE_04` (sandbox).
